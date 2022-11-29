@@ -5,6 +5,13 @@ Created on Mon Nov 28 16:35:07 2022
 
 @author: Elena Cristina Rusu 
 Exon Primer Surfer
+
+
+mock inputfile: 
+T1	ENSE1-ENSE2-ENSE4
+T2	ENSE1-ENSE2-ENSE3-ENSE4
+T3	ENSE1-ENSE2
+T4	ENSE1-ENSE2-ENSE3
 """
 
 
