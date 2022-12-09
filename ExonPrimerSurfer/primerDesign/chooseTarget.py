@@ -19,24 +19,6 @@ T4	ENSE1-ENSE2-ENSE3
 #           read input and choose target FUNCTION DEFINITION SITE             #
 ###############################################################################
 
-def read_input(file): 
-    """
-    This function takes a file where transcript ids are separated from the exon
-    ids with tabs and returns a dictionary. 
-    Args: 
-        file [in] (str): Complete path to the transcript list file
-        d [out] (dict): Transcript IDs as keys, exon list (ORDERED) as values 
-    """
-    d = {}
-    with open(file, "r") as f_open: 
-        for line in f_open.readlines(): 
-            if line != "": 
-                line = line.rstrip().split("\t")
-                d[line[0]] = line[1]
-    
-    return d
-
-###############################################################################
     
 def format_junctions(d): 
     """
@@ -130,4 +112,5 @@ def choose_target(d, junctions, to_detect):
     
     
     return toreturn
+
 
