@@ -1,8 +1,8 @@
 
-# ExonPrimerSurfer
+# ExonSurfer
 
 
-ExonPrimerSurfer is a python3 program, designed for the design of high specific transcript primers, using the Ensembl database and the blastn algorithm in order to identify and find the proper exon binding of the transcripts.
+ExonSurfer is a python3 program, designed for the design of high specific transcript primers, using the Ensembl database and the blastn algorithm in order to identify and find the proper exon binding of the transcripts.
 
 The advantages of ExonPrimerSurfer are:
 
@@ -26,11 +26,17 @@ Install the dependencies:
 pip install -r requirements.txt
 ```
 
+Install the package
+
+```bash
+python3 setup.py install --user
+```
+
 ## Usage
 
 Once the program is installed, it can be used to design primers for any given gene transcript.
 
-`python exonprimersurfer.py --gene <gene_name> --transcript <transcript_name>`
+`exon_surfer.py --gene <gene_name> --transcript <transcript_name> --out <path_out>`
 
 This will output a list of primers that can be used for the specified gene transcript.
 
