@@ -45,13 +45,13 @@ def CreatePrimers(gene, transcripts = "ALL", path_out = "."):
         # Design primers
         print(target)
         c1, c2 = designPrimers.call_primer3(target, index)
-        designPrimers.report_design(c1, c2, item, DESIGN_OUT)
+        dfPrimer = designPrimers.report_design(c1, c2, item, DESIGN_OUT)
         
         # Write primers to fasta file 
         designPrimers.write_blast_fasta(c1, c2, FASTA_F)
         
         # Call blast
-        df = blast.run_blast_list(FASTA_F, 
+        dfBlast = blast.run_blast_list(FASTA_F, 
                              BLAST_OUT, 
                              "blastn", 
                              resources.BLAST_DB())

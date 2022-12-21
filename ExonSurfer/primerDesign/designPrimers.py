@@ -95,8 +95,9 @@ def report_design(c1, c2, exon_junction, ofile):
                                    - Ensembl exon ID" (2) Design specification
         ofile [in] (str)           Path to the output file
     """
+    import pandas as pd
     out_open = open(ofile, "a+")
-    
+    df = pd.DataFrame()
     for pdict in (c1, c2): 
         for n in range(DESIGN_DICT["PRIMER_NUM_RETURN"]): 
             patt = "_{}_".format(n)
@@ -110,12 +111,15 @@ def report_design(c1, c2, exon_junction, ofile):
             else: 
                 num = str(n + CASE2_PRIMERS)
                 opt = "2"
-            
+            lPair = (opt, num, exon_junction[0], forseq, revseq, 
+                               str(ampsize), exon_junction[1])
+            df = df.append(pd.Series(lPair), ignore_index=True)
             string = "\t".join((opt, num, exon_junction[0], forseq, revseq, 
                                str(ampsize), exon_junction[1])) + "\n"
             
             out_open.write(string)
             
     out_open.close()
+    return df
     
     
