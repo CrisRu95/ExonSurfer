@@ -19,3 +19,15 @@ straightforward as possible.
  
 ### Fixed
  - Fixed the package structure
+
+ ## [0.1.0] - 2021-12-21
+
+### Added
+- Added the "create_index_table" function, to match the transcript ID with the
+  gene symbol
+
+### Changed
+
+### Fixed
+- Fixed the "make_blast_db" function, to create the blast database with the
+  correct cDNA file

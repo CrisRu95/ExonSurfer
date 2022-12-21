@@ -32,8 +32,19 @@ def download_ensembl_cdna():
                     full_path=download_path,
                     download_url=url,
                     timeout=3600)
-
+    print("Download complete.")
+    print("Creating index table...")
+    blast.create_index_table(download_path)
+    print("Index table created.")
+    print("Creating blast database...")
     blast.make_blast_db(download_path)
+    print("Blast database created.")
+
+def get_cdna_file():
+    """
+    This function returns the path to the ensembl cdna table file.
+    """
+    return str(os.path.join(str(get_db_path()),"CDNA_GENE.txt"))
 
 
 def get_db_path():
