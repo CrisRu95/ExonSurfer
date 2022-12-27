@@ -9,6 +9,7 @@ Created on Wed Dec  7 13:10:49 2022
 # imported modules
 import re
 import primer3
+import pandas as pd
 
 # my constants
 from .designConfig import design_dict as DESIGN_DICT
@@ -95,7 +96,7 @@ def report_design(c1, c2, exon_junction, ofile):
                                    - Ensembl exon ID" (2) Design specification
         ofile [in] (str)           Path to the output file
     """
-    import pandas as pd
+
     out_open = open(ofile, "a+")
     df = pd.DataFrame()
     for pdict in (c1, c2): 

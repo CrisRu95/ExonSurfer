@@ -1,9 +1,15 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# imported modules
+import os
+
 # own modules
 from ExonSurfer.ensembl import ensembl
 from ExonSurfer.blast import blast
 from ExonSurfer.resources import resources
 from ExonSurfer.primerDesign import designPrimers, chooseTarget
-import os
+
 
 def CreatePrimers(gene, transcripts = "ALL", path_out = "."):
     """
@@ -29,7 +35,7 @@ def CreatePrimers(gene, transcripts = "ALL", path_out = "."):
     
     # Get sequence and junction index
     print("Starting primer design")
-    #Define three output files, with the same name as the gene and transcript
+    # Define three output files, with the same name as the gene and transcript
     DESIGN_OUT = os.path.join(path_out, 
                               gene + "_" + transcripts + "_design.txt")
     BLAST_OUT = os.path.join(path_out, 
