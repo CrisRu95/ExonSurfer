@@ -7,7 +7,6 @@ Created on Wed Dec  7 13:10:49 2022
 """
 
 # imported modules
-import re
 import primer3
 import pandas as pd
 
@@ -54,35 +53,6 @@ def call_primer3(target_seq, junction_i):
     case2_primers = primer3.bindings.designPrimers(target_dict, DESIGN_DICT)
     
     return case1_primers, case2_primers
-
-###############################################################################
-
-def write_blast_fasta(case1_primers, case2_primers, fastaf): 
-    """
-    This function writes a fasta file with the designed primers. 
-    Args: 
-        case1_primers [in] (dict) Dictionary of primers designed with option 1
-        case2_primers [in] (dict) Dictionary of primers designed with option 2
-        fastaf [in] (str)         Full path to the fasta file to write
-    """
-    with open(fastaf, "w") as f_open: 
-        for k in case1_primers: 
-            if "PRIMER" in k and "SEQUENCE" in k: 
-                string = ">{}\n{}\n".format(k, case1_primers[k])
-                f_open.write(string)
-                
-        for k in case2_primers: 
-            if "PRIMER" in k and "SEQUENCE" in k: 
-                
-                # this is done to differenciate between case1 and case2
-                pnum_toreplace = re.search("_\d+_", k).group()
-                new_pnum = int(pnum_toreplace.replace("_", "")) + CASE2_PRIMERS
-                new_pnum = "_{}_".format(new_pnum)
-                
-                newk = k.replace(pnum_toreplace, new_pnum)
-                
-                string = ">{}\n{}\n".format(newk, case1_primers[k])
-                f_open.write(string)
                 
 ###############################################################################
                    
@@ -98,29 +68,37 @@ def report_design(c1, c2, exon_junction, ofile):
     """
 
     out_open = open(ofile, "a+")
-    df = pd.DataFrame()
     for pdict in (c1, c2): 
         for n in range(DESIGN_DICT["PRIMER_NUM_RETURN"]): 
-            patt = "_{}_".format(n)
-            forseq = [pdict[k] for k in pdict if "PRIMER_LEFT{}SEQUENCE".format(patt) in k][0]
-            revseq = [pdict[k] for k in pdict if "PRIMER_RIGHT{}SEQUENCE".format(patt) in k][0]
             
-            ampsize = [pdict[k] for k in pdict if "{}PRODUCT_SIZE".format(patt) in k][0]
-            if pdict == c1: 
-                num = str(n)
-                opt = "1"
-            else: 
-                num = str(n + CASE2_PRIMERS)
-                opt = "2"
-            lPair = (opt, num, exon_junction[0], forseq, revseq, 
-                               str(ampsize), exon_junction[1])
-            df = df.append(pd.Series(lPair), ignore_index=True)
-            string = "\t".join((opt, num, exon_junction[0], forseq, revseq, 
-                               str(ampsize), exon_junction[1])) + "\n"
+            patt = "_{}_".format(n)
+            opt = "1" if pdict == c1 else "2" # design option
+            
+            l = (opt, 
+                 exon_junction[0], 
+                 exon_junction[1], 
+                 pdict["PRIMER_LEFT{}SEQUENCE".format(patt)].upper(), 
+                 pdict["PRIMER_RIGHT{}SEQUENCE".format(patt)].upper(), 
+                 pdict["PRIMER_PAIR{}PRODUCT_SIZE".format(patt)], 
+                 pdict["PRIMER_LEFT{}TM".format(patt)], 
+                 pdict["PRIMER_LEFT{}TM".format(patt)], 
+                 pdict["PRIMER_LEFT{}GC_PERCENT".format(patt)], 
+                 pdict["PRIMER_LEFT{}GC_PERCENT".format(patt)], 
+                 pdict["PRIMER_PAIR{}PRODUCT_TM".format(patt)], 
+                 pdict["PRIMER_PAIR{}PENALTY".format(patt)]
+                 )
+            
+            string = "\t".join([str(x) for x in l]) + "\n"
             
             out_open.write(string)
             
     out_open.close()
-    return df
+
     
+###############################################################################
+
     
+
+
+
+

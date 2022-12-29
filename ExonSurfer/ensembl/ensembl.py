@@ -4,21 +4,18 @@
 # imported modules
 from pyensembl import EnsemblRelease
 
-MASKED_SEQS = "/home/ecrisru/Desktop/refgenome/Chrs_masked_001/Chr_{}_masked001.fa"
-
 ###############################################################################
 #                  ensemble module FUNCTION DEFINITION SITE                   #
 ###############################################################################
-
     
 def get_gene_by_symbol(gene_symbol, release = 108):
     # release 77 uses human reference genome GRCh38
     """
     This function takes a gene symbol and returns the gene object.
     Args:
-        gene_symbol [in] (str):   Gene symbol
-        release [in] (int):       Ensembl release
-        gene [out] (gene object): Gene object
+        gene_symbol [in] (str)   Gene symbol
+        release [in] (int)       Ensembl release
+        gene [out] (gene object) Gene object
     """
     data = EnsemblRelease(release)
     gene = data.genes_by_name(gene_symbol)
@@ -34,8 +31,8 @@ def get_transcript_from_gene(gene):
     """
     This function takes a gene object and returns a list of transcript objects.
     Args:
-        gene [in] (gene object):  Gene object
-        transcripts [out] (list): List of transcript objects
+        gene [in] (gene object)  Gene object
+        transcripts [out] (list) List of transcript objects
     """
     return gene.transcripts
 
@@ -69,8 +66,8 @@ def get_coding_sequence(transcripts):
     This function takes a list of transcript objects and returns a list of
     coding sequences.
     Args:
-        transcripts [in] (list):       List of transcript objects
-        coding_sequences [out] (list): List of coding sequences
+        transcripts [in] (list)       List of transcript objects
+        coding_sequences [out] (list) List of coding sequences
         """
     return [x.coding_sequence for x in transcripts]
 
@@ -93,8 +90,8 @@ def get_transcripts_dict(gene, exclude_coding = False):
     This function takes a gene object and returns a dictionary of transcript
     objects, with transcript ID as keys, and exon objects as values.
     Args:
-        gene [in] (gene object):   Gene object
-        dTranscripts [out] (dict): Dictionary of transcript objects, with
+        gene [in] (gene object)   Gene object
+        dTranscripts [out] (dict) Dictionary of transcript objects, with
         transcript ID as keys, and exon objects as values
     """
     d = {}
@@ -168,15 +165,4 @@ def constructu_target_cdna(masked_chr, gene_obj, transcript, exon_junction):
         cdna, junction_i = None, None
         
     return cdna, junction_i
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
