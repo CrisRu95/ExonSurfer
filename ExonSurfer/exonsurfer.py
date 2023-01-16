@@ -12,7 +12,7 @@ from ExonSurfer.resources import resources
 from ExonSurfer.primerDesign import designPrimers, chooseTarget
 
 
-def CreatePrimers(gene, transcripts = "ALL", path_out = "."):
+def CreatePrimers(gene, transcripts = "ALL", path_out = ".", release = 108):
     """
     This function is the main function of the pipeline. It takes a gene name and
     a transcript name and returns a list of primers.
@@ -25,8 +25,9 @@ def CreatePrimers(gene, transcripts = "ALL", path_out = "."):
         
     # Construct transcripts dictionary
     print("Extracting ensemble info")
-    gene_obj = ensembl.get_gene_by_symbol(gene)
-    d = ensembl.get_transcripts_dict(gene_obj, exclude_coding = False)
+    data = ensembl.create_ensembl_data(release = 108)
+    gene_obj = ensembl.get_gene_by_symbol(gene, data)
+    d = ensembl.get_transcripts_dict(gene_obj, exclude_noncoding = True)
     
     # Get best exonic junction
     print("Getting exon junction")
@@ -39,15 +40,21 @@ def CreatePrimers(gene, transcripts = "ALL", path_out = "."):
     # Define three output files, with the same name as the gene and transcript
     DESIGN_OUT = os.path.join(path_out, "{}_{}_design.txt".format(gene, transcripts))
     BLAST_OUT = os.path.join(path_out, "{}_{}_blast.txt".format(gene, transcripts))
+    
+    # remove in case remaining from previous design
+    for file in (DESIGN_OUT, BLAST_OUT): 
+        if os.path.exists(file):
+            os.remove(file)
 
     print("Design output: {}".format(DESIGN_OUT))
     
     for item in junction: 
         
-        target, index = ensembl.constructu_target_cdna(resources.MASKED_SEQS(), 
-                                                       gene_obj, 
-                                                       transcripts, 
-                                                       item)
+        target, index = ensembl.construct_target_cdna(resources.MASKED_SEQS(), 
+                                                      gene_obj,
+                                                      data, 
+                                                      transcripts, 
+                                                      item)
         # Design primers
         c1, c2 = designPrimers.call_primer3(target, index)
         designPrimers.report_design(c1, c2, item, DESIGN_OUT)
@@ -72,11 +79,14 @@ def CreatePrimers(gene, transcripts = "ALL", path_out = "."):
     os.remove(FASTA_F)
     
     # Filter blast results
-    blast_df = blast.pre_filter_blast(blast_df, transcripts, df)
+    blast_df = blast.pre_filter_blast(blast_df, transcripts, gene, df)
     
     # Check blast results positions
     blast.check_specificity(blast_df, df, gene)
-
-
+    
+    final_df = designPrimers.penalize_final_output(df, transcripts)
+    final_df.to_csv(DESIGN_OUT, sep = "\t")
+    
+    
 if __name__ == "__main__":
     CreatePrimers()

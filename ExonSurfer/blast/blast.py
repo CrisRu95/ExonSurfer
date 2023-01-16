@@ -7,7 +7,6 @@ from subprocess import call, DEVNULL
 
 # own modules
 from ExonSurfer.resources import resources
-
 ###############################################################################
 #                    blast module FUNCTION DEFINITION SITE                    #
 ###############################################################################
@@ -49,26 +48,33 @@ def run_blast_list(fastaf, out, db_path,
 
 ###############################################################################
     
-def filter_intended_al(primer_id, identity, transcript_df, t_transcript, 
-                       done_ids) : 
+def filter_intended_al(primer_id, identity, transcript_id, gene_id, 
+                       t_transcript, t_gene, done_ids) : 
     """
     This function assesses whether a primer alignment is the intended one (i.e, 
     in the target transcript with a high identity) or is a possible off-target.
     Args: 
         primer_id [in] (str)     Primer identifier. Format: Pair[\d+]_(3|5)
         identity [in] (int)      Alignment identity, as returned by blast
-        transcript_df [in] (str) Transcript identifier (subject id), with version
-        t_transcript [in] (str)  Target transcript, without version
-        done_ids [in] (list)     Already assessed primer_ids
+        transcript_id [in] (str) Transcript identifier (subject id, from the 
+                                 blast df), with version
+        gene_id [in] (str)       Gene identifier (form the blast df)
+        t_transcript [in] (str)  Target transcript, without version (can be ALL)
+        t_gene [in] (str)        Target gene
+        done_ids [in] (list)     Already assessed primer_ids, only one alignment
+                                 per primer can be removed
         to_keep [out] (bool)     False if the alignment is expected 
     """
-    to_keep = True # default situation
-    if primer_id not in done_ids: 
-        if transcript_df.split(".")[0] == t_transcript and identity == 100: 
-            to_keep = False
-            # if there is another instance, it will not be removed
-            done_ids.append(primer_id) 
-            
+    if t_transcript == "ALL": 
+        to_keep = True if gene_id != t_gene else False
+    else: 
+        to_keep = True # default situation
+        if primer_id not in done_ids: 
+            if transcript_id.split(".")[0] == t_transcript and identity == 100: 
+                to_keep = False
+                # if there is another instance, it will not be removed
+                done_ids.append(primer_id)             
+
     return to_keep
 
 ###############################################################################
@@ -95,7 +101,7 @@ def filter_3end_al(primer_id, q_end, design_df):
 
 ###############################################################################
     
-def pre_filter_blast(blast_df, t_transcript, design_df, 
+def pre_filter_blast(blast_df, t_transcript, t_gene, design_df, 
                      e_cutoff = 0.8, i_cutoff = 70): 
     """
     This function filters the alignments returned by blast in order to keep the
@@ -112,8 +118,10 @@ def pre_filter_blast(blast_df, t_transcript, design_df,
     done_ids = []
     blast_df["filter1"] = blast_df.apply(lambda row: filter_intended_al(row["query id"], 
                                                                         row["identity"],
-                                                                        row["subject id"], 
+                                                                        row["subject id"],
+                                                                        row["gene_symbol"],
                                                                         t_transcript, 
+                                                                        t_gene, 
                                                                         done_ids), axis = 1)
     # keep only alignments where primers 3' end is aligned
     blast_df["filter2"] = blast_df.apply(lambda row: filter_3end_al(row["query id"], 

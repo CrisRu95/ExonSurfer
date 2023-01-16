@@ -7,17 +7,21 @@ from pyensembl import EnsemblRelease
 ###############################################################################
 #                  ensemble module FUNCTION DEFINITION SITE                   #
 ###############################################################################
+
+def create_ensembl_data(release = 108): 
+    return EnsemblRelease(release)
+
+###############################################################################
     
-def get_gene_by_symbol(gene_symbol, release = 108):
+def get_gene_by_symbol(gene_symbol, data):
     # release 77 uses human reference genome GRCh38
     """
     This function takes a gene symbol and returns the gene object.
     Args:
         gene_symbol [in] (str)   Gene symbol
-        release [in] (int)       Ensembl release
+        data [in] (Genome obj)   Genome pyensmebl object 
         gene [out] (gene object) Gene object
     """
-    data = EnsemblRelease(release)
     gene = data.genes_by_name(gene_symbol)
     
     try: 
@@ -85,20 +89,22 @@ def get_exon_locations(exon_id, release = 108):
 
 ###############################################################################
     
-def get_transcripts_dict(gene, exclude_coding = False):
+def get_transcripts_dict(gene, exclude_noncoding = False):
     """
     This function takes a gene object and returns a dictionary of transcript
     objects, with transcript ID as keys, and exon objects as values.
     Args:
         gene [in] (gene object)   Gene object
+        exclude_noncoding [in] (bool) False if all transcripts, True to exclude non
+                          coding
         dTranscripts [out] (dict) Dictionary of transcript objects, with
-        transcript ID as keys, and exon objects as values
+                     transcript ID as keys, and exon objects as values
     """
     d = {}
     
     # get list of transcripts to iterate
     all_transcripts = get_transcript_from_gene(gene)
-    if exclude_coding == False: 
+    if exclude_noncoding == False: 
         tcripts = all_transcripts
     else: 
         tcripts = get_coding_transcript(all_transcripts)
@@ -111,7 +117,8 @@ def get_transcripts_dict(gene, exclude_coding = False):
 
 ###############################################################################
 
-def constructu_target_cdna(masked_chr, gene_obj, transcript, exon_junction): 
+def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction, 
+                          exclude_noncoding = True): 
     """
     This function takes a transcript and an exon junction inside this transcript
     and returns the complete transcript cDNA + the index of the junction on the
@@ -119,50 +126,69 @@ def constructu_target_cdna(masked_chr, gene_obj, transcript, exon_junction):
     Args: 
         masked_chr [in] (str)    Full path to the masked chromosome files
         gene_obj [in] (Gene obj) Gene object returned by ensembl
+        data [in] (Genome obj)   Genome object returned by ensembl
         transcript [in] (str)    Ensembl transcript ID
         exon_junction [in] (str) Ensembl exon IDs (e.g. ENS001-ENS002)
+        exclude_noncoding [in] (bool) True if to exclude non coding transcripts
         cdna [out] (str)         Complete cDNA of the transcript 
         junction_i [out] (int)   exon_junction location on the cdna
     """
     # t is a transcript object, and transcript is a string
     #l = [str(x.transcript_id) for x in gene_obj.transcripts ]
     #print(set(l))
-    t = [x for x in gene_obj.transcripts if x.transcript_id == transcript]
     
-    if len(t) > 0: 
-        t = t[0]
-
-        cdna, junction_i, found_junction = "", 0, False # initialize
+    # read chromosome 
+    chrom_open = open(masked_chr.format(gene_obj.contig), "r")
+    tt = chrom_open.read() # full chromosome sequence
+    chrom_open.close()
+            
+    if transcript == "ALL": 
+        # exon_junction[1] contains information on the transcripts NOT detected by that junction
+        e1 = exon_junction[0].split("-")[0]
+        e2 = exon_junction[0].split("-")[1]
         
-        chrom_open = open(masked_chr.format(gene_obj.contig), "r")
-        tt = chrom_open.read() # full chromosome sequence
-        chrom_open.close()
+        exon_obj1 = data.exon_by_id(e1)
+        exon_obj2 = data.exon_by_id(e2)
         
         if gene_obj.on_positive_strand: 
-            for exon in t.exons: 
-                cdna += tt[exon.start:exon.end+1]
-                
-                if found_junction == False: 
-                    junction_i += exon.end - exon.start + 1
-                
-                if exon.exon_id in exon_junction[0]: 
-                    found_junction = True # stop summing on junction index
+            cdna = tt[exon_obj1.start:exon_obj1.end+1] + tt[exon_obj2.start:exon_obj2.end+1]
+            junction_i = exon_obj1.end - exon_obj1.start
+        else: 
+            cdna = tt[exon_obj2.start:exon_obj2.end+1] + tt[exon_obj1.start:exon_obj1.end+1]
+            junction_i = exon_obj2.end - exon_obj2.start            
+    else:
+        # t is a target transcript object
+        t_filt = [x for x in gene_obj.transcripts if x.transcript_id == transcript]
         
-        else: # reverse strand genes
-            for exon in reversed(t.exons): 
-                print("exon: {} - {}".format(exon.start, exon.end))
-                cdna += tt[exon.start:exon.end+1]
-                
-                if found_junction == False: 
-                    junction_i += exon.end - exon.start + 1
-                
-                if exon.exon_id in exon_junction[0]: 
-                    found_junction = True # stop summing on junction index            
-                    
+        if len(t_filt) > 0: 
+            t = t_filt[0]
     
-    else: 
-        print("Transcript not found in gene")
-        cdna, junction_i = None, None
-        
+            cdna, junction_i, found_junction = "", 0, False # initialize
+            
+            if gene_obj.on_positive_strand: 
+                for exon in t.exons: 
+                    cdna += tt[exon.start:exon.end+1]
+                    
+                    if found_junction == False: 
+                        junction_i += exon.end - exon.start + 1
+                    
+                    if exon.exon_id in exon_junction[0]: 
+                        found_junction = True # stop summing on junction index
+            
+            else: # reverse strand genes
+                for exon in reversed(t.exons): 
+                    print("exon: {} - {}".format(exon.start, exon.end))
+                    cdna += tt[exon.start:exon.end+1]
+                    
+                    if found_junction == False: 
+                        junction_i += exon.end - exon.start + 1
+                    
+                    if exon.exon_id in exon_junction[0]: 
+                        found_junction = True # stop summing on junction index            
+
+        else: 
+            print("Transcript not found in gene")
+            cdna, junction_i = None, None
+    
     return cdna, junction_i
     

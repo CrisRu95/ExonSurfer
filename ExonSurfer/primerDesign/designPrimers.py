@@ -8,7 +8,6 @@ Created on Wed Dec  7 13:10:49 2022
 
 # imported modules
 import primer3
-import pandas as pd
 
 # my constants
 from .designConfig import design_dict as DESIGN_DICT
@@ -69,7 +68,8 @@ def report_design(c1, c2, exon_junction, ofile):
 
     out_open = open(ofile, "a+")
     for pdict in (c1, c2): 
-        for n in range(DESIGN_DICT["PRIMER_NUM_RETURN"]): 
+        
+        for n in range(pdict["PRIMER_PAIR_NUM_RETURNED"]): 
             
             patt = "_{}_".format(n)
             opt = "1" if pdict == c1 else "2" # design option
@@ -97,8 +97,37 @@ def report_design(c1, c2, exon_junction, ofile):
     
 ###############################################################################
 
+def penalize_final_output(df, transcripts): 
+    """
+    This function penalizes the last data design DF (with blast information 
+    appended) and returns a list of the best primer pairs for the task
+    """
+    if transcripts != "ALL": 
+        # prioritize option 1, no other transcripts and no other genes
+        if any(df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "") & (df["option"] == "1")]): 
+            final_df = df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "") & (df["option"] == "1")]
+        # any option, no other transcripts nor genes
+        elif any(df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")]): 
+            final_df = df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")]
+        # try with no other transcripts
+        elif any(df.loc[(df['other_transcripts'] == "")]): 
+            final_df = df.loc[(df['other_transcripts'] == "")] 
+        # try with no other genes at least
+        elif any(df.loc[(df['other_genes'] == "")]): 
+            final_df = df.loc[(df['other_genes'] == "")]  
+        else: 
+            final_df = df # whatever
     
-
-
-
-
+    else: # do not need to prioritize option 1
+        if any(df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")]): 
+            final_df = df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")]
+        elif any(df.loc[(df['other_transcripts'] == "")]): # try without other transcripts
+            final_df = df.loc[(df['other_transcripts'] == "")] 
+        elif any(df.loc[(df['other_genes'] == "")]): # try without other genes
+            final_df = df.loc[(df['other_genes'] == "")]  
+        else: 
+            final_df = df # whatever
+            
+    return final_df
+    
+    

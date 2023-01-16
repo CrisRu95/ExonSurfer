@@ -254,9 +254,10 @@ def FILT_BLAST_DB():
                     to_write.write(">" + item)
             except: 
                 pass # transcript is not in the DB because it is not prot cod
-    print("Created filtered PCOD fasta")            
-    create_index_table(filt_db_path, get_filtered_cdna_file())
-    print("Created filtered index table")   
-    make_blast_db(filt_db_path)     
-    print("created filtered blast db")   
+        print("Created filtered PCOD fasta")            
+        create_index_table(filt_db_path, get_filtered_cdna_file())
+        print("Created filtered index table")   
+        make_blast_db(filt_db_path)     
+        print("created filtered blast db")   
+        
     return filt_db_path
