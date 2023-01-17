@@ -86,7 +86,7 @@ def CreatePrimers(gene, transcripts = "ALL", path_out = ".", release = 108):
     # Check blast results positions
     blast.check_specificity(blast_df, df, gene)
     
-    final_df = designPrimers.penalize_final_output(df, transcripts)
+    final_df = designPrimers.penalize_final_output(df, transcripts, data)
     final_df.to_csv(DESIGN_OUT, sep = "\t")
     
     

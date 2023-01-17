@@ -99,34 +99,77 @@ def report_design(c1, c2, exon_junction, ofile):
     
 ###############################################################################
 
-def penalize_final_output(df, transcripts): 
+def annotate_other_transcripts(transcript_list, data): 
+    """
+    This function annotates the biotype of a given list of transcripts. 
+    Args: 
+        transcript_list [in] (str) Semicolon separated transcript ID string
+        data [in] (Genome obj)     Genome ensembl object
+        new_ts [in] (str)          Semicolon separated transcript ID string, with
+                                   biotype written in brackets
+    """
+    
+    ts = transcript_list.split(";")
+    ts_nov = [t.split(".")[0] for t in ts if t != ""]
+    new_ts = ";".join(["{}({})".format(x, data.transcript_by_id(x).biotype) for x in ts_nov])
+    
+    return new_ts
+    
+###############################################################################
+    
+def penalize_final_output(df, transcripts, data): 
     """
     This function penalizes the last data design DF (with blast information 
     appended) and returns a list of the best primer pairs for the task
     """
+    # Annotate other_transcripts and other_genes columns: 
+    df["other_transcripts_an"] = df.apply(lambda row: annotate_other_transcripts(row["other_transcripts"], data), axis=1)
+    df["other_genes_an"] = df.apply(lambda row: annotate_other_transcripts(row["other_genes"], data), axis=1)
+    
+    df = df.drop("other_transcripts", axis = 1)
+    df = df.drop("other_genes", axis = 1)
+    
+    df = df.rename({"other_transcripts_an":"other_transcripts", 
+                    "other_genes_an": "other_genes"}, axis = "columns")
+    
+    # annotate number of protein_coding
+    df["pcod_transcripts"] = df.apply(lambda row: row["other_transcripts"].count("protein_coding"), axis=1)
+    df["pcod_genes"] = df.apply(lambda row: row["other_genes"].count("protein_coding"), axis=1)
+    min_pcod_trans = min(df["pcod_transcripts"])
+    min_pcod_genes = min(df["pcod_genes"])
+    
     if transcripts != "ALL": 
         # prioritize option 1, no other transcripts and no other genes
         if df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "") & (df["option"] == "1")].shape[0] > 0: 
             final_df = df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "") & (df["option"] == "1")]
+            print("first if")
         # any option, no other transcripts nor genes
         elif df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")].shape[0] > 0: 
             final_df = df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")]
-        # try with no other transcripts
-        elif df.loc[(df['other_transcripts'] == "")].shape[0] > 0: 
-            final_df = df.loc[(df['other_transcripts'] == "")] 
-        # try with no other genes at least
-        elif df.loc[(df['other_genes'] == "")].shape[0] > 0: 
-            final_df = df.loc[(df['other_genes'] == "")]  
+            print("second if")
+        # try with no other genes and only the min protein_coding transcripts
+        elif df.loc[(df['other_genes'] == "") & (df['pcod_transcripts'] == min_pcod_trans)].shape[0] > 0: 
+            final_df = df.loc[(df['other_genes'] == "") & (df['pcod_transcripts'] == min_pcod_trans)]  
+            print("third if")
+        # try with no other transcripts at least and the minimum protein coding genes
+        elif df.loc[(df['other_transcripts'] == "") & (df['pcod_genes'] == min_pcod_genes)].shape[0] > 0: 
+            final_df = df.loc[(df['other_transcripts'] == "") & (df['pcod_genes'] == min_pcod_genes)] 
+            print("fourth if")
+        # try with the minimum number of protein_coding transcripts and genes
+        elif df.loc[(df['pcod_transcripts'] == min_pcod_trans) & (df['pcod_genes'] == min_pcod_genes)].shape[0] > 0:
+            final_df = df.loc[(df['pcod_transcripts'] == min_pcod_trans) & (df['pcod_genes'] == min_pcod_genes)]
+            print("fifth if")
         else: 
             final_df = df # whatever
+            print("whatever")
     
     else: # do not need to prioritize option 1
-        if df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")].shape[0] > 0: 
-            final_df = df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")]
-        elif df.loc[(df['other_transcripts'] == "")].shape[0] > 0: # try without other transcripts
-            final_df = df.loc[(df['other_transcripts'] == "")] 
-        elif df.loc[(df['other_genes'] == "")].shape[0] > 0: # try without other genes
+        # try without other genes
+        if df.loc[(df['other_genes'] == "")].shape[0] > 0: 
             final_df = df.loc[(df['other_genes'] == "")]  
+        # try with the minimum number of protein_coding transcripts from other genes 
+        elif df.loc[(df['pcod_genes'] == min_pcod_genes)].shape[0] > 0:
+            final_df = df.loc[(df['pcod_genes'] == min_pcod_genes)]
         else: 
             final_df = df # whatever
             
