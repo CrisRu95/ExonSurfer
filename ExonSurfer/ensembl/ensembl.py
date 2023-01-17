@@ -89,7 +89,7 @@ def get_exon_locations(exon_id, release = 108):
 
 ###############################################################################
     
-def get_transcripts_dict(gene, exclude_noncoding = False):
+def get_transcripts_dict(gene, exclude_noncoding = True):
     """
     This function takes a gene object and returns a dictionary of transcript
     objects, with transcript ID as keys, and exon objects as values.
@@ -117,8 +117,7 @@ def get_transcripts_dict(gene, exclude_noncoding = False):
 
 ###############################################################################
 
-def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction, 
-                          exclude_noncoding = True): 
+def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction): 
     """
     This function takes a transcript and an exon junction inside this transcript
     and returns the complete transcript cDNA + the index of the junction on the
@@ -129,7 +128,6 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction,
         data [in] (Genome obj)   Genome object returned by ensembl
         transcript [in] (str)    Ensembl transcript ID
         exon_junction [in] (str) Ensembl exon IDs (e.g. ENS001-ENS002)
-        exclude_noncoding [in] (bool) True if to exclude non coding transcripts
         cdna [out] (str)         Complete cDNA of the transcript 
         junction_i [out] (int)   exon_junction location on the cdna
     """

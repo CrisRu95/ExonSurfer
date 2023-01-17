@@ -73,7 +73,7 @@ def CreatePrimers(gene, transcripts = "ALL", path_out = ".", release = 108):
     resources.fillin_temp_fasta(DESIGN_OUT, FASTA_F)
     
     # Call blast
-    blast_df = blast.run_blast_list(FASTA_F, BLAST_OUT, resources.FILT_BLAST_DB())
+    blast_df = blast.run_blast_list(FASTA_F, BLAST_OUT, resources.BLAST_DB())
     
     # Delete fasta file
     os.remove(FASTA_F)
