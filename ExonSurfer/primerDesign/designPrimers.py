@@ -104,26 +104,26 @@ def penalize_final_output(df, transcripts):
     """
     if transcripts != "ALL": 
         # prioritize option 1, no other transcripts and no other genes
-        if any(df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "") & (df["option"] == "1")]): 
+        if df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "") & (df["option"] == "1")].shape[0] > 0: 
             final_df = df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "") & (df["option"] == "1")]
         # any option, no other transcripts nor genes
-        elif any(df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")]): 
+        elif df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")].shape[0] > 0: 
             final_df = df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")]
         # try with no other transcripts
-        elif any(df.loc[(df['other_transcripts'] == "")]): 
+        elif df.loc[(df['other_transcripts'] == "")].shape[0] > 0: 
             final_df = df.loc[(df['other_transcripts'] == "")] 
         # try with no other genes at least
-        elif any(df.loc[(df['other_genes'] == "")]): 
+        elif df.loc[(df['other_genes'] == "")].shape[0] > 0: 
             final_df = df.loc[(df['other_genes'] == "")]  
         else: 
             final_df = df # whatever
     
     else: # do not need to prioritize option 1
-        if any(df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")]): 
+        if df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")].shape[0] > 0: 
             final_df = df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")]
-        elif any(df.loc[(df['other_transcripts'] == "")]): # try without other transcripts
+        elif df.loc[(df['other_transcripts'] == "")].shape[0] > 0: # try without other transcripts
             final_df = df.loc[(df['other_transcripts'] == "")] 
-        elif any(df.loc[(df['other_genes'] == "")]): # try without other genes
+        elif df.loc[(df['other_genes'] == "")].shape[0] > 0: # try without other genes
             final_df = df.loc[(df['other_genes'] == "")]  
         else: 
             final_df = df # whatever
