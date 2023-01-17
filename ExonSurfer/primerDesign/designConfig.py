@@ -29,7 +29,5 @@ design_dict = {
         'PRIMER_GC_CLAMP': 1, 
         'PRIMER_MAX_END_GC': 4,
         
-        'PRIMER_PRODUCT_SIZE_RANGE': [[80, 170]],
-        
-        'PRIMER_NUM_RETURN': 40,
+        'PRIMER_PRODUCT_SIZE_RANGE': [[80, 170]]
         } 

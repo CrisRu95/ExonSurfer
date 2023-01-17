@@ -21,16 +21,19 @@ CASE2_PRIMERS = 100
 ###############################################################################
 
     
-def call_primer3(target_seq, junction_i): 
+def call_primer3(target_seq, junction_i, num_primers): 
     """
     This function calls primers3 for 2 design options: (1) primers are placed 
     ON the exon junction and (2) primers are placed FLANKING the exon junction. 
     Args: 
         target_seq [in] (str)      Full cDNA sequence of the transcript
         junction_i [in] (int)      Index of the exonic junction on the target_seq
+        num_primers [in] (int)     Number of primers to design for each option
         case1_primers [out] (dict) Dictionary of primers designed with option 1
         case2_primers [out] (dict) Dictionary of primers designed with option 2
     """
+    # annotate number of primers to design
+    DESIGN_DICT["PRIMER_NUM_RETURN"] = num_primers
     
     # Case 1: place forward primer or right primer ON junction
     target_dict = {
@@ -40,7 +43,6 @@ def call_primer3(target_seq, junction_i):
             'PRIMER_MIN_3_PRIME_OVERLAP_OF_JUNCTION': 4,
             }
 
-    # PRIMER_MIN_3_PRIME_OVERLAP_OF_JUNCTION=4]
     case1_primers = primer3.bindings.designPrimers(target_dict, DESIGN_DICT)
     
     # Case 2: place each primer on one exon

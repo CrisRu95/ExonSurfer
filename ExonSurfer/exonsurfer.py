@@ -48,15 +48,17 @@ def CreatePrimers(gene, transcripts = "ALL", path_out = ".", release = 108):
 
     print("Design output: {}".format(DESIGN_OUT))
     
+    # number of primers to design for each junction and option
+    num_primers = int(100 / (len(junction)*2))
+    
     for item in junction: 
-        
         target, index = ensembl.construct_target_cdna(resources.MASKED_SEQS(), 
                                                       gene_obj,
                                                       data, 
                                                       transcripts, 
                                                       item)
         # Design primers
-        c1, c2 = designPrimers.call_primer3(target, index)
+        c1, c2 = designPrimers.call_primer3(target, index, num_primers)
         designPrimers.report_design(c1, c2, item, DESIGN_OUT)
 
     # Add primer pair identifier
