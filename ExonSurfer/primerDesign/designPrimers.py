@@ -166,18 +166,21 @@ def penalize_final_output(df, transcripts, data, gene_object):
             final_df = df.loc[(df['pcod_transcripts'] == min_pcod_trans) & (df['pcod_genes'] == min_pcod_genes)]
             print("fifth if")
         else: 
-            final_df = df # whatever
+            final_df = df.loc[(df['pcod_genes'] == min_pcod_genes)] # whatever
             print("whatever")
     
     else: # do not need to prioritize option 1
         # get first transcript id; if 
         vip_trans = gene_object.transcripts[0].transcript_id
+        # any with all transcripts included
+        if df.loc[(df['other_genes'] == "") & (df["junction_description"] == "")].shape[0] > 0: 
+            final_df = df.loc[(df['other_genes'] == "") & (df["junction_description"] == "")]  
         # try without other genes and with first transcript included (not present in junction_description)
-        if df.loc[(df['other_genes'] == "") & (df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))].shape[0] > 0: 
+        elif df.loc[(df['other_genes'] == "") & (df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))].shape[0] > 0: 
             final_df = df.loc[(df['other_genes'] == "") & (df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))]  
         # try with first transcript included and least amount of prot coding genes
         elif df.loc[(df['pcod_genes'] == min_pcod_genes) & (df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))].shape[0] > 0: 
-            final_df = df.loc[(df['other_genes'] == "") & (df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))]  
+            final_df = df.loc[(df['pcod_genes'] == min_pcod_genes) & (df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))]  
        # try with first transcript incuded
         elif df.loc[(df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))].shape[0] > 0: 
             final_df = df.loc[(df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))]          
@@ -185,10 +188,8 @@ def penalize_final_output(df, transcripts, data, gene_object):
         elif df.loc[(df['other_genes'] == "")].shape[0] > 0: 
             final_df = df.loc[(df['other_genes'] == "")]          
         # try with the minimum number of protein_coding transcripts from other genes 
-        elif df.loc[(df['pcod_genes'] == min_pcod_genes)].shape[0] > 0:
+        else:
             final_df = df.loc[(df['pcod_genes'] == min_pcod_genes)]
-        else: 
-            final_df = df # whatever
             
     return final_df
     
