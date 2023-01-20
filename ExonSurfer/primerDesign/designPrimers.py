@@ -117,10 +117,16 @@ def annotate_other_transcripts(transcript_list, data):
     
 ###############################################################################
     
-def penalize_final_output(df, transcripts, data): 
+def penalize_final_output(df, transcripts, data, gene_object): 
     """
     This function penalizes the last data design DF (with blast information 
     appended) and returns a list of the best primer pairs for the task
+    Args: 
+        df [in] (pd.df)          Design df with blast information appended
+        transcripts [in] (str)   Target transcript ID (no version) or ALL
+        data [in] (Genome obj)   Ensembl Genome object
+        gene_obj [in] (Gene obj) Ensembl gene object
+        final_df [out] (pd.df)   Filtered df 
     """
     # Annotate other_transcripts and other_genes columns: 
     df["other_transcripts_an"] = df.apply(lambda row: annotate_other_transcripts(row["other_transcripts"], data), axis=1)
@@ -164,9 +170,20 @@ def penalize_final_output(df, transcripts, data):
             print("whatever")
     
     else: # do not need to prioritize option 1
-        # try without other genes
-        if df.loc[(df['other_genes'] == "")].shape[0] > 0: 
-            final_df = df.loc[(df['other_genes'] == "")]  
+        # get first transcript id; if 
+        vip_trans = gene_object.transcripts[0].transcript_id
+        # try without other genes and with first transcript included (not present in junction_description)
+        if df.loc[(df['other_genes'] == "") & (df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))].shape[0] > 0: 
+            final_df = df.loc[(df['other_genes'] == "") & (df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))]  
+        # try with first transcript included and least amount of prot coding genes
+        elif df.loc[(df['pcod_genes'] == min_pcod_genes) & (df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))].shape[0] > 0: 
+            final_df = df.loc[(df['other_genes'] == "") & (df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))]  
+       # try with first transcript incuded
+        elif df.loc[(df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))].shape[0] > 0: 
+            final_df = df.loc[(df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))]          
+        # try with no other genes
+        elif df.loc[(df['other_genes'] == "")].shape[0] > 0: 
+            final_df = df.loc[(df['other_genes'] == "")]          
         # try with the minimum number of protein_coding transcripts from other genes 
         elif df.loc[(df['pcod_genes'] == min_pcod_genes)].shape[0] > 0:
             final_df = df.loc[(df['pcod_genes'] == min_pcod_genes)]
