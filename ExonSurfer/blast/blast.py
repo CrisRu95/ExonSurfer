@@ -26,16 +26,17 @@ def run_blast_list(fastaf, out, db_path,
                     '-query', fastaf,
                     '-out', out,
                     '-db', db_path,
-                    '-outfmt', '6',
-                   '-num_threads', str(num_threads)]
+                    '-outfmt', '6 qseqid sseqid pident length qstart qend sstart send evalue sstrand',
+                    '-num_threads', str(num_threads), 
+                    '-strand', 'both']
 
     # RunBlastDBCommand(command_line)
     call(command_line, stderr = DEVNULL, stdout = DEVNULL)
     
     # Store DF results 
     df_header = ("query id", "subject id","identity", "alignment length", 
-                 "mismatches", "gap opens", "q. start", "q. end", "s. start",
-                "s. end", "evalue", "bit score")
+                 "q. start", "q. end", "s. start",
+                "s. end", "evalue", "strand")
     df = pd.read_csv(out, sep = "\t", names = df_header)
     
     table = pd.read_csv(resources.get_cdna_file(), sep="\t", 
@@ -79,24 +80,27 @@ def filter_intended_al(primer_id, identity, transcript_id, gene_id,
 
 ###############################################################################
 
-def filter_3end_al(primer_id, q_end, design_df): 
+def filter_3end_al(primer_id, q_start, q_end, strand, design_df): 
     """
     This function assesses whether a blast alignment involves the 3' end of the
     primers. 
     Args: 
         primer_id [in] (str)   Primer identifier. Format: Pair[\d+]_(3|5)
+        q_start [in] (int)     Query start
         q_end [in] (int)       Query end
         design_df [in] (pd.df) Design dataframe with the primer sequences
         to_keep [out] (bool)   True if the 3' end of the primer is aligned
     """
     # get complete primer len
-    if "_5" in primer_id: 
-        plen = len(design_df.loc[primer_id[:-2],"forward"])
+    if strand  == "plus": 
+        if "_5" in primer_id: 
+            plen = len(design_df.loc[primer_id[:-2],"forward"])
+        else: 
+            plen = len(design_df.loc[primer_id[:-2],"reverse"])
+        to_keep = True if q_end == plen else False
     else: 
-        plen = len(design_df.loc[primer_id[:-2],"reverse"])
-    
-    to_keep = True if q_end == plen else False
-    
+        to_keep = True if q_start == 1 else False
+
     return to_keep 
 
 ###############################################################################
@@ -125,7 +129,9 @@ def pre_filter_blast(blast_df, t_transcript, t_gene, design_df,
                                                                         done_ids), axis = 1)
     # keep only alignments where primers 3' end is aligned
     blast_df["filter2"] = blast_df.apply(lambda row: filter_3end_al(row["query id"], 
+                                                                    row["q. start"], 
                                                                     row["q. end"], 
+                                                                    row["strand"],
                                                                     design_df), axis = 1)
     # apply filters
     blast_df = blast_df[blast_df["filter1"]]
