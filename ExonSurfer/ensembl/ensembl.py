@@ -149,10 +149,10 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
         exon_obj2 = data.exon_by_id(e2)
         
         if gene_obj.on_positive_strand: 
-            cdna = tt[exon_obj1.start:exon_obj1.end+1] + tt[exon_obj2.start:exon_obj2.end+1]
+            cdna = tt[exon_obj1.start-1:exon_obj1.end] + tt[exon_obj2.start-1:exon_obj2.end]
             junction_i = exon_obj1.end - exon_obj1.start
         else: 
-            cdna = tt[exon_obj2.start:exon_obj2.end+1] + tt[exon_obj1.start:exon_obj1.end+1]
+            cdna = tt[exon_obj2.start-1:exon_obj2.end] + tt[exon_obj1.start-1:exon_obj1.end]
             junction_i = exon_obj2.end - exon_obj2.start            
     else:
         # t is a target transcript object
@@ -165,7 +165,7 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
             
             if gene_obj.on_positive_strand: 
                 for exon in t.exons: 
-                    cdna += tt[exon.start:exon.end+1]
+                    cdna += tt[exon.start-1:exon.end]
                     
                     if found_junction == False: 
                         junction_i += exon.end - exon.start + 1
@@ -176,7 +176,7 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
             else: # reverse strand genes
                 for exon in reversed(t.exons): 
                     print("exon: {} - {}".format(exon.start, exon.end))
-                    cdna += tt[exon.start:exon.end+1]
+                    cdna += tt[exon.start-1:exon.end]
                     
                     if found_junction == False: 
                         junction_i += exon.end - exon.start + 1
