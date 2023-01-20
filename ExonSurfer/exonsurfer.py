@@ -90,6 +90,8 @@ def CreatePrimers(gene, transcripts = "ALL", path_out = ".", release = 108):
     final_df = designPrimers.penalize_final_output(df, transcripts, data, gene_obj)
     final_df.to_csv(DESIGN_OUT, sep = "\t")
     
+    return blast_df, final_df
+    
     
 if __name__ == "__main__":
     CreatePrimers()
