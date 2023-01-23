@@ -9,23 +9,25 @@ import pandas as pd
 from ExonSurfer.ensembl import ensembl
 from ExonSurfer.blast import blast
 from ExonSurfer.resources import resources
-from ExonSurfer.primerDesign import designPrimers, chooseTarget
+from ExonSurfer.primerDesign import designPrimers, chooseTarget, designConfig
 
 
-def CreatePrimers(gene, transcripts = "ALL", path_out = ".", release = 108):
+def CreatePrimers(gene, transcripts = "ALL", design_dict = designConfig, 
+                  path_out = ".", release = 108):
     """
     This function is the main function of the pipeline. It takes a gene name and
     a transcript name and returns a list of primers.
-        gene [in] (str): gene name
-        transcripts [in] (str): transcript name
-        path_out [in] (str): path to output directory
-        BLAST_OUT [out] (df): dataframe with blast results
-        DESIGN_OUT [out] (df): dataframe with primer design results
+    Args:
+        gene [in] (str):        Gene name
+        transcripts [in] (str): Transcript name or ALL
+        path_out [in] (str):    Path to output directory
+        BLAST_OUT [out] (df):   Dataframe with blast results
+        DESIGN_OUT [out] (df):  Ddataframe with primer design results
     """ 
         
     # Construct transcripts dictionary
     print("Extracting ensemble info")
-    data = ensembl.create_ensembl_data(release = 108)
+    data = ensembl.create_ensembl_data(release)
     gene_obj = ensembl.get_gene_by_symbol(gene, data)
     d = ensembl.get_transcripts_dict(gene_obj, exclude_noncoding = True)
     
@@ -50,6 +52,7 @@ def CreatePrimers(gene, transcripts = "ALL", path_out = ".", release = 108):
     
     # number of primers to design for each junction and option
     num_primers = int(100 / (len(junction)*2))
+    design_dict["PRIMER_NUM_RETURN"] = num_primers
     
     for item in junction: 
         target, index = ensembl.construct_target_cdna(resources.MASKED_SEQS(), 
@@ -58,7 +61,7 @@ def CreatePrimers(gene, transcripts = "ALL", path_out = ".", release = 108):
                                                       transcripts, 
                                                       item)
         # Design primers
-        c1, c2 = designPrimers.call_primer3(target, index, num_primers)
+        c1, c2 = designPrimers.call_primer3(target, index, design_dict)
         designPrimers.report_design(c1, c2, item, DESIGN_OUT)
 
     # Add primer pair identifier

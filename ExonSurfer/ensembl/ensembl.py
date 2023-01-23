@@ -8,7 +8,7 @@ from pyensembl import EnsemblRelease
 #                  ensemble module FUNCTION DEFINITION SITE                   #
 ###############################################################################
 
-def create_ensembl_data(release = 108): 
+def create_ensembl_data(release): 
     return EnsemblRelease(release)
 
 ###############################################################################

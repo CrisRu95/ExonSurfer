@@ -9,9 +9,6 @@ Created on Wed Dec  7 13:10:49 2022
 # imported modules
 import primer3
 
-# my constants
-from .designConfig import design_dict as DESIGN_DICT
-
 # Constants
 FLANK = 400
 CASE2_PRIMERS = 100
@@ -21,19 +18,17 @@ CASE2_PRIMERS = 100
 ###############################################################################
 
     
-def call_primer3(target_seq, junction_i, num_primers): 
+def call_primer3(target_seq, junction_i, design_dict): 
     """
     This function calls primers3 for 2 design options: (1) primers are placed 
     ON the exon junction and (2) primers are placed FLANKING the exon junction. 
     Args: 
         target_seq [in] (str)      Full cDNA sequence of the transcript
         junction_i [in] (int)      Index of the exonic junction on the target_seq
-        num_primers [in] (int)     Number of primers to design for each option
+        design_dict [in] (str)     Dict of arguments for primer3
         case1_primers [out] (dict) Dictionary of primers designed with option 1
         case2_primers [out] (dict) Dictionary of primers designed with option 2
     """
-    # annotate number of primers to design
-    DESIGN_DICT["PRIMER_NUM_RETURN"] = num_primers
     
     # Case 1: place forward primer or right primer ON junction
     target_dict = {
@@ -43,7 +38,7 @@ def call_primer3(target_seq, junction_i, num_primers):
             'PRIMER_MIN_3_PRIME_OVERLAP_OF_JUNCTION': 4,
             }
 
-    case1_primers = primer3.bindings.designPrimers(target_dict, DESIGN_DICT)
+    case1_primers = primer3.bindings.designPrimers(target_dict, design_dict)
     
     # Case 2: place each primer on one exon
     target_dict = {
@@ -51,7 +46,7 @@ def call_primer3(target_seq, junction_i, num_primers):
             'SEQUENCE_TEMPLATE': target_seq,
             'SEQUENCE_TARGET': [junction_i, 1],
             }
-    case2_primers = primer3.bindings.designPrimers(target_dict, DESIGN_DICT)
+    case2_primers = primer3.bindings.designPrimers(target_dict, design_dict)
     
     return case1_primers, case2_primers
                 

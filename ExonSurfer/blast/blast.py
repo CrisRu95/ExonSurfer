@@ -6,7 +6,8 @@ import pandas as pd
 from subprocess import call, DEVNULL
 
 # own modules
-from ExonSurfer.resources import resources
+#from ExonSurfer.resources import resources
+from resources import resources
 ###############################################################################
 #                    blast module FUNCTION DEFINITION SITE                    #
 ###############################################################################
