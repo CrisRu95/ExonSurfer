@@ -152,16 +152,60 @@ def penalize_final_output(df, transcripts, data, gene_object):
             final_df = make_df_comparison(df, all_comb[i], columns)
             shape = final_df.shape[0]
             i = i + 1 # keep iterating...
-            
-        # Report final conditions for the filter(i-1)
-        print("FINAL CONDITIONS MET ARE:\nProductive als with other genes\t{}".format(all_comb[i-1][0]))
-        print("Num of productive als with other pcod genes\t{}".format(all_comb[i-1][1]))
-        print("Prod als with other transcripts\t{}".format(all_comb[i-1][2]))
-        print("Num of productive als with other pcod trans\t{}".format(all_comb[i-1][3]))
-        print("Num of individual als\t{}".format(all_comb[i-1][4]))
-        print("Desin option\t{}".format(all_comb[i-1][5]))
     
     else: # transcripts == ALL
+    
+        # STEP 1. Verify all the trans are included or, at least, the most imp
+        vip_trans = gene_object.transcripts[0].transcript_id
         
+        # without junction description (ALL transcripts included)
+        if df.loc[(df["junction_description"] == "")].shape[0] > 0: 
+            df = df.loc[(df["junction_description"] == "")]
         
+        # first transcript covered by the primers
+        elif df.loc[(df.apply(lambda row: vip_trans not in row["junction_description"], 
+                              axis=1))].shape[0] > 0: 
+            df = df.loc[(df.apply(lambda row: vip_trans not in row["junction_description"], 
+                                  axis=1))]
+        
+        # STEP 2. Get best results according to combinations of "if statements"
+        columns = ["other_genes", 
+                   "pcod_genes",
+                   "indiv_als", 
+                   "option"]
+        
+        conditions = [["", None], # other_genes col
+                      list(set([0, min_pcod_genes, None])), # pcod_genes col
+                      list(set([0, min_indiv, None])), # indiv_als col
+                      [1, None]] # option col
+        
+        all_comb = list(product(*conditions))
+        
+        # remove ilogical combinations
+        all_comb = [comb for comb in all_comb if not (comb[0] == "" and comb[1] == None)]
+        all_comb = [comb for comb in all_comb if not (comb[0] == "" and comb[1] > 0)]
+        
+        # initialize loop 
+        i, shape = 0, 0
+
+        while i < len(all_comb) and shape == 0:
+            final_df = make_df_comparison(df, all_comb[i], columns)
+            shape = final_df.shape[0]
+            i = i + 1 # keep iterating...    
+            
+        # Report final conditions for the filter(i-1)
+        if transcripts != "ALL": 
+            print("FINAL CONDITIONS MET ARE:\nProductive als with other genes\t{}".format(all_comb[i-1][0]))
+            print("Num of productive als with other pcod genes\t{}".format(all_comb[i-1][1]))
+            print("Prod als with other transcripts\t{}".format(all_comb[i-1][2]))
+            print("Num of productive als with other pcod trans\t{}".format(all_comb[i-1][3]))
+            print("Num of individual als\t{}".format(all_comb[i-1][4]))
+            print("Desin option\t{}".format(all_comb[i-1][5]))   
+        else: 
+            print("FINAL CONDITIONS MET ARE:\nProductive als with other genes\t{}".format(all_comb[i-1][0]))
+            print("Num of productive als with other pcod genes\t{}".format(all_comb[i-1][1]))
+            print("Num of individual als\t{}".format(all_comb[i-1][2]))
+            print("Desin option\t{}".format(all_comb[i-1][3]))            
     return final_df
+
+
