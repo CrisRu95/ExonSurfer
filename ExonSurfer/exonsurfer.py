@@ -12,6 +12,8 @@ from ExonSurfer.resources import resources
 from ExonSurfer.primerDesign import designPrimers, chooseTarget, designConfig
 from ExonSurfer.primerDesign import penalizePrimers
 
+# Constants
+NPRIMERS = 100
 
 def CreatePrimers(gene, transcripts = "ALL", design_dict = designConfig.design_dict, 
                   path_out = ".", release = 108):
@@ -53,20 +55,32 @@ def CreatePrimers(gene, transcripts = "ALL", design_dict = designConfig.design_d
 
     print("Design output: {}".format(DESIGN_OUT))
     
-    # number of primers to design for each junction and option
-    num_primers = int(100 / (len(junction)*2))
-    design_dict["PRIMER_NUM_RETURN"] = num_primers
-    
-    for item in junction: 
-        target, index = ensembl.construct_target_cdna(resources.MASKED_SEQS(), 
-                                                      gene_obj,
-                                                      data, 
-                                                      transcripts, 
-                                                      item)
+    if junction == None: # only one exon
+        design_dict["PRIMER_NUM_RETURN"] = NPRIMERS
+        target, index = ensembl.construct_one_exon_cdna(resources.MASKED_SEQS(), 
+                                                        data, transcripts)        
         # Design primers
-        c1, c2 = designPrimers.call_primer3(target, index, design_dict)
-        designPrimers.report_design(c1, c2, item, DESIGN_OUT)
-
+        c2 = designPrimers.call_primer3(target, index, design_dict, enum = 1)
+        item = [data.transcript_by_id(transcripts).exons[0].exon_id, 
+                "one exon"]
+        designPrimers.report_one_exon_design(c2, item, DESIGN_OUT)
+        
+    else: # Normal design (more than 1 exon)
+        # number of primers to design for each junction and option
+        num_primers = int(NPRIMERS / (len(junction)*2))
+        design_dict["PRIMER_NUM_RETURN"] = num_primers
+        
+        for item in junction: 
+            target, index = ensembl.construct_target_cdna(resources.MASKED_SEQS(), 
+                                                          gene_obj,
+                                                          data, 
+                                                          transcripts, 
+                                                          item)
+            # Design primers
+            c1, c2 = designPrimers.call_primer3(target, index, design_dict)
+    
+            designPrimers.report_design(c1, c2, item, DESIGN_OUT)
+    
     # Add primer pair identifier
     cols = ("option", "junction", "junction_description", "forward", "reverse", 
             "amplicon_size", "forward_tm", "reverse_tm", "forward_gc", "reverse_gc", 

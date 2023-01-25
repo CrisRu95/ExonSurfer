@@ -189,4 +189,25 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
             cdna, junction_i = None, None
     
     return cdna, junction_i
+
+###############################################################################
+
+def construct_one_exon_cdna(masked_chr, data, transcript): 
+    
+    t_obj = data.transcript_by_id(transcript)
+    
+    # read chromosome 
+    chrom_open = open(masked_chr.format(t_obj.contig), "r")
+    tt = chrom_open.read() # full chromosome sequence
+    chrom_open.close()
+    
+
+    cdna = tt[t_obj.exons[0].start-1:t_obj.exons[0].end]
+    
+    junction_i = int(len(cdna) / 2)
+    
+    return cdna, junction_i
+        
+    
+    
     
