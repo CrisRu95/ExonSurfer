@@ -12,7 +12,7 @@ from ExonSurfer.resources import resources
 from ExonSurfer.primerDesign import designPrimers, chooseTarget, designConfig
 
 
-def CreatePrimers(gene, transcripts = "ALL", design_dict = designConfig, 
+def CreatePrimers(gene, transcripts = "ALL", design_dict = designConfig.design_dict, 
                   path_out = ".", release = 108):
     """
     This function is the main function of the pipeline. It takes a gene name and
@@ -20,6 +20,7 @@ def CreatePrimers(gene, transcripts = "ALL", design_dict = designConfig,
     Args:
         gene [in] (str):        Gene name
         transcripts [in] (str): Transcript name or ALL
+        design_dict [in] (d):   Dict with primer3 parameters
         path_out [in] (str):    Path to output directory
         BLAST_OUT [out] (df):   Dataframe with blast results
         DESIGN_OUT [out] (df):  Ddataframe with primer design results
@@ -29,6 +30,7 @@ def CreatePrimers(gene, transcripts = "ALL", design_dict = designConfig,
     print("Extracting ensemble info")
     data = ensembl.create_ensembl_data(release)
     gene_obj = ensembl.get_gene_by_symbol(gene, data)
+        
     d = ensembl.get_transcripts_dict(gene_obj, exclude_noncoding = True)
     
     # Get best exonic junction
@@ -87,7 +89,7 @@ def CreatePrimers(gene, transcripts = "ALL", design_dict = designConfig,
     blast_df = blast.pre_filter_blast(blast_df, transcripts, gene, df)
     
     # Check blast results positions
-    blast.check_specificity(blast_df, df, gene)
+    df = blast.check_specificity(blast_df, df, gene)
     
     # Filter final DF 
     final_df = designPrimers.penalize_final_output(df, transcripts, data, gene_obj)

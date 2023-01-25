@@ -6,8 +6,13 @@ import pandas as pd
 from subprocess import call, DEVNULL
 
 # own modules
-#from ExonSurfer.resources import resources
-from resources import resources
+from ExonSurfer.resources import resources
+
+# Constants
+E_VALUE_CUTOFF = 0.8
+IDENTITIY_CUTOFF = 70
+MAX_SEP = 700
+
 ###############################################################################
 #                    blast module FUNCTION DEFINITION SITE                    #
 ###############################################################################
@@ -107,7 +112,7 @@ def filter_3end_al(primer_id, q_start, q_end, strand, design_df):
 ###############################################################################
     
 def pre_filter_blast(blast_df, t_transcript, t_gene, design_df, 
-                     e_cutoff = 0.8, i_cutoff = 70): 
+                     e_cutoff = E_VALUE_CUTOFF, i_cutoff = IDENTITIY_CUTOFF): 
     """
     This function filters the alignments returned by blast in order to keep the
     ones that are unintended (i.e., outside the target transcript), with a good
@@ -145,15 +150,18 @@ def pre_filter_blast(blast_df, t_transcript, t_gene, design_df,
 
 ###############################################################################
     
-def check_specificity(blast_df, design_df, t_gene, max_sep = 700):
+def check_specificity(blast_df, design_df, t_gene, max_sep = MAX_SEP):
     """
-    This function check if the 
+    This function check if the specificity of the blast result and annotates: 
+    (a) productive blast alignments and (b) unproductive blast alignments as 
+    "other_genes" (productive), "other_transcripts" (productive) and "indiv_als"
+    (unproductive), in the design_df. 
     Args: 
-        blast_df [in] (pd.df) Filtered alignments dataframe
+        blast_df [in] (pd.df)  Filtered alignments dataframe
         design_df [in] (pd.df) Design dataframe
-        t_gene [in] (str) Target gene name
-        max_sep [in] (int) Maximum separation between 2 alignments in order to 
-                           form an off-target
+        t_gene [in] (str)      Target gene name
+        max_sep [in] (int)     Maximum separation between 2 alignments in order
+                               to form an off-target
     """
     # new columns to fill in 
     design_df["other_transcripts"] = ""
@@ -185,3 +193,10 @@ def check_specificity(blast_df, design_df, t_gene, max_sep = 700):
                         design_df.loc[for_id[:-2], "other_genes"] += subj +";"
     
     
+    # individual alignments with other genes
+    b_ogenes = blast_df[blast_df["gene_symbol"] != t_gene]
+    design_df["indiv_als"] = design_df.apply(lambda row: b_ogenes[(b_ogenes["query id"] == row.name+"_5") | \
+                                                                  (b_ogenes["query id"] == row.name+"_3")].shape[0], 
+                                             axis = 1)    
+    
+    return design_df

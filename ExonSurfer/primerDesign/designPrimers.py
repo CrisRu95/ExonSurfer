@@ -8,6 +8,7 @@ Created on Wed Dec  7 13:10:49 2022
 
 # imported modules
 import primer3
+from itertools import product
 
 # Constants
 FLANK = 400
@@ -111,7 +112,62 @@ def annotate_other_transcripts(transcript_list, data):
     return new_ts
     
 ###############################################################################
+
+def make_df_comparison(df, condition, columns):
+    """
+    This function subsets the df according to the conditions indicated. 
+    Args: 
+        df [in] (pd.df)        Design dataframe
+        condition [in] (l)     List of 6 elements with the conditions to be met
+                               None values indicate no condition for that column
+        columns [in] (l)       List of 6 values with the column names for the conds
+        final_df [out] (pd.df) Subsetted dataframe (can be shape (0, X)) 
+    """
+    # keep only conditions that are NOT set to None
+    newcols = [columns[i] for i in range(len(columns)) if condition[i] != None]
+    newconds = [condition[i] for i in range(len(condition)) if condition[i] != None]
     
+    # check conditions length and buid final_df
+    if len(newconds) == 6: 
+        final_df = df.loc[(df[newcols[0]] <= newconds[0]) &\
+                          (df[newcols[1]] <= newconds[1]) &\
+                          (df[newcols[2]] <= newconds[2]) &\
+                          (df[newcols[3]] <= newconds[3]) &\
+                          (df[newcols[4]] <= newconds[4]) &\
+                          (df[newcols[5]] <= newconds[5])]
+            
+    elif len(newconds) == 5: 
+        final_df = df.loc[(df[newcols[0]] <= newconds[0]) &\
+                          (df[newcols[1]] <= newconds[1]) &\
+                          (df[newcols[2]] <= newconds[2]) &\
+                          (df[newcols[3]] <= newconds[3]) &\
+                          (df[newcols[4]] <= newconds[4])]
+            
+    elif len(newconds) == 4: 
+        final_df = df.loc[(df[newcols[0]] <= newconds[0]) &\
+                          (df[newcols[1]] <= newconds[1]) &\
+                          (df[newcols[2]] <= newconds[2]) &\
+                          (df[newcols[3]] <= newconds[3])]
+            
+    elif len(newconds) == 3: 
+        final_df = df.loc[(df[newcols[0]] <= newconds[0]) &\
+                          (df[newcols[1]] <= newconds[1]) &\
+                          (df[newcols[2]] <= newconds[2])]
+            
+    elif len(newconds) == 2: 
+        final_df = df.loc[(df[newcols[0]] <= newconds[0]) &\
+                          (df[newcols[1]] <= newconds[1])]
+            
+    elif len(newconds) == 1: 
+        final_df = df.loc[(df[newcols[0]] <= newconds[0])]
+            
+    else: 
+        final_df = df
+                
+    return final_df
+
+###############################################################################
+
 def penalize_final_output(df, transcripts, data, gene_object): 
     """
     This function penalizes the last data design DF (with blast information 
@@ -134,58 +190,55 @@ def penalize_final_output(df, transcripts, data, gene_object):
                     "other_genes_an": "other_genes"}, axis = "columns")
     
     # annotate number of protein_coding
-    df["pcod_transcripts"] = df.apply(lambda row: row["other_transcripts"].count("protein_coding"), axis=1)
+    df["pcod_trans"] = df.apply(lambda row: row["other_transcripts"].count("protein_coding"), axis=1)
     df["pcod_genes"] = df.apply(lambda row: row["other_genes"].count("protein_coding"), axis=1)
-    min_pcod_trans = min(df["pcod_transcripts"])
+    min_pcod_trans = min(df["pcod_trans"])
     min_pcod_genes = min(df["pcod_genes"])
+    min_indiv = min(df["indiv_als"])
+    
     
     if transcripts != "ALL": 
-        # prioritize option 1, no other transcripts and no other genes
-        if df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "") & (df["option"] == "1")].shape[0] > 0: 
-            final_df = df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "") & (df["option"] == "1")]
-            print("first if")
-        # any option, no other transcripts nor genes
-        elif df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")].shape[0] > 0: 
-            final_df = df.loc[(df['other_transcripts'] == "") & (df['other_genes'] == "")]
-            print("second if")
-        # try with no other genes and only the min protein_coding transcripts
-        elif df.loc[(df['other_genes'] == "") & (df['pcod_transcripts'] == min_pcod_trans)].shape[0] > 0: 
-            final_df = df.loc[(df['other_genes'] == "") & (df['pcod_transcripts'] == min_pcod_trans)]  
-            print("third if")
-        # try with no other transcripts at least and the minimum protein coding genes
-        elif df.loc[(df['other_transcripts'] == "") & (df['pcod_genes'] == min_pcod_genes)].shape[0] > 0: 
-            final_df = df.loc[(df['other_transcripts'] == "") & (df['pcod_genes'] == min_pcod_genes)] 
-            print("fourth if")
-        # try with the minimum number of protein_coding transcripts and genes
-        elif df.loc[(df['pcod_transcripts'] == min_pcod_trans) & (df['pcod_genes'] == min_pcod_genes)].shape[0] > 0:
-            final_df = df.loc[(df['pcod_transcripts'] == min_pcod_trans) & (df['pcod_genes'] == min_pcod_genes)]
-            print("fifth if")
-        else: 
-            final_df = df.loc[(df['pcod_genes'] == min_pcod_genes)] # whatever
-            print("whatever")
-    
-    else: # do not need to prioritize option 1
-        # get first transcript id; if 
-        vip_trans = gene_object.transcripts[0].transcript_id
-        # any with all transcripts included
-        if df.loc[(df['other_genes'] == "") & (df["junction_description"] == "")].shape[0] > 0: 
-            final_df = df.loc[(df['other_genes'] == "") & (df["junction_description"] == "")]  
-        # try without other genes and with first transcript included (not present in junction_description)
-        elif df.loc[(df['other_genes'] == "") & (df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))].shape[0] > 0: 
-            final_df = df.loc[(df['other_genes'] == "") & (df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))]  
-        # try with first transcript included and least amount of prot coding genes
-        elif df.loc[(df['pcod_genes'] == min_pcod_genes) & (df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))].shape[0] > 0: 
-            final_df = df.loc[(df['pcod_genes'] == min_pcod_genes) & (df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))]  
-       # try with first transcript incuded
-        elif df.loc[(df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))].shape[0] > 0: 
-            final_df = df.loc[(df.apply(lambda row: vip_trans not in row["junction_description"], axis=1))]          
-        # try with no other genes
-        elif df.loc[(df['other_genes'] == "")].shape[0] > 0: 
-            final_df = df.loc[(df['other_genes'] == "")]          
-        # try with the minimum number of protein_coding transcripts from other genes 
-        else:
-            final_df = df.loc[(df['pcod_genes'] == min_pcod_genes)]
+        
+        # combinations of "if statements"
+        columns = ["other_genes", 
+                   "pcod_genes",
+                   "other_transcripts", 
+                   "pcod_trans", 
+                   "indiv_als", 
+                   "option"]
+        
+        conditions = [["", None], # other_genes col
+                      list(set([0, min_pcod_genes, None])), # pcod_genes col
+                      ["", None], # other_trans col
+                      list(set([0, min_pcod_trans, None])), # pcod_trans col
+                      list(set([0, min_indiv, None])), # indiv_als col
+                      [1, None]] # option col
+        
+        all_comb = list(product(*conditions))
+        
+        # remove ilogical combinations
+        all_comb = [comb for comb in all_comb if not (comb[0] == "" and comb[1] == None)]
+        all_comb = [comb for comb in all_comb if not (comb[0] == "" and comb[1] > 0)]
+        all_comb = [comb for comb in all_comb if not (comb[2] == "" and comb[3] == None)]
+        all_comb = [comb for comb in all_comb if not (comb[2] == "" and comb[3] > 0)]
+        
+        # initialize loop 
+        i, shape = 0, 0
+
+        while i < len(all_comb) and shape == 0:
+            final_df = make_df_comparison(df, all_comb[i], columns)
+            shape = final_df.shape[0]
+            i = i + 1 # keep iterating...
             
+        # Report final conditions for the filter(i-1)
+        print("FINAL CONDITIONS MET ARE:\nProductive als with other genes\t{}".format(all_comb[i-1][0]))
+        print("Num of productive als with other pcod genes\t{}".format(all_comb[i-1][1]))
+        print("Prod als with other transcripts\t{}".format(all_comb[i-1][2]))
+        print("Num of productive als with other pcod trans\t{}".format(all_comb[i-1][3]))
+        print("Num of individual als\t{}".format(all_comb[i-1][4]))
+        print("Desin option\t{}".format(all_comb[i-1][5]))
+        
     return final_df
-    
+        
+            
     
