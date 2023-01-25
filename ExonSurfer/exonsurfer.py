@@ -10,6 +10,7 @@ from ExonSurfer.ensembl import ensembl
 from ExonSurfer.blast import blast
 from ExonSurfer.resources import resources
 from ExonSurfer.primerDesign import designPrimers, chooseTarget, designConfig
+from ExonSurfer.primerDesign import penalizePrimers
 
 
 def CreatePrimers(gene, transcripts = "ALL", design_dict = designConfig.design_dict, 
@@ -92,7 +93,7 @@ def CreatePrimers(gene, transcripts = "ALL", design_dict = designConfig.design_d
     df = blast.check_specificity(blast_df, df, gene)
     
     # Filter final DF 
-    final_df = designPrimers.penalize_final_output(df, transcripts, data, gene_obj)
+    final_df = penalizePrimers.penalize_final_output(df, transcripts, data, gene_obj)
     final_df.to_csv(DESIGN_OUT, sep = "\t")
     
     return blast_df, final_df

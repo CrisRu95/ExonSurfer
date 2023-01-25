@@ -160,5 +160,8 @@ def penalize_final_output(df, transcripts, data, gene_object):
         print("Num of productive als with other pcod trans\t{}".format(all_comb[i-1][3]))
         print("Num of individual als\t{}".format(all_comb[i-1][4]))
         print("Desin option\t{}".format(all_comb[i-1][5]))
+    
+    else: # transcripts == ALL
+        
         
     return final_df
