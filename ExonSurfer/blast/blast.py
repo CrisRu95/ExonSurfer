@@ -171,26 +171,28 @@ def check_specificity(blast_df, design_df, t_gene, max_sep = MAX_SEP):
     for for_id in [x for x in list(set(blast_df["query id"])) if "_5" in x]: 
         # for every alignment for a given forward
         for subj in list(blast_df[blast_df["query id"] == for_id]["subject id"]): 
-            forpos = int(blast_df.loc[(blast_df['query id'] == for_id) & \
-                                      (blast_df['subject id'] == subj)]["s. start"])
             
-            # check if there are any reverse alignments on the same subject id
-            rev_id = for_id[:-2] + "_3"
-            any_rev = blast_df.loc[(blast_df['query id'] == rev_id) & \
-                                   (blast_df['subject id'] == subj)]["s. start"]
-            if len(any_rev) > 0: 
-                revpos = int(any_rev)
-                
-                # both alignments are on the same, untargeted, subject
-                if abs(revpos-forpos) <= max_sep: 
+            for forpos in blast_df.loc[(blast_df['query id'] == for_id) & \
+                                      (blast_df['subject id'] == subj)]["s. start"]: 
+                forpos = int(forpos)
+
+                # check if there are any reverse alignments on the same subject id
+                rev_id = for_id[:-2] + "_3"
+            
+                for revpos in blast_df.loc[(blast_df['query id'] == rev_id) & \
+                                       (blast_df['subject id'] == subj)]["s. start"]: 
+                    revpos = int(revpos)
                     
-                    gene = blast_df.loc[(blast_df['query id'] == rev_id) & \
-                                        (blast_df['subject id'] == subj)]["gene_symbol"]
-                    
-                    if t_gene == gene.item(): # same gene, different transcript
-                        design_df.loc[for_id[:-2], "other_transcripts"] += subj +";" 
-                    else:  # different gene
-                        design_df.loc[for_id[:-2], "other_genes"] += subj +";"
+                    # both alignments are on the same, untargeted, subject
+                    if abs(revpos-forpos) <= max_sep: 
+                        
+                        gene = blast_df.loc[(blast_df['query id'] == rev_id) & \
+                                            (blast_df['subject id'] == subj)]["gene_symbol"]
+                        
+                        if t_gene == gene.item(): # same gene, different transcript
+                            design_df.loc[for_id[:-2], "other_transcripts"] += subj +";" 
+                        else:  # different gene
+                            design_df.loc[for_id[:-2], "other_genes"] += subj +";"
     
     
     # individual alignments with other genes
