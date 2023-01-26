@@ -8,8 +8,8 @@ from pyensembl import EnsemblRelease
 #                  ensemble module FUNCTION DEFINITION SITE                   #
 ###############################################################################
 
-def create_ensembl_data(release): 
-    return EnsemblRelease(release)
+def create_ensembl_data(release, species): 
+    return EnsemblRelease(release = release, species = species)
 
 ###############################################################################
     
@@ -62,31 +62,7 @@ def get_coding_transcript(transcripts):
         coding_transcript [out] (list): List of protein coding transcript objects
     """
     return [x for x in transcripts if x.biotype == "protein_coding"]
-
-###############################################################################
     
-def get_coding_sequence(transcripts):
-    """
-    This function takes a list of transcript objects and returns a list of
-    coding sequences.
-    Args:
-        transcripts [in] (list)       List of transcript objects
-        coding_sequences [out] (list) List of coding sequences
-        """
-    return [x.coding_sequence for x in transcripts]
-
-###############################################################################
-    
-def get_exon_locations(exon_id, release = 108): 
-    """
-    This function return exon start and end of a given exonic identifer. 
-    """
-    data = EnsemblRelease(release)
-    exonlocus = data.locus_of_exon_id(exon_id)
-    
-    return exonlocus
-    
-
 ###############################################################################
     
 def get_transcripts_dict(gene, exclude_noncoding = True):

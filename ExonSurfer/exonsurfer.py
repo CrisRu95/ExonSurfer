@@ -15,23 +15,27 @@ from ExonSurfer.primerDesign import penalizePrimers
 # Constants
 NPRIMERS = 100
 
-def CreatePrimers(gene, transcripts = "ALL", design_dict = designConfig.design_dict, 
-                  path_out = ".", release = 108):
+def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens",
+                  release = 108, design_dict = designConfig.design_dict, 
+                  path_out = "."):
     """
     This function is the main function of the pipeline. It takes a gene name and
     a transcript name and returns a list of primers.
     Args:
         gene [in] (str):        Gene name
         transcripts [in] (str): Transcript name or ALL
+        species [in] (str):     Species for the data (human, mus_musculus or 
+                                                      rattus_novegicus)
+        release [in] (str):     Ensembl release number. Change with caution
         design_dict [in] (d):   Dict with primer3 parameters
-        path_out [in] (str):    Path to output directory
+        path_out [in] (str):    Path to output direct
         BLAST_OUT [out] (df):   Dataframe with blast results
         DESIGN_OUT [out] (df):  Ddataframe with primer design results
     """ 
         
     # Construct transcripts dictionary
     print("Extracting ensemble info")
-    data = ensembl.create_ensembl_data(release)
+    data = ensembl.create_ensembl_data(release, species)
     gene_obj = ensembl.get_gene_by_symbol(gene, data)
         
     d = ensembl.get_transcripts_dict(gene_obj, exclude_noncoding = True)
@@ -57,7 +61,7 @@ def CreatePrimers(gene, transcripts = "ALL", design_dict = designConfig.design_d
     
     if junction == None: # only one exon
         design_dict["PRIMER_NUM_RETURN"] = NPRIMERS
-        target, index = ensembl.construct_one_exon_cdna(resources.MASKED_SEQS(), 
+        target, index = ensembl.construct_one_exon_cdna(resources.MASKED_SEQS(species), 
                                                         data, transcripts)        
         # Design primers
         c2 = designPrimers.call_primer3(target, index, design_dict, enum = 1)
@@ -71,7 +75,7 @@ def CreatePrimers(gene, transcripts = "ALL", design_dict = designConfig.design_d
         design_dict["PRIMER_NUM_RETURN"] = num_primers
         
         for item in junction: 
-            target, index = ensembl.construct_target_cdna(resources.MASKED_SEQS(), 
+            target, index = ensembl.construct_target_cdna(resources.MASKED_SEQS(species), 
                                                           gene_obj,
                                                           data, 
                                                           transcripts, 
@@ -95,7 +99,8 @@ def CreatePrimers(gene, transcripts = "ALL", design_dict = designConfig.design_d
     resources.fillin_temp_fasta(DESIGN_OUT, FASTA_F)
     
     # Call blast
-    blast_df = blast.run_blast_list(FASTA_F, BLAST_OUT, resources.BLAST_DB())
+    blast_df = blast.run_blast_list(FASTA_F, BLAST_OUT, 
+                                    resources.BLAST_DB(release, species), species)
     
     # Delete fasta file
     os.remove(FASTA_F)

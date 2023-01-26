@@ -8,8 +8,12 @@ import pandas as pd
 from subprocess import call, DEVNULL
 
 # Constants
-RELEASE_NUMBER = 108
-CDNA_FASTA = "Homo_sapiens.GRCh38.cdna.all.fa"
+CDNA_LINKS = {
+    "homo_sapiens": "https://ftp.ensembl.org/pub/release-108/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz", 
+    "mus_musculus": "https://ftp.ensembl.org/pub/release-108/fasta/mus_musculus/cdna/Mus_musculus.GRCm39.cdna.all.fa.gz", 
+    "rattus_norvegicus": "https://ftp.ensembl.org/pub/release-108/fasta/rattus_norvegicus/cdna/Rattus_norvegicus.mRatBN7.2.cdna.all.fa.gz"
+    }
+
 
 ###############################################################################
 #                   resources module FUNCTION DEFINITION SITE                 #
@@ -46,13 +50,13 @@ def make_blast_db(download_path):
 
 ###############################################################################
     
-def create_index_table(download_path, cdna_file, realease = RELEASE_NUMBER):
+def create_index_table(download_path, cdna_file, realease, species):
     """
     This function creates a table with the transcript id and the gene symbol.
     """
     # import necessary module (only inside this function)
     from pyensembl import EnsemblRelease
-    data = EnsemblRelease(realease)
+    data = EnsemblRelease(realease, species)
     
     with open(cdna_file, "w") as table_out: # output file
         fasta_open = open(download_path, "r")    
@@ -80,49 +84,48 @@ def create_index_table(download_path, cdna_file, realease = RELEASE_NUMBER):
 
 ###############################################################################
                         
-def download_ensembl_cdna():
+def download_ensembl_cdna(release, species):
     """
     This function downloads the ensembl cdna fasta file.
     """
-    import datacache
-    
-    url = "https://ftp.ensembl.org/pub/release-108/fasta/homo_sapiens/cdna/{}.gz".format(CDNA_FASTA)
+    from datacache import download
     print("Downloading ensembl cdna fasta file...")
-    download_path = os.path.join(str(get_db_path()), CDNA_FASTA)
-    datacache.download._download_and_decompress_if_necessary(full_path = download_path,
-                                                             download_url = url,
-                                                             timeout = 3600)
+    download_path = os.path.join(str(get_db_path(species)), CDNA_LINKS[species].split("/")[-1].replace(".gz", ""))
+    download._download_and_decompress_if_necessary(full_path = download_path,
+                                                   download_url = CDNA_LINKS[species],
+                                                   timeout = 3600)
     
     print("Download complete.")
     print("Creating regular index table...")
-    create_index_table(download_path, get_cdna_file())
+    
+    create_index_table(download_path, get_cdna_file(species), release, species)
     print("Index table created.")
     print("Creating blast database...")
     make_blast_db(download_path)
 
 ###############################################################################
     
-def get_cdna_file():
+def get_cdna_file(species):
     """
     This function returns the path to the ensembl cdna table file.
     """
-    return str(os.path.join(str(get_db_path()),"CDNA_GENE.txt"))
+    return str(os.path.join(str(get_db_path(species)),"CDNA_GENE.txt"))
 
 ###############################################################################
     
-def get_filtered_cdna_file():
+def get_filtered_cdna_file(species):
     """
     This function returns the path to the ensembl cdna table file.
     """
-    return str(os.path.join(str(get_db_path()),"CDNA_GENE_FILT.txt"))
+    return str(os.path.join(str(get_db_path(species)),"CDNA_GENE_FILT.txt"))
 
 ###############################################################################
     
-def get_db_path():
+def get_db_path(species):
     """
     This function returns the path to the blastn database.
     """
-    db_path = os.path.join(str(_get_path_data()),"db/")
+    db_path = os.path.join(str(_get_path_data()),"db/", species)
     # check if db folder exists
     if not os.path.exists(db_path):
         os.makedirs(db_path) # if not, create it
@@ -148,8 +151,8 @@ def load_mapping():
     
 ###############################################################################    
     
-def get_maskedseq_path(): 
-    db_path = os.path.join(str(_get_path_data()),"Homo_sapiens")
+def get_maskedseq_path(species): 
+    db_path = os.path.join(str(_get_path_data()),species)
     #check if db folder exists, if not create it
     if not os.path.exists(db_path):
         os.makedirs(db_path)
@@ -157,12 +160,12 @@ def get_maskedseq_path():
 
 ###############################################################################
 # Function to download the Human Masked Sequence
-def download_maskedseq():
+def download_maskedseq(species):
     import datacache
     
     for chr in list(range(1,24)) + ["X","MT"]:
         url = f"https://sandbox.zenodo.org/record/1136239/files/Chr_{chr}_masked001.fa?download=1"
-        download_path = os.path.join(str(get_maskedseq_path()),f"Chr_{chr}_masked001.fa")
+        download_path = os.path.join(str(get_maskedseq_path(species)),f"Chr_{chr}_masked001.fa")
         print("Downloading masked sequence for chromosome",chr)
         datacache.download._download_and_decompress_if_necessary(
                         full_path=download_path,
@@ -199,40 +202,41 @@ def fillin_temp_fasta(design_file, temp_file, col_id = 0, col_s1 = 4, col_s2 = 5
                 
 ###############################################################################
     
-def MASKED_SEQS():
-    mask_path = os.path.join(str(get_maskedseq_path()),f"Chr_1_masked001.fa")
+def MASKED_SEQS(species):
+    mask_path = os.path.join(str(get_maskedseq_path(species)),"Chr_1_masked001.fa")
     if not os.path.exists(mask_path):
-        download_maskedseq()
-    return get_maskedseq_path()+"/Chr_{}_masked001.fa"
+        download_maskedseq(species)
+    return get_maskedseq_path(species)+"/Chr_{}_masked001.fa"
 
 ###############################################################################
     
-def BLAST_DB():
+def BLAST_DB(release, species):
     """
     This function returns the blast DB path AND constructs it if necessary. 
     Args: 
         blast_db_path [out] (str) Path to the BLAST db
     """
-    blast_db_path = os.path.join(get_db_path() + CDNA_FASTA)
+    blast_db_path = os.path.join(get_db_path(species) + "/"+CDNA_LINKS[species].split("/")[-1].replace(".gz", ""))
 
     # Check if Homo_sapiens.GRCh38.cdna.all.fa file exists, if not download it
     if not os.path.exists(blast_db_path):
-        download_ensembl_cdna()
+        print("this path does not exist: {}".format(blast_db_path))
+        download_ensembl_cdna(release, species)
 
     return blast_db_path
     
 ###############################################################################
     
-def FILT_BLAST_DB(): 
+def FILT_BLAST_DB(release, species): 
     """
     This function returns the path to the blast DB composed ONLY by protein
     coding transcripts, AND constructs it if necessary
     """
     # download regular DB if it does not exist
-    blast_db_path = BLAST_DB()
+    blast_db_path = BLAST_DB(release, species)
     
     # Open filtered DB file
-    filt_db_path = blast_db_path.replace("Homo_sapiens", "Homo_sapiens_PCOD")
+    filt_db_path = blast_db_path.replace(".cdna.", ".filtered_cdna.")
     
     # If filtered DB does not exist
     if not os.path.exists(filt_db_path): 
@@ -241,7 +245,7 @@ def FILT_BLAST_DB():
         
         # import module
         from pyensembl import EnsemblRelease
-        data = EnsemblRelease(RELEASE_NUMBER)
+        data = EnsemblRelease(release, species)
         
         all_cdna = open(blast_db_path, "r").read()
         all_cdna = all_cdna.split(">")
@@ -255,7 +259,7 @@ def FILT_BLAST_DB():
             except: 
                 pass # transcript is not in the DB because it is not prot cod
         print("Created filtered PCOD fasta")            
-        create_index_table(filt_db_path, get_filtered_cdna_file())
+        create_index_table(filt_db_path, get_filtered_cdna_file(species), release)
         print("Created filtered index table")   
         make_blast_db(filt_db_path)     
         print("created filtered blast db")   

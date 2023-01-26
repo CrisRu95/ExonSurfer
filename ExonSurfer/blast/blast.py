@@ -17,7 +17,7 @@ MAX_SEP = 700
 #                    blast module FUNCTION DEFINITION SITE                    #
 ###############################################################################
             
-def run_blast_list(fastaf, out, db_path,
+def run_blast_list(fastaf, out, db_path, species,
                    blastn_path = "blastn", 
                    num_threads = 4):
     """
@@ -45,7 +45,7 @@ def run_blast_list(fastaf, out, db_path,
                 "s. end", "evalue", "strand")
     df = pd.read_csv(out, sep = "\t", names = df_header)
     
-    table = pd.read_csv(resources.get_cdna_file(), sep="\t", 
+    table = pd.read_csv(resources.get_cdna_file(species), sep="\t", 
                         names=("transcript_id", "gene_symbol"), header=None)
     df = pd.merge(df,table, left_on="subject id", right_on="transcript_id")
     df.to_csv(out, sep = "\t", index = False)
