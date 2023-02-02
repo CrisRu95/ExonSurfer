@@ -94,28 +94,42 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens",
     df = df.set_index('pair_num')
     df.to_csv(DESIGN_OUT, sep = "\t")
     
-    # Write blast input
-    FASTA_F = resources.create_temp_fasta()
-    resources.fillin_temp_fasta(DESIGN_OUT, FASTA_F)
+    if df.shape[0] > 1: # we designed primers
+        # Write blast input
+        FASTA_F = resources.create_temp_fasta()
+        resources.fillin_temp_fasta(DESIGN_OUT, FASTA_F)
+        
+        # Call blast
+        blast_df = blast.run_blast_list(FASTA_F, BLAST_OUT, 
+                                        resources.BLAST_DB(release, species), species)
+        
+        # Delete fasta file
+        os.remove(FASTA_F)
+        
+        # Filter blast results
+        blast_df = blast.pre_filter_blast(blast_df, transcripts, gene, df)
+        
+        # Check blast results positions
+        df = blast.check_specificity(blast_df, df, gene)
+        
+        # Filter final DF 
+        final_df = penalizePrimers.penalize_final_output(df, transcripts, data, gene_obj)
+        final_df.to_csv(DESIGN_OUT, sep = "\t")
     
-    # Call blast
-    blast_df = blast.run_blast_list(FASTA_F, BLAST_OUT, 
-                                    resources.BLAST_DB(release, species), species)
+        return blast_df, final_df
     
-    # Delete fasta file
-    os.remove(FASTA_F)
-    
-    # Filter blast results
-    blast_df = blast.pre_filter_blast(blast_df, transcripts, gene, df)
-    
-    # Check blast results positions
-    df = blast.check_specificity(blast_df, df, gene)
-    
-    # Filter final DF 
-    final_df = penalizePrimers.penalize_final_output(df, transcripts, data, gene_obj)
-    final_df.to_csv(DESIGN_OUT, sep = "\t")
-    
-    return blast_df, final_df
+    else: 
+        # extract c2 reason
+        msg = c2["PRIMER_PAIR_EXPLAIN"].split(",")
+        msg_f = [x for x in msg if "ok" not in x and "considered" not in x]
+        
+        if len(msg_f) > 1: 
+            msg_f = [x for x in msg_f if "product size" not in x][0]
+        else: 
+            msg_f = msg_f[0]
+        
+        return "Main reason for design failure: {}".format(msg_f)
+
     
     
 if __name__ == "__main__":
