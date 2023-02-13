@@ -208,4 +208,28 @@ def penalize_final_output(df, transcripts, data, gene_object):
             print("Desin option\t{}".format(all_comb[i-1][3]))            
     return final_df
 
+###############################################################################
 
+def minmax_norm(v, minv, maxv): 
+    """ This function makes the min max normalization"""
+    newv = (v - minv) / (maxv - minv) 
+    return newv * 100
+
+###############################################################################
+
+def make_penalty_score(df, complete_max = 20): 
+    """
+    This function transforms the penalty value. 
+    """
+    # Collapse values bigger than 20 at 20
+    df['pair_penalty'].values[df['pair_penalty'].values > complete_max] = complete_max
+    
+    minv = min(df["pair_penalty"])
+    maxv = max(df["pair_penalty"])
+    df["pair_score"] = df["pair_penalty"].apply(lambda x: minmax_norm(x, 
+                                                                      minv, maxv))
+    
+    # remove penalty score
+    df = df.drop("pair_penalty", axis = 1)
+    
+    return df

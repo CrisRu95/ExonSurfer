@@ -8,11 +8,6 @@ from subprocess import call, DEVNULL
 # own modules
 from ExonSurfer.resources import resources
 
-# Constants
-E_VALUE_CUTOFF = 0.8
-IDENTITIY_CUTOFF = 70
-MAX_SEP = 700
-
 ###############################################################################
 #                    blast module FUNCTION DEFINITION SITE                    #
 ###############################################################################
@@ -112,7 +107,7 @@ def filter_3end_al(primer_id, q_start, q_end, strand, design_df):
 ###############################################################################
     
 def pre_filter_blast(blast_df, t_transcript, t_gene, design_df, 
-                     e_cutoff = E_VALUE_CUTOFF, i_cutoff = IDENTITIY_CUTOFF): 
+                     e_cutoff, i_cutoff): 
     """
     This function filters the alignments returned by blast in order to keep the
     ones that are unintended (i.e., outside the target transcript), with a good
@@ -150,7 +145,7 @@ def pre_filter_blast(blast_df, t_transcript, t_gene, design_df,
 
 ###############################################################################
     
-def check_specificity(blast_df, design_df, t_gene, max_sep = MAX_SEP):
+def check_specificity(blast_df, design_df, t_gene, max_sep):
     """
     This function check if the specificity of the blast result and annotates: 
     (a) productive blast alignments and (b) unproductive blast alignments as 

@@ -187,19 +187,21 @@ def create_temp_fasta():
 
 ###############################################################################
 
-def fillin_temp_fasta(design_file, temp_file, col_id = 0, col_s1 = 4, col_s2 = 5): 
+def fillin_temp_fasta(df, temp_file): 
     """
+    This function writes a temporary fasta file with primer sequences for BLAST. 
+    Args: 
+        df [in|out] (pd.df)  Dataframe with designed primers
+        temp_file [in] (str) Temporary fasta file
     """
     with open(temp_file, "w") as t_open: 
-        with open(design_file, "r") as d_open: 
-            for line in d_open.readlines()[1:]: # first line is header
-                line = line.split("\t")
-                
-                string1 = ">{}_5\n{}\n".format(line[col_id], line[col_s1]) 
-                string2 = ">{}_3\n{}\n".format(line[col_id], line[col_s2]) 
-                
-                t_open.write(string1 + string2)
-                
+        for p in list(df.index): 
+               
+            string1 = ">{}_5\n{}\n".format(p, df.loc[p]["forward"]) 
+            string2 = ">{}_3\n{}\n".format(p, df.loc[p]["reverse"]) 
+            
+            t_open.write(string1 + string2)
+            
 ###############################################################################
     
 def MASKED_SEQS(species):
