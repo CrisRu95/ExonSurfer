@@ -2,6 +2,7 @@ ExonSurfer/__pycache__/*
 ExonSurfer/resources/temp/*
 ExonSurfer/resources/db/*
 ExonSurfer/resources/homo_sapiens/*
+ExonSurfer/resources/homo_sapiens_masked/*
 ExonSurfer/resources/mus_musculus/*
 ExonSurfer/resources/rattus_norvegicus/*
 ExonSurfer/resources/__pycache__/*
