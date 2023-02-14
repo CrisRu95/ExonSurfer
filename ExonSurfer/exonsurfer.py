@@ -15,7 +15,7 @@ from ExonSurfer.primerDesign import penalizePrimers
 # Constants
 NPRIMERS = 100
 
-def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens",
+def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                   release = 108, design_dict = designConfig.design_dict, 
                   path_out = ".", save_files = True, e_value = 0.8,
                   i_cutoff = 70, max_sep = 700):
@@ -36,7 +36,8 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens",
         
     # Construct transcripts dictionary
     print("Extracting ensemble info")
-    data = ensembl.create_ensembl_data(release, species)
+    data = ensembl.create_ensembl_data(release, 
+                                       species.replace("_masked", ""))
     gene_obj = ensembl.get_gene_by_symbol(gene, data)
         
     d = ensembl.get_transcripts_dict(gene_obj, exclude_noncoding = True)
@@ -105,7 +106,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens",
         
         # Call blast
         blast_df = blast.run_blast_list(FASTA_F, BLAST_OUT, 
-                                        resources.BLAST_DB(release, species), 
+                                        resources.BLAST_DB(species), 
                                         species)
         
         # Delete fasta file

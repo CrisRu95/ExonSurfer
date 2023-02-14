@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # imported modules
+import os
 import pandas as pd
 from subprocess import call, DEVNULL
 
@@ -36,13 +37,20 @@ def run_blast_list(fastaf, out, db_path, species,
     
     # Store DF results 
     df_header = ("query id", "subject id","identity", "alignment length", 
-                 "q. start", "q. end", "s. start",
-                "s. end", "evalue", "strand")
+                 "q. start", "q. end", "s. start", "s. end", "evalue", "strand")
+    
     df = pd.read_csv(out, sep = "\t", names = df_header)
     
-    table = pd.read_csv(resources.get_cdna_file(species), sep="\t", 
-                        names=("transcript_id", "gene_symbol"), header=None)
-    df = pd.merge(df,table, left_on="subject id", right_on="transcript_id")
+    # remove transcript version information
+    df["subject id"] = df["subject id"].map(lambda x: x.split(".")[0])
+    
+    
+    table = pd.read_csv(os.path.join(resources.get_blastdb_path(species),
+                                     resources.IDS_TABEL), sep = "\t")
+    
+    df = pd.merge(df, table, left_on="subject id", right_on = "id")
+    
+    # overwrite annotated blast result
     df.to_csv(out, sep = "\t", index = False)
     
     return df
@@ -72,7 +80,7 @@ def filter_intended_al(primer_id, identity, transcript_id, gene_id,
     else: 
         to_keep = True # default situation
         if primer_id not in done_ids: 
-            if transcript_id.split(".")[0] == t_transcript and identity == 100: 
+            if transcript_id == t_transcript and identity == 100: 
                 to_keep = False
                 # if there is another instance, it will not be removed
                 done_ids.append(primer_id)             
@@ -123,8 +131,8 @@ def pre_filter_blast(blast_df, t_transcript, t_gene, design_df,
     done_ids = []
     blast_df["filter1"] = blast_df.apply(lambda row: filter_intended_al(row["query id"], 
                                                                         row["identity"],
-                                                                        row["subject id"],
-                                                                        row["gene_symbol"],
+                                                                        row["ensembl_id"],
+                                                                        row["gene"],
                                                                         t_transcript, 
                                                                         t_gene, 
                                                                         done_ids), axis = 1)
@@ -161,37 +169,75 @@ def check_specificity(blast_df, design_df, t_gene, max_sep):
     # new columns to fill in 
     design_df["other_transcripts"] = ""
     design_df["other_genes"] = ""
+    design_df["other_transcripts_rpred"] = ""
+    design_df["other_genes_rpred"] = ""
     
+    
+    # LOOP 1. only for ensembl nomenclature (not predicte)
     # for every forward primer
     for for_id in [x for x in list(set(blast_df["query id"])) if "_5" in x]: 
         # for every alignment for a given forward
-        for subj in list(blast_df[blast_df["query id"] == for_id]["subject id"]): 
+        
+        # Subject is annotated in ensembl nomenclature
+        for subj in [x for x in list(blast_df[blast_df["query id"] == for_id]["ensembl_id"]) if x != "-"]: 
             
             for forpos in blast_df.loc[(blast_df['query id'] == for_id) & \
-                                      (blast_df['subject id'] == subj)]["s. start"]: 
+                                      (blast_df['ensembl_id'] == subj)]["s. start"]: 
                 forpos = int(forpos)
 
                 # check if there are any reverse alignments on the same subject id
                 rev_id = for_id[:-2] + "_3"
             
                 for revpos in blast_df.loc[(blast_df['query id'] == rev_id) & \
-                                       (blast_df['subject id'] == subj)]["s. start"]: 
+                                       (blast_df['ensembl_id'] == subj)]["s. start"]: 
                     revpos = int(revpos)
                     
                     # both alignments are on the same, untargeted, subject
                     if abs(revpos-forpos) <= max_sep: 
                         
                         gene = blast_df.loc[(blast_df['query id'] == rev_id) & \
-                                            (blast_df['subject id'] == subj)]["gene_symbol"]
+                                            (blast_df['ensembl_id'] == subj)]["gene"]
                         
                         if t_gene == gene.item(): # same gene, different transcript
                             design_df.loc[for_id[:-2], "other_transcripts"] += subj +";" 
                         else:  # different gene
                             design_df.loc[for_id[:-2], "other_genes"] += subj +";"
+                                
     
     
+    # LOOP 2. Subject is NOT annotated in ensembl nomenclature
+    miniblast_df = blast_df[blast_df["ensembl_id"] == "-"]
+    
+    for for_id in [x for x in list(set(miniblast_df["query id"])) if "_5" in x]: 
+        # for every alignment for a given forward
+        
+        # Subject is annotated in ensembl nomenclature
+        for subj in list(miniblast_df[miniblast_df["query id"] == for_id]["subject id"]):        
+
+            for forpos in miniblast_df.loc[(miniblast_df['query id'] == for_id) & \
+                                      (miniblast_df['subject id'] == subj)]["s. start"]: 
+                forpos = int(forpos)
+
+                # check if there are any reverse alignments on the same subject id
+                rev_id = for_id[:-2] + "_3"
+            
+                for revpos in miniblast_df.loc[(miniblast_df['query id'] == rev_id) & \
+                                       (miniblast_df['subject id'] == subj)]["s. start"]: 
+                    revpos = int(revpos)
+                    
+                    # both alignments are on the same, untargeted, subject
+                    if abs(revpos-forpos) <= max_sep: 
+                        
+                        gene = miniblast_df.loc[(miniblast_df['query id'] == rev_id) & \
+                                                (miniblast_df['subject id'] == subj)]["gene"]
+                        
+                        if t_gene == gene.item(): # same gene, different transcript
+                            design_df.loc[for_id[:-2], "other_transcripts_rpred"] += subj +";" 
+                        else:  # different gene
+                            design_df.loc[for_id[:-2], "other_genes_rpred"] += subj +";"
+                                
     # individual alignments with other genes
-    b_ogenes = blast_df[blast_df["gene_symbol"] != t_gene]
+    b_ogenes = blast_df[blast_df["gene"] != t_gene]
     design_df["indiv_als"] = design_df.apply(lambda row: b_ogenes[(b_ogenes["query id"] == row.name+"_5") | \
                                                                   (b_ogenes["query id"] == row.name+"_3")].shape[0], 
                                              axis = 1)    

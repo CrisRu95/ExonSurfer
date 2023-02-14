@@ -45,7 +45,25 @@ def make_df_comparison(df, condition, columns):
     newconds = [condition[i] for i in range(len(condition)) if condition[i] != None]
     
     # check conditions length and buid final_df
-    if len(newconds) == 6: 
+    if len(newconds) == 8: 
+        final_df = df.loc[(df[newcols[0]] <= newconds[0]) &\
+                          (df[newcols[1]] <= newconds[1]) &\
+                          (df[newcols[2]] <= newconds[2]) &\
+                          (df[newcols[3]] <= newconds[3]) &\
+                          (df[newcols[4]] <= newconds[4]) &\
+                          (df[newcols[5]] <= newconds[5]) &\
+                          (df[newcols[6]] <= newconds[6]) &\
+                          (df[newcols[7]] <= newconds[7])]
+    elif len(newconds) == 7: 
+        final_df = df.loc[(df[newcols[0]] <= newconds[0]) &\
+                          (df[newcols[1]] <= newconds[1]) &\
+                          (df[newcols[2]] <= newconds[2]) &\
+                          (df[newcols[3]] <= newconds[3]) &\
+                          (df[newcols[4]] <= newconds[4]) &\
+                          (df[newcols[5]] <= newconds[5]) &\
+                          (df[newcols[6]] <= newconds[6])]
+            
+    elif len(newconds) == 6: 
         final_df = df.loc[(df[newcols[0]] <= newconds[0]) &\
                           (df[newcols[1]] <= newconds[1]) &\
                           (df[newcols[2]] <= newconds[2]) &\
@@ -103,10 +121,11 @@ def penalize_final_output(df, transcripts, data, gene_object):
     df["other_genes_an"] = df.apply(lambda row: annotate_other_transcripts(row["other_genes"], 
                                                                            data), 
                                     axis=1)
-    
+    # remove unnanotated columns
     df = df.drop("other_transcripts", axis = 1)
     df = df.drop("other_genes", axis = 1)
     
+    # rename columns 
     df = df.rename({"other_transcripts_an":"other_transcripts", 
                     "other_genes_an": "other_genes"}, axis = "columns")
     
@@ -115,10 +134,25 @@ def penalize_final_output(df, transcripts, data, gene_object):
                                 axis=1)
     df["pcod_genes"] = df.apply(lambda row: row["other_genes"].count("protein_coding"), 
                                 axis=1)
+    
+    # Get number of alignments in transcripts NOT annotated with ensembl
+    df["other_genes_rpred_count"] = df.apply(lambda row: row["other_genes_rpred"].count(";"), axis=1)
+    df["other_transcripts_rpred_count"] = df.apply(lambda row: row["other_transcripts_rpred"].count(";"), axis=1)
+
+    # remove old columns
+    df = df.drop("other_genes_rpred", axis = 1)
+    df = df.drop("other_transcripts_rpred", axis = 1)
+    
+    # rename columns 
+    df = df.rename({"other_genes_rpred_count":"other_genes_rpred", 
+                    "other_transcripts_rpred_count": "other_transcripts_rpred"}, 
+                   axis = "columns")
+    
     min_pcod_trans = min(df["pcod_trans"])
     min_pcod_genes = min(df["pcod_genes"])
     min_indiv = min(df["indiv_als"])
-    
+    min_genes_rpred = min(df["other_genes_rpred"])
+    min_trans_rpred = min(df["other_transcripts_rpred"])    
     
     if transcripts != "ALL": 
         
@@ -128,6 +162,8 @@ def penalize_final_output(df, transcripts, data, gene_object):
                    "other_transcripts", 
                    "pcod_trans", 
                    "indiv_als", 
+                   "other_genes_rpred", 
+                   "other_transcripts_rpred",
                    "option"]
         
         conditions = [["", None], # other_genes col
@@ -135,6 +171,8 @@ def penalize_final_output(df, transcripts, data, gene_object):
                       ["", None], # other_trans col
                       list(set([0, min_pcod_trans, None])), # pcod_trans col
                       list(set([0, min_indiv, None])), # indiv_als col
+                      list(set([0, min_genes_rpred, None])), # refseq annotated genes
+                      list(set([0, min_trans_rpred, None])), # refseq annotated transcripts
                       [1, None]] # option col
         
         all_comb = list(product(*conditions))
@@ -172,11 +210,15 @@ def penalize_final_output(df, transcripts, data, gene_object):
         columns = ["other_genes", 
                    "pcod_genes",
                    "indiv_als", 
+                   "other_genes_rpred", 
+                   "other_transcripts_rpred",
                    "option"]
         
         conditions = [["", None], # other_genes col
                       list(set([0, min_pcod_genes, None])), # pcod_genes col
                       list(set([0, min_indiv, None])), # indiv_als col
+                      list(set([0, min_genes_rpred, None])), # refseq annotated genes
+                      list(set([0, min_trans_rpred, None])), # refseq annotated transcripts
                       [1, None]] # option col
         
         all_comb = list(product(*conditions))
@@ -200,12 +242,16 @@ def penalize_final_output(df, transcripts, data, gene_object):
             print("Prod als with other transcripts\t{}".format(all_comb[i-1][2]))
             print("Num of productive als with other pcod trans\t{}".format(all_comb[i-1][3]))
             print("Num of individual als\t{}".format(all_comb[i-1][4]))
-            print("Desin option\t{}".format(all_comb[i-1][5]))   
+            print("Num of other genes refseq preds\t{}".format(all_comb[i-1][5]))
+            print("Num of other trans refseq preds\t{}".format(all_comb[i-1][6]))
+            print("Desin option\t{}".format(all_comb[i-1][7]))   
         else: 
             print("FINAL CONDITIONS MET ARE:\nProductive als with other genes\t{}".format(all_comb[i-1][0]))
             print("Num of productive als with other pcod genes\t{}".format(all_comb[i-1][1]))
             print("Num of individual als\t{}".format(all_comb[i-1][2]))
-            print("Desin option\t{}".format(all_comb[i-1][3]))            
+            print("Num of other genes refseq preds\t{}".format(all_comb[i-1][3]))
+            print("Num of other trans refseq preds\t{}".format(all_comb[i-1][4]))
+            print("Desin option\t{}".format(all_comb[i-1][5]))            
     return final_df
 
 ###############################################################################
