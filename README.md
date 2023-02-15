@@ -36,7 +36,8 @@ python3 setup.py install --user
 
 Once the program is installed, it can be used to design primers for any given gene transcript.
 
-`exon_surfer.py --gene <gene_name> --transcript <transcript_name> --out <path_out>`
+`exon_surfer.py --gene <gene_name> --transcript <transcript_name> --out <path_out> --release <release> --design_dict <design_dict> --files <save_files> --e_value <e_value> --i_cutoff <i_cutoff> --max_sep <max_sep>
+`
 
 This will output a list of primers that can be used for the specified gene transcript.
 
