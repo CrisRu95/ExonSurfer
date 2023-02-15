@@ -138,21 +138,12 @@ def penalize_final_output(df, transcripts, data, gene_object):
     # Get number of alignments in transcripts NOT annotated with ensembl
     df["other_genes_rpred_count"] = df.apply(lambda row: row["other_genes_rpred"].count(";"), axis=1)
     df["other_transcripts_rpred_count"] = df.apply(lambda row: row["other_transcripts_rpred"].count(";"), axis=1)
-
-    # remove old columns
-    df = df.drop("other_genes_rpred", axis = 1)
-    df = df.drop("other_transcripts_rpred", axis = 1)
-    
-    # rename columns 
-    df = df.rename({"other_genes_rpred_count":"other_genes_rpred", 
-                    "other_transcripts_rpred_count": "other_transcripts_rpred"}, 
-                   axis = "columns")
     
     min_pcod_trans = min(df["pcod_trans"])
     min_pcod_genes = min(df["pcod_genes"])
     min_indiv = min(df["indiv_als"])
-    min_genes_rpred = min(df["other_genes_rpred"])
-    min_trans_rpred = min(df["other_transcripts_rpred"])    
+    min_genes_rpred = min(df["other_genes_rpred_count"])
+    min_trans_rpred = min(df["other_transcripts_rpred_count"])    
     
     if transcripts != "ALL": 
         
@@ -162,8 +153,8 @@ def penalize_final_output(df, transcripts, data, gene_object):
                    "other_transcripts", 
                    "pcod_trans", 
                    "indiv_als", 
-                   "other_genes_rpred", 
-                   "other_transcripts_rpred",
+                   "other_genes_rpred_count", 
+                   "other_transcripts_rpred_count",
                    "option"]
         
         conditions = [["", None], # other_genes col
@@ -210,8 +201,8 @@ def penalize_final_output(df, transcripts, data, gene_object):
         columns = ["other_genes", 
                    "pcod_genes",
                    "indiv_als", 
-                   "other_genes_rpred", 
-                   "other_transcripts_rpred",
+                   "other_genes_rpred_count", 
+                   "other_transcripts_rpred_count",
                    "option"]
         
         conditions = [["", None], # other_genes col
