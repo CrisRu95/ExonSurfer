@@ -37,7 +37,7 @@ def arguments_parser():
     parser.add_argument("--e_value", "-ev", dest = "e_value", default = 0.8, 
                         help = "E value cutoff for the blast search")
 
-    parser.add_argument("--i_cutoff", "-ev", dest = "i_cutoff", default = 70, 
+    parser.add_argument("--i_cutoff", "-i_c", dest = "i_cutoff", default = 70, 
                         help = "Identity cutoff for the blast search")
 
     parser.add_argument("--max_sep", "-ms", dest = "max_sep", default = 1000, 
