@@ -56,7 +56,7 @@ def main():
         args.design_dict = designConfig.design_dict
     # Construct transcripts dictionary
     CreatePrimers(gene = args.gene, 
-                  transcript = args.transcript, 
+                  transcripts = args.transcript, 
                   species = args.species, 
                   path_out = args.path_out,
                   release = args.release,
