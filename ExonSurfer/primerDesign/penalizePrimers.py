@@ -5,6 +5,7 @@ Created on Wed Jan 25 12:34:41 2023
 """
 
 # imported modules
+import re
 from itertools import product
 
 
@@ -16,16 +17,21 @@ def annotate_other_transcripts(transcript_list, data):
     """
     This function annotates the biotype of a given list of transcripts. 
     Args: 
-        transcript_list [in] (str) Semicolon separated transcript ID string
+        transcript_list [in] (str) Semicolon or hyphen sep transcript ID string
         data [in] (Genome obj)     Genome ensembl object
         new_ts [in] (str)          Semicolon separated transcript ID string, with
                                    biotype written in brackets
     """
+    ts = re.split("-|;", transcript_list) # transform to list
+    new_ts = ""
+    ts_nov = [t.split(".")[0] for t in ts if t != ""] #  no version info
     
-    ts = transcript_list.split(";")
-    ts_nov = [t.split(".")[0] for t in ts if t != ""]
-    new_ts = ";".join(["{}({})".format(x, data.transcript_by_id(x).biotype) for x in ts_nov])
-    
+    for x in ts_nov: 
+        try: 
+            new_ts += ";{}({})".format(x, data.transcript_by_id(x).biotype)
+        except: 
+            pass
+        
     return new_ts
     
 ###############################################################################
