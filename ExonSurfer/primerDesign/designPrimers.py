@@ -52,7 +52,7 @@ def call_primer3(target_seq, junction_i, design_dict, enum = 2):
         try: 
             case1_primers = primer3.bindings.designPrimers(target_dict, 
                                                            design_dict)
-        except: 
+        except OSError: 
             case1_primers = {"PRIMER_PAIR_NUM_RETURNED":0}
             
         # Case 2: place each primer on one exon
@@ -65,8 +65,13 @@ def call_primer3(target_seq, junction_i, design_dict, enum = 2):
         try: 
             case2_primers = primer3.bindings.designPrimers(target_dict, 
                                                            design_dict)
-        except: 
+        except OSError as e: 
+            msg = getattr(e, 'message', repr(e)).replace("OSError", "")
+            msg = msg.replace("(", "")
+            msg = msg.replace("'", "")
+            msg = msg.replace("(", "")
             case2_primers = {"PRIMER_PAIR_NUM_RETURNED":0}
+            case2_primers["PRIMER_PAIR_EXPLAIN"] = msg
             
         return case1_primers, case2_primers
                 
