@@ -115,17 +115,19 @@ def filter_3end_al(primer_id, q_start, q_end, strand, design_df):
 ###############################################################################
     
 def pre_filter_blast(blast_df, t_transcript, t_gene, design_df, 
-                     e_cutoff, i_cutoff): 
+                     e_cutoff, i_cutoff, filter2 = True): 
     """
     This function filters the alignments returned by blast in order to keep the
     ones that are unintended (i.e., outside the target transcript), with a good
     3' end alignment, and with good enough e and identity values. 
     Args: 
-        blast_df [in] (pd.df) Alignment dataframe
-        t_transcript [in] (str) Target transcript, without version info
-        design_df [in] (pd.df) Design dataframe
-        e_cutoff [in] (float) Maximum e value to consider an alignment
+        blast_df [in] (pd.df)     Alignment dataframe
+        t_transcript [in] (str)   Target transcript, without version info
+        design_df [in] (pd.df)    Design dataframe
+        e_cutoff [in] (float)     Maximum e value to consider an alignment
         i_cutoff [in] (float/int) Minimum identity to consider an alignment
+        filter2 [in] (bool)       True if to disregard alignments with mismatches 
+                                  at the 3' end'
     """ 
     # keep only alignments outside the intended transcript
     done_ids = []
@@ -137,14 +139,16 @@ def pre_filter_blast(blast_df, t_transcript, t_gene, design_df,
                                                                         t_gene, 
                                                                         done_ids), axis = 1)
     # keep only alignments where primers 3' end is aligned
-    blast_df["filter2"] = blast_df.apply(lambda row: filter_3end_al(row["query id"], 
-                                                                    row["q. start"], 
-                                                                    row["q. end"], 
-                                                                    row["strand"],
-                                                                    design_df), axis = 1)
+    if filter2 == True: 
+        blast_df["filter2"] = blast_df.apply(lambda row: filter_3end_al(row["query id"], 
+                                                                        row["q. start"], 
+                                                                        row["q. end"], 
+                                                                        row["strand"],
+                                                                        design_df), axis = 1)
+        blast_df = blast_df[blast_df["filter2"]]
+    
     # apply filters
     blast_df = blast_df[blast_df["filter1"]]
-    blast_df = blast_df[blast_df["filter2"]]
     blast_df = blast_df[blast_df["evalue"] <= e_cutoff]
     blast_df = blast_df[blast_df["identity"] >= i_cutoff]
 
