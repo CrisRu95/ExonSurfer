@@ -48,17 +48,26 @@ def call_primer3(target_seq, junction_i, design_dict, enum = 2):
                 'SEQUENCE_OVERLAP_JUNCTION_LIST': junction_i,
                 'PRIMER_MIN_3_PRIME_OVERLAP_OF_JUNCTION': 4,
                 }
-    
-        case1_primers = primer3.bindings.designPrimers(target_dict, design_dict)
         
+        try: 
+            case1_primers = primer3.bindings.designPrimers(target_dict, 
+                                                           design_dict)
+        except: 
+            case1_primers = {"PRIMER_PAIR_NUM_RETURNED":0}
+            
         # Case 2: place each primer on one exon
         target_dict = {
                 'SEQUENCE_ID': 'InternalID',
                 'SEQUENCE_TEMPLATE': target_seq,
                 'SEQUENCE_TARGET': [junction_i, 1],
                 }
-        case2_primers = primer3.bindings.designPrimers(target_dict, design_dict)
-    
+        
+        try: 
+            case2_primers = primer3.bindings.designPrimers(target_dict, 
+                                                           design_dict)
+        except: 
+            case2_primers = {"PRIMER_PAIR_NUM_RETURNED":0}
+            
         return case1_primers, case2_primers
                 
 ###############################################################################
