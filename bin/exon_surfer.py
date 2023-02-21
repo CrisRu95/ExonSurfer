@@ -44,7 +44,7 @@ def arguments_parser():
     parser.add_argument("--max_sep", "-ms", dest = "max_sep", default = 1000, 
                         help = "Maximum sep between alignments to consider amplicon")
     
-    parser.add_argument("--download", "-d", dest = "download", default = False, 
+    parser.add_argument("--download", "-db", dest = "download", default = False, 
                         help = "Download all DB") 
              
     args = parser.parse_args()
