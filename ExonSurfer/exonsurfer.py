@@ -80,8 +80,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                                                 item)
             # Design primers
             c1, c2 = designPrimers.call_primer3(target, index, design_dict)
-    
-            df = designPrimers.report_design(c1, c2, item, df)
+            df = designPrimers.report_design(c1, c2,elen, item, df)
     
 
     df["pair_num"] = ["Pair{}".format(x) for x in range(0, df.shape[0])]
