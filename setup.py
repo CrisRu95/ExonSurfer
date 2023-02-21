@@ -8,7 +8,7 @@ setup(
    author_email='pablo.monfort@i-med.ac.at',
    packages=['ExonSurfer','ExonSurfer.blast','ExonSurfer.ensembl',\
       'ExonSurfer.primerDesign','ExonSurfer.resources' ],
-   scripts=['bin/exon_surfer.py','bin/exon_surfer_download_dbl.py'],
+   scripts=['bin/exon_surfer.py',],
    url='https://github.com/CrisRu95/ExonPrimerSurfer/',
    license='LICENSE.txt',
    description='',
