@@ -106,6 +106,7 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
         exon_junction [in] (str) Ensembl exon IDs (e.g. ENS001-ENS002)
         cdna [out] (str)         Complete cDNA of the transcript 
         junction_i [out] (int)   exon_junction location on the cdna
+        exon_len [out] (l)       List of exon ids and pos range from the junction
     """
     # t is a transcript object, and transcript is a string
     #l = [str(x.transcript_id) for x in gene_obj.transcripts ]
@@ -127,9 +128,18 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
         if gene_obj.on_positive_strand: 
             cdna = tt[exon_obj1.start-1:exon_obj1.end] + tt[exon_obj2.start-1:exon_obj2.end]
             junction_i = exon_obj1.end - exon_obj1.start
+            e1_len = exon_obj1.end - exon_obj1.start + 1
+            e2_len = exon_obj2.end - exon_obj2.start + 1
+            exon_len = [(exon_obj1.exon_id, range(0, e1_len)), 
+                        (exon_obj2.exon_id, range(e1_len, e1_len + e2_len))]
         else: 
             cdna = tt[exon_obj2.start-1:exon_obj2.end] + tt[exon_obj1.start-1:exon_obj1.end]
-            junction_i = exon_obj2.end - exon_obj2.start            
+            junction_i = exon_obj2.end - exon_obj2.start     
+            e1_len = exon_obj1.end - exon_obj1.start + 1
+            e2_len = exon_obj2.end - exon_obj2.start + 1
+            
+            exon_len = [(exon_obj2.exon_id, range(0, e2_len)), 
+                        (exon_obj1.exon_id, range(e2_len, e2_len + e1_len))]
     else:
         # t is a target transcript object
         t_filt = [x for x in gene_obj.transcripts if x.transcript_id == transcript]
@@ -137,11 +147,17 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
         if len(t_filt) > 0: 
             t = t_filt[0]
     
-            cdna, junction_i, found_junction = "", 0, False # initialize
+            cdna, junction_i, found_junction, exon_len = "", 0, False, [] # initialize
             
             if gene_obj.on_positive_strand: 
+                tosum = 0
                 for exon in t.exons: 
                     cdna += tt[exon.start-1:exon.end]
+                    
+                    elen = (exon.exon_id, 
+                            range(tosum, exon.end - exon.start + 1))
+                    exon_len.append(elen)
+                    tosum += exon.end - exon.start + 1
                     
                     if found_junction == False: 
                         junction_i += exon.end - exon.start + 1
@@ -151,8 +167,13 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
             
             else: # reverse strand genes
                 for exon in reversed(t.exons): 
-                    print("exon: {} - {}".format(exon.start, exon.end))
+                    tosum = 0
                     cdna += tt[exon.start-1:exon.end]
+                    
+                    elen = (exon.exon_id, 
+                            range(tosum, exon.end - exon.start + 1))
+                    exon_len.append(elen)
+                    tosum += exon.end - exon.start + 1
                     
                     if found_junction == False: 
                         junction_i += exon.end - exon.start + 1
@@ -162,14 +183,16 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
 
         else: 
             print("Transcript not found in gene")
-            cdna, junction_i = None, None
+            cdna, junction_i, exon_len = None, None, None
     
-    return cdna, junction_i
+    return cdna, junction_i, exon_len
 
 ###############################################################################
 
 def construct_one_exon_cdna(masked_chr, data, transcript): 
-    
+    """
+
+    """
     t_obj = data.transcript_by_id(transcript)
     
     # read chromosome 
@@ -181,8 +204,10 @@ def construct_one_exon_cdna(masked_chr, data, transcript):
     cdna = tt[t_obj.exons[0].start-1:t_obj.exons[0].end]
     
     junction_i = int(len(cdna) / 2)
+    exon_len = [(t_obj.exons[0].exon_id, 
+                 range(0, t_obj.exons[0].end - t_obj.exons[0].start + 1))]
     
-    return cdna, junction_i
+    return cdna, junction_i, exon_len
         
     
     

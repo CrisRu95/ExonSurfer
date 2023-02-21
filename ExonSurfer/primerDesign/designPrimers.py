@@ -74,15 +74,16 @@ def call_primer3(target_seq, junction_i, design_dict, enum = 2):
             case2_primers["PRIMER_PAIR_EXPLAIN"] = msg
             
         return case1_primers, case2_primers
-                
+
 ###############################################################################
-                   
-def report_design(c1, c2, exon_junction, df):    
+           
+def report_design(c1, c2, exon_len, exon_junction, df):    
     """
     This function writes a table with the designed primers
     Args: 
         c1 [in] (dict)             Dict of primers designed with option 1
         c2 [in] (dict)             Dict of primers designed with option 2
+        exon_len [in] (l)          List of tuples, (exon_id, exon length)
         exon_junction [in] (tuple) Tuple with two strings: (1) "Ensemble exon ID
                                    - Ensembl exon ID" (2) Design specification
         df [in|out] (ps.df)        Pandas df with the designed primers info
@@ -91,20 +92,45 @@ def report_design(c1, c2, exon_junction, df):
         
         for n in range(pdict["PRIMER_PAIR_NUM_RETURNED"]): 
             
-            patt = "_{}_".format(n)            
+            patt = "_{}".format(n)            
             row = {"option": 1 if pdict == c1 else 2, # design option, 
                    "junction": exon_junction[0], 
                    "junction_description": exon_junction[1], 
-                   "forward": pdict["PRIMER_LEFT{}SEQUENCE".format(patt)].upper(), 
-                   "reverse": pdict["PRIMER_RIGHT{}SEQUENCE".format(patt)].upper(), 
-                   "amplicon_size": pdict["PRIMER_PAIR{}PRODUCT_SIZE".format(patt)], 
-                   "forward_tm": pdict["PRIMER_LEFT{}TM".format(patt)], 
-                   "reverse_tm": pdict["PRIMER_LEFT{}TM".format(patt)], 
-                   "forward_gc": pdict["PRIMER_LEFT{}GC_PERCENT".format(patt)],
-                   "reverse_gc": pdict["PRIMER_LEFT{}GC_PERCENT".format(patt)], 
-                   "amplicon_tm": pdict["PRIMER_PAIR{}PRODUCT_TM".format(patt)], 
-                   "pair_penalty": pdict["PRIMER_PAIR{}PENALTY".format(patt)]}
+                   "forward": pdict["PRIMER_LEFT{}_SEQUENCE".format(patt)].upper(), 
+                   "reverse": pdict["PRIMER_RIGHT{}_SEQUENCE".format(patt)].upper(), 
+                   "amplicon_size": pdict["PRIMER_PAIR{}_PRODUCT_SIZE".format(patt)], 
+                   "forward_tm": pdict["PRIMER_LEFT{}_TM".format(patt)], 
+                   "reverse_tm": pdict["PRIMER_LEFT{}_TM".format(patt)], 
+                   "forward_gc": pdict["PRIMER_LEFT{}_GC_PERCENT".format(patt)],
+                   "reverse_gc": pdict["PRIMER_LEFT{}_GC_PERCENT".format(patt)], 
+                   "amplicon_tm": pdict["PRIMER_PAIR{}_PRODUCT_TM".format(patt)], 
+                   "pair_penalty": pdict["PRIMER_PAIR{}_PENALTY".format(patt)]}
             
+            # get position of primers
+            forpos, forlen = pdict["PRIMER_LEFT{}".format(patt)]
+            revpos, revlen = pdict["PRIMER_RIGHT{}".format(patt)]
+            if pdict == c1: 
+                
+                forex1 = [e[0] for e in exon_len if forpos in e[1]] # e1 is range
+                forex2 = [e[0] for e in exon_len if forpos+forlen in e[1]] # e1 is range
+                revex1 = [e[0] for e in exon_len if revpos in e[1]] # e1 is range
+                revex2 = [e[0] for e in exon_len if revpos+revlen in e[1]] # e1 is range
+                
+                if forex1 != forex2: 
+                    row["for_pos"] = [(forex1, forlen/2), (forex2, forlen/2)]
+                    row["rev_pos"] = [(revex1, revlen)]                
+                else: 
+                    row["for_pos"] = [(forex1, forlen)]
+                    row["rev_pos"] = [(revex1, revlen/2), (revex2, revlen/2)]    
+                    
+            else: # pdict is c2
+                forex = [e[0] for e in exon_len if forpos in e[1]] # e1 is range
+                revex = [e[0] for e in exon_len if revpos in e[1]] # e1 is range
+                
+                row["for_pos"] = [(forex, forlen)]
+                row["rev_pos"] = [(revex, revlen)]
+                
+                
             df = pd.concat([df, pd.DataFrame([row])], ignore_index = True)
             
     return df

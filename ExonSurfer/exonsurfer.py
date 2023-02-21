@@ -59,8 +59,8 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
     
     if junction == None: # only one exon
         design_dict["PRIMER_NUM_RETURN"] = NPRIMERS
-        target, index = ensembl.construct_one_exon_cdna(resources.MASKED_SEQS(species), 
-                                                        data, transcripts)        
+        target, index, elen = ensembl.construct_one_exon_cdna(resources.MASKED_SEQS(species), 
+                                                              data, transcripts)        
         # Design primers
         c2 = designPrimers.call_primer3(target, index, design_dict, enum = 1)
         item = [data.transcript_by_id(transcripts).exons[0].exon_id, 
@@ -71,13 +71,13 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         # number of primers to design for each junction and option
         num_primers = int(NPRIMERS / (len(junction)*2))
         design_dict["PRIMER_NUM_RETURN"] = num_primers
-        
+
         for item in junction: 
-            target, index = ensembl.construct_target_cdna(resources.MASKED_SEQS(species), 
-                                                          gene_obj,
-                                                          data, 
-                                                          transcripts, 
-                                                          item)
+            target, index, elen = ensembl.construct_target_cdna(resources.MASKED_SEQS(species), 
+                                                                gene_obj,
+                                                                data, 
+                                                                transcripts, 
+                                                                item)
             # Design primers
             c1, c2 = designPrimers.call_primer3(target, index, design_dict)
     
@@ -114,7 +114,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         
         # Filter blast results
         blast_df = blast.pre_filter_blast(blast_df, transcripts, gene, df, 
-                                          e_value, i_cutoff)
+                                          e_value, i_cutoff, False)
         
         # Check blast results positions
         df = blast.check_specificity(blast_df, df, gene, max_sep)
