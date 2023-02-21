@@ -7,6 +7,7 @@ import argparse
 # own modules
 from ExonSurfer.exonsurfer import CreatePrimers
 from ExonSurfer.primerDesign import designConfig
+from ExonSurfer.resources import resources
 
 def arguments_parser(): 
     """
@@ -42,6 +43,9 @@ def arguments_parser():
 
     parser.add_argument("--max_sep", "-ms", dest = "max_sep", default = 1000, 
                         help = "Maximum sep between alignments to consider amplicon")
+    
+    parser.add_argument("--download", "-d", dest = "download", default = False, 
+                        help = "Download all DB") 
              
     args = parser.parse_args()
     
@@ -54,6 +58,9 @@ def main():
     
     if args.design_dict is None:
         args.design_dict = designConfig.design_dict
+        
+    if args.download:
+        resources.download_all_db()
     # Construct transcripts dictionary
     CreatePrimers(gene = args.gene, 
                   transcripts = args.transcript, 
