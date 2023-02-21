@@ -41,7 +41,13 @@ IDS_TABEL = "table.txt"
 
 def _get_path_data():
     """Return the path to the data directory."""
-    return str(os.path.dirname(__file__))
+    custom_path = os.environ.get("EXONSURFER_CACHE_DIR", None)
+
+    if custom_path is not None:
+        path_data = custom_path
+    else:
+        path_data = str(os.path.dirname(__file__))
+    return path_data
 
 ###############################################################################
     
@@ -199,3 +205,16 @@ def BLAST_DB(species):
         download_blast_db(species)
 
     return blast_db_path
+###############################################################################
+
+def download_all_db():
+    """
+    This function downloads all the databases.
+    Fasta sequences and BLAST databases.
+    """
+    for species in BLAST_DB_LINKS.keys():
+        print("[+] Downloading {} BLAST DB...".format(species), flush=True)
+        BLAST_DB(species)
+        print("[+] Downloading {} masked sequences...".format(species), flush=True)
+        MASKED_SEQS(species)
+        print("[+] Done.", flush=True)
