@@ -6,7 +6,9 @@ Created on Tue Feb 14 17:31:44 2023
 @author: Elena Cristina Rusu 
 """
 # imported modules
+import os
 import re
+import regex
 
 # own modules
 from ExonSurfer.ensembl import ensembl
@@ -16,42 +18,7 @@ from ExonSurfer.resources import resources
 #                        CONSTANTS FOR THE HTML FILE                          #
 ###############################################################################
 
-UPPER_LINES =['<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">', 
-              '<html>', 
-              '<head>', 
-              
-              '<style>', 
-              '@page { size: 8.27in 11.69in; margin: 0.79in }',
-              'div {text-align:justify; word-break: break-all; max-width:40em; line-height: 20%;}',   
-              'span{ width:100%; height:1em;}', 
-              
-              '.ex1 {color: #7b3294; display: inline;}', 
-              '.ex1H {color: #7b3294; background-color: #c2a5cf; display: inline;}', 
-              '.ex2 {color: #008837; display: inline;}', 
-              '.ex2H {color: #008837; background-color: #a6dba0; display: inline;}', 
-              
-              '.divS { width: 30em; max-width: 100%; margin-bottom: 0in; line-height: 100%}', 
-              '.two p:nth-child(1) { float:left; }', 
-              '.two p:nth-child(2) { float:right; }', 
-              
-              '.header {font-family:"Liberation Sans", sans-serif; size: 14pt; }',
-              '</style>',
-              
-              '<meta http-equiv="content-type" content="text/html; charset=utf-8"/>', 
-              '<title>{}</title>',
-              '<meta name="generator" content="LibreOffice 6.4.7.2 (Linux)"/>', 
-              '<meta name="created" content="2022-03-31T10:34:31.650656446"/>', 
-              '<meta name="changed" content="2022-05-25T14:09:40.676889449"/>', 
-              '</head>', 
-              
-              '<body lang="en-US" link="#000080" vlink="#800000" dir="ltr">', 
-              '<h3 class="header"> {} {}</h3>',
-              '<div class="divS">', 
-              '<font face="Liberation Sans, sans-serif" size="2" style="font-size: 10pt">']
-
-
-FINAL_LINES = ['</font>', '</div>', '</body>', '</html>']
-
+HEADER_LINE ='<h3 class="header"> {} {}</h3>'
 
 ###############################################################################
 #                          Function definition site                           #
@@ -100,36 +67,58 @@ def get_junction_seqs(junction, masked_chr, data):
 
     return nm_dna, ji
     
-    
 ###############################################################################
 
-def get_primers_i(junction_dna, forward, reverse): 
+def get_primers_i(dna, forward, reverse, e = 0): 
     """
-    This func returns the start and end of forward and reverse primers on the 
-    junction_dna
+    This func returns the start and end of forward and reverse primers on a DNA
     Args: 
-        junction_dna [in] (str) Junction seq
+        dna [in] (str)          DNA seq where to search
         forward [in] (str)      Forward primer seq
         reverse [in] (str)      Reverse primer seq
+        e [in] (int)            Mismatches allowed (errors)
         f1, f2 [out] (int)      Forward start and end indices
         r1, r2 [out] (int)      Reverse start and end indices
     """
+    if e == 0: 
+        f1 = re.search(forward, dna, re.I).start()
+        f2 =  re.search(forward, dna, re.I).end()
     
-    f1 = re.search(forward, junction_dna, re.I).start()
-    f2 =  re.search(forward, junction_dna, re.I).end()
-
-    r1 = re.search(reverse_complement(reverse), junction_dna, re.I).start()
-    r2 =  re.search(reverse_complement(reverse), junction_dna, re.I).end()
+        r1 = re.search(reverse_complement(reverse), dna, re.I).start()
+        r2 =  re.search(reverse_complement(reverse), dna, re.I).end()
     
+    else: 
+        err_patt = "{e<=" + str(e) + "}"
+        try: 
+            f1 = regex.search(forward + err_patt, dna).span()[0]
+            f2 = regex.search(forward + err_patt, dna).span()[1]
+            
+        except: 
+            print("not found: dna")
+        
+        try: 
+            r1 = regex.search(reverse_complement(reverse) + err_patt, dna).span()[0]
+            r2 = regex.search(reverse_complement(reverse) + err_patt, dna).span()[1]        
+        except: 
+            print("not found: dna")    
     return f1, f2, r1, r2
 
 ###############################################################################
 
 def create_par_string(nm_dna, option, ji, f1, f2, r1, r2): 
+    """
+    This func creates the html string with the marked primers
+    Args: 
+        nm_dna [in] (str)  Junction seq
+        option [in] (int)  design option used (1 OR 2)
+        ji [in] (str)      Junction index
+        f1, f2 [in] (int)  Forward start and end indices
+        r1, r2 [in] (int)  Reverse start and end indices   
+        string [out] (str) Annotated html string
     
+    """
     if option == 1: 
-        if f2 > ji: # the forward is ON the junction
-            
+        if f2 > ji: # the forward is ON the junction     
             string = '<p class="ex1">' + nm_dna[:f1] + '</p>'
             string += '<p class="ex1H">' + nm_dna[f1:ji] + '</p>' # forward ini
             string += '<p class="ex2H">' + nm_dna[ji:f2] + "➛"+ '</p>' # forward final
@@ -148,8 +137,8 @@ def create_par_string(nm_dna, option, ji, f1, f2, r1, r2):
     else: 
         string = '<p class="ex1">' + nm_dna[:f1] + '</p>'
         string += '<p class="ex1H">' + nm_dna[f1:f2] + "➛"+ '</p>' # full forward
-        string += '<p class="ex1">' + nm_dna[f2:ji] + '</p>' 
-        string += '<p class="ex2">' + nm_dna[ji:r1] + '</p>'
+        string += '<p class="ex1">' + nm_dna[f2:ji+1] + '</p>' 
+        string += '<p class="ex2">' + nm_dna[ji+1:r1] + '</p>'
         string += '<p class="ex2H">' + "￩"+nm_dna[r1:r2] + '</p>' # full reverse
         string += '<p class="ex2">' + nm_dna[r2:] + '</p>'      
         
@@ -157,33 +146,203 @@ def create_par_string(nm_dna, option, ji, f1, f2, r1, r2):
 
 ###############################################################################
 
-def highlight_primers(pair_id, final_df, species, release, outfile): 
+def create_offt_string(seq, f1, f2, r1, r2, mm_i): 
     """
+    This func creates the html string with the marked primers
+    Args: 
+        seq    [in] (str)  Offtarget DNA seq
+        f1, f2 [in] (int)  Forward start and end indices
+        r1, r2 [in] (int)  Reverse start and end indices   
+        mm_i   [in] (l)    List of indices where mismatches are found
+        string [out] (str) Sequence with marked primers and errors
     """
+   
+    string = '<p class="ex">' + seq[:f1] + '</p>'
+    # all possible mismatches in the forward primer
+    if any([x for x in mm_i if x in range(f1, f2)]):
+        for_mmi = [x for x in mm_i if x in range(f1, f2)]
+        start = f1
+        for i in range(0, len(for_mmi)): 
+            string += '<p class="exH">' + string[start:for_mmi[i]] + '</p>'
+            string += '<p class="error">' + string[for_mmi[i]] + '</p>'
+            start = for_mmi[i] + 1
+        string += '<p class="exH">' + string[start:f2] + '</p>'
+    else: 
+        string += '<p class="exH">' + seq[f1:f2] + '</p>' # full forward
+    
+    string += '<p class="ex">' + seq[f2:r1] + '</p>' # in between primers
+    
+    if any([x for x in mm_i if x in range(r1, r2)]):
+        rev_mmi = [x for x in mm_i if x in range(r1, r2)]
+        start = r1
+        for mi in range(0, len(rev_mmi)): 
+            string += '<p class="exH">' + string[start:rev_mmi[i]] + '</p>'
+            string += '<p class="error">' + string[rev_mmi[i]] + '</p>'
+            start = rev_mmi[i] + 1
+        string += '<p class="exH">' + string[start:r2] + '</p>'
+    else: 
+        string += '<p class="exH">' + seq[r1:r2] + '</p>' # full reverse   
+        
+    string += '<p class="ex">' + seq[r2:] + '</p>'
+        
+        
+
+        
+    return string
+
+###############################################################################
+
+def obtain_offtarget_list(pair_id, final_df, species): 
+    """
+    This function returns a list of refseq identifiers, corresponding to the
+    possible off-target amplification. 
+    Args: 
+        pair_id [in] (str)   Primer pair identifier (ex "Pair1")
+        final_df [in] (str)  Final design DF returned by exon surfer
+        species [in] (str)   Organism
+        refseq_ids [out] (l) List of refseq identifiers
+    """
+    refseq_ids = [] # to return
+    
+    # Obtain ensembl ids
+    ensembl_ids = final_df.loc[pair_id]["other_genes"].split(";")
+    ensembl_ids += final_df.loc[pair_id]["other_transcripts"].split(";")    
+    
+    # Remove empty ones
+    ensembl_ids = [x for x in ensembl_ids if x != ""]
+    
+    # Transform to refseq ids
+    if len(ensembl_ids) > 0: 
+        table_file = os.path.join(resources.get_blastdb_path(species), 
+                                  resources.IDS_TABEL)
+        with open(table_file, "r") as op: 
+            lines = op.realdines()
+        refseq_ids += [l.split("\t")[0] for l in lines if any([x for x in ensembl_ids if x in l])]
+
+    # Obtain refseq_ids
+    refseq_ids = final_df.loc[pair_id]["other_genes_rpred"].split(";")
+    refseq_ids += final_df.loc[pair_id]["other_transcripts_rpred"].split(";")    
+
+    # Remove empty ones
+    refseq_ids = [x for x in refseq_ids if x != ""]
+    
+    return refseq_ids
+  
+###############################################################################
+
+def get_offtarget_sequence(refseq_id, species): 
+    """
+    This function returns the complete sequence of an off-target location. 
+    Args: 
+        refseq_id [in] (str) Refseq identifier
+        species [in] (str)   Organism
+        seq [out] (str)      Complete sequence of the refseq identifier
+
+    """
+    blast_file = os.path.join(resources.get_blastdb_path(species), 
+                              resources.BLAST_DB_NAMES[species])
+    
+    with open(blast_file, "r") as op: 
+        cseq = op.read() # complete sequence
+        cseq = cseq.split(">") # list
+        
+    # add "." to ensure complete match
+    string = [x for x in cseq if refseq_id+"." in x][0]
+    string = string.split("\n") # list
+    string = string[1:] # remove header
+    string = "".join(string).upper()
+        
+    return string
+
+###############################################################################
+
+def get_error_indices(seq, f1, r1, forward, reverse): 
+    """
+    This function returns the error match indices between the off-target 
+    alignment and the primers. 
+    Args: 
+        seq [in] (str)     Off-target DNA seq
+        f1, r1 [in] (int)  Start indices for forward and reverse primer
+        forward [in] (str) Forward sequence
+        reverse [in] (str) Reverse sequence
+        mm_i [out] (l)     List of indices where mismatches are found
+    """
+    mm_i = [] # to return
+    
+    for i in range(0, len(forward)): 
+        # there is a mismatch
+        if forward[i] != seq[i + f1]: 
+            mm_i.append(i + f1)
+            
+    for i in range(0, len(reverse)): 
+        # there is a mismatch
+        if reverse_complement(reverse)[i] != seq[i + r1]: 
+            mm_i.append(i + r1)        
+        
+    return mm_i
+
+###############################################################################
+#                MAIN FUNCTION FOR ON TARGET HIGHLIGHTING                     #
+###############################################################################
+
+def highlight_ontarget(pair_id, final_df, species, release): 
+    """
+    MAIN FUNCTION: highlights the ON target alignment of the primers. 
+    Args: 
+        pair_id [in] (str)  Primer pair identifier (ex "Pair1")
+        final_df [in] (str) Final design DF returned by exon surfer
+        species [in] (str)  Organism
+        release [in] (int)  Ensembl release
+        string [out] (str)  String to write to the html file
+    """
+    # obtain exon junction information
     junction = final_df.loc[pair_id]["junction"]
     masked_chr = resources.MASKED_SEQS(species)
     data = ensembl.create_ensembl_data(release, 
                                        species.replace("_masked", ""))
-    
+    # obtain sequence and indices
     nm_dna, ji = get_junction_seqs(junction, masked_chr, data)
     f1, f2, r1, r2 = get_primers_i(nm_dna, final_df.loc[pair_id]["forward"], 
                                    final_df.loc[pair_id]["reverse"])
     
-
+    # marked string
     string = create_par_string(nm_dna, final_df.loc[pair_id]["option"],
                                ji, f1, f2, r1, r2)    
     
-    with open(outfile, "w") as file_open: 
-        for l in UPPER_LINES: 
-            if "title" in l: 
-                file_open.write(l.format(pair_id))
-            elif "h3" in l: 
-                file_open.write(l.format(pair_id, junction))
-            else: 
-                file_open.write(l)
+    return HEADER_LINE.format(pair_id, junction) + "\n" + string
 
-        file_open.write(string)
-        for l in FINAL_LINES: 
-            file_open.write(l)
+###############################################################################
+#                MAIN FUNCTION FOR off TARGET HIGHLIGHTING                     #
+###############################################################################
+        
+def highlight_offtarget(pair_id, final_df, species): 
+    """
+    MAIN FUNCTION: highlights the OFF target alignment of the primers. 
 
-
+    """
+    strings = [] # list to return
+    
+    # Obtain all off-target ids
+    refseq_ids = obtain_offtarget_list(pair_id, final_df, species)
+    
+    for item in refseq_ids: 
+        seq = get_offtarget_sequence(item, species) # refseq sequence
+        # get primer match indices
+        f1, f2, r1, r2 = get_primers_i(seq, 
+                                       final_df.loc[pair_id]["forward"], 
+                                       final_df.loc[pair_id]["reverse"], 
+                                       e = 3)
+        
+        mm_i = get_error_indices(seq, f1, r1, 
+                                 final_df.loc[pair_id]["forward"], 
+                                 final_df.loc[pair_id]["reverse"])
+        
+    
+        string = create_offt_string(seq, f1, f2, r1, r2, mm_i)
+        
+        fullstr = HEADER_LINE.format(pair_id, item) + "\n" + string + "\n"
+        
+        strings.append(fullstr)
+    
+    return strings
+        
