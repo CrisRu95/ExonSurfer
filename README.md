@@ -7,7 +7,7 @@ ExonSurfer is a python3 program, designed for the design of high specific transc
 The advantages of ExonPrimerSurfer are:
 
 * Fast and accurate primer design, with user specified parameters like primer size, GC content, etc
-* User friendly [WEB](http://eps.icbi.local/) to setup search options and visualize results
+* User friendly [WEB](https://exonsurfer.i-med.ac.at/) to setup search options and visualize results
 * Highly specific primers, with low non-specific binding
 * Fully automated workflows
 
