@@ -76,7 +76,7 @@ def get_primers_i(dna, forward, reverse, e = 0):
         dna [in] (str)          DNA seq where to search
         forward [in] (str)      Forward primer seq
         reverse [in] (str)      Reverse primer seq
-        e [in] (int)            Mismatches allowed (errors)
+        e [in] (int)            Mismatches allowed (mismatches)
         f1, f2 [out] (int)      Forward start and end indices
         r1, r2 [out] (int)      Reverse start and end indices
     """
@@ -88,17 +88,17 @@ def get_primers_i(dna, forward, reverse, e = 0):
         r2 =  re.search(reverse_complement(reverse), dna, re.I).end()
     
     else: 
-        err_patt = "{e<=" + str(e) + "}"
+        err_patt = "){s<=" + str(e) + "}" # only substitutions allowed
         try: 
-            f1 = regex.search(forward + err_patt, dna).span()[0]
-            f2 = regex.search(forward + err_patt, dna).span()[1]
+            f1 = regex.search("(?:"+forward + err_patt, dna).span()[0]
+            f2 = regex.search("(?:"+forward + err_patt, dna).span()[1]
             
         except: 
             print("not found: dna")
         
         try: 
-            r1 = regex.search(reverse_complement(reverse) + err_patt, dna).span()[0]
-            r2 = regex.search(reverse_complement(reverse) + err_patt, dna).span()[1]        
+            r1 = regex.search("(?:"+reverse_complement(reverse) + err_patt, dna).span()[0]
+            r2 = regex.search("(?:"+reverse_complement(reverse) + err_patt, dna).span()[1]        
         except: 
             print("not found: dna")    
     return f1, f2, r1, r2
@@ -154,19 +154,19 @@ def create_offt_string(seq, f1, f2, r1, r2, mm_i):
         f1, f2 [in] (int)  Forward start and end indices
         r1, r2 [in] (int)  Reverse start and end indices   
         mm_i   [in] (l)    List of indices where mismatches are found
-        string [out] (str) Sequence with marked primers and errors
+        string [out] (str) Sequence with marked primers and mismatches
     """
-   
+
     string = '<p class="ex">' + seq[:f1] + '</p>'
     # all possible mismatches in the forward primer
     if any([x for x in mm_i if x in range(f1, f2)]):
         for_mmi = [x for x in mm_i if x in range(f1, f2)]
         start = f1
         for i in range(0, len(for_mmi)): 
-            string += '<p class="exH">' + string[start:for_mmi[i]] + '</p>'
-            string += '<p class="error">' + string[for_mmi[i]] + '</p>'
+            string += '<p class="exH">' + seq[start:for_mmi[i]] + '</p>'
+            string += '<p class="mismatch">' + seq[for_mmi[i]] + '</p>'
             start = for_mmi[i] + 1
-        string += '<p class="exH">' + string[start:f2] + '</p>'
+        string += '<p class="exH">' + seq[start:f2] + '</p>'
     else: 
         string += '<p class="exH">' + seq[f1:f2] + '</p>' # full forward
     
@@ -176,17 +176,23 @@ def create_offt_string(seq, f1, f2, r1, r2, mm_i):
         rev_mmi = [x for x in mm_i if x in range(r1, r2)]
         start = r1
         for mi in range(0, len(rev_mmi)): 
-            string += '<p class="exH">' + string[start:rev_mmi[i]] + '</p>'
-            string += '<p class="error">' + string[rev_mmi[i]] + '</p>'
+            string += '<p class="exH">' + seq[start:rev_mmi[i]] + '</p>'
+            string += '<p class="mismatch">' + seq[rev_mmi[i]] + '</p>'
             start = rev_mmi[i] + 1
-        string += '<p class="exH">' + string[start:r2] + '</p>'
+        string += '<p class="exH">' + seq[start:r2] + '</p>'
     else: 
         string += '<p class="exH">' + seq[r1:r2] + '</p>' # full reverse   
         
     string += '<p class="ex">' + seq[r2:] + '</p>'
         
-        
-
+    # cut start and end of sequence if too long: 
+    if len(seq[:f1]) > 200: 
+        string = '<p class="ex">' + "..." + string[100:]
+        if len(seq[r2:]) > 350: 
+            string = string[:r2+200] + "..." + '</p>'
+    else: 
+        if len(seq[r2:]) > 350: 
+            string = string[:r2+200] + "..." + '</p>'
         
     return string
 
@@ -211,16 +217,19 @@ def obtain_offtarget_list(pair_id, final_df, species):
     # Remove empty ones
     ensembl_ids = [x for x in ensembl_ids if x != ""]
     
+    # Remove annotation
+    ensembl_ids = [x.replace("(protein_coding)", "") for x in ensembl_ids]
+    
     # Transform to refseq ids
     if len(ensembl_ids) > 0: 
         table_file = os.path.join(resources.get_blastdb_path(species), 
                                   resources.IDS_TABEL)
         with open(table_file, "r") as op: 
-            lines = op.realdines()
+            lines = op.readlines()
         refseq_ids += [l.split("\t")[0] for l in lines if any([x for x in ensembl_ids if x in l])]
 
     # Obtain refseq_ids
-    refseq_ids = final_df.loc[pair_id]["other_genes_rpred"].split(";")
+    refseq_ids += final_df.loc[pair_id]["other_genes_rpred"].split(";")
     refseq_ids += final_df.loc[pair_id]["other_transcripts_rpred"].split(";")    
 
     # Remove empty ones
@@ -256,9 +265,9 @@ def get_offtarget_sequence(refseq_id, species):
 
 ###############################################################################
 
-def get_error_indices(seq, f1, r1, forward, reverse): 
+def get_mismatch_indices(seq, f1, r1, forward, reverse): 
     """
-    This function returns the error match indices between the off-target 
+    This function returns the mismatch indices between the off-target 
     alignment and the primers. 
     Args: 
         seq [in] (str)     Off-target DNA seq
@@ -309,7 +318,7 @@ def highlight_ontarget(pair_id, final_df, species, release):
     string = create_par_string(nm_dna, final_df.loc[pair_id]["option"],
                                ji, f1, f2, r1, r2)    
     
-    return HEADER_LINE.format(pair_id, junction) + "\n" + string
+    return HEADER_LINE.format(pair_id, junction) + "<br>" + string
 
 ###############################################################################
 #                MAIN FUNCTION FOR off TARGET HIGHLIGHTING                     #
@@ -318,7 +327,11 @@ def highlight_ontarget(pair_id, final_df, species, release):
 def highlight_offtarget(pair_id, final_df, species): 
     """
     MAIN FUNCTION: highlights the OFF target alignment of the primers. 
-
+    Args: 
+        pair_id [in] (str)  Primer pair identifier (ex "Pair1")
+        final_df [in] (str) Final design DF returned by exon surfer
+        species [in] (str)  Organism
+        strings [out] (l)   List of strings to write to the html file
     """
     strings = [] # list to return
     
@@ -333,14 +346,14 @@ def highlight_offtarget(pair_id, final_df, species):
                                        final_df.loc[pair_id]["reverse"], 
                                        e = 3)
         
-        mm_i = get_error_indices(seq, f1, r1, 
-                                 final_df.loc[pair_id]["forward"], 
-                                 final_df.loc[pair_id]["reverse"])
+        mm_i = get_mismatch_indices(seq, f1, r1, 
+                                    final_df.loc[pair_id]["forward"], 
+                                    final_df.loc[pair_id]["reverse"])
         
     
         string = create_offt_string(seq, f1, f2, r1, r2, mm_i)
         
-        fullstr = HEADER_LINE.format(pair_id, item) + "\n" + string + "\n"
+        fullstr = HEADER_LINE.format(pair_id, item) + "<br>" + string 
         
         strings.append(fullstr)
     
