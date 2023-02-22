@@ -111,21 +111,24 @@ def report_design(c1, c2, exon_len, exon_junction, df):
             revpos, revlen = pdict["PRIMER_RIGHT{}".format(patt)]
             if pdict == c1: 
                 
-                forex1 = [e[0] for e in exon_len if forpos in e[1]] # e1 is range
-                forex2 = [e[0] for e in exon_len if forpos+forlen in e[1]] # e1 is range
-                revex1 = [e[0] for e in exon_len if revpos in e[1]] # e1 is range
-                revex2 = [e[0] for e in exon_len if revpos+revlen in e[1]] # e1 is range
+                forex1 = [e[0] for e in exon_len if forpos in e[1]][0] # start of primers
+                forex2 = [e[0] for e in exon_len if forpos+forlen in e[1]][0] # end of primers  
                 
+                
+                revex1 = [e[0] for e in exon_len if revpos-revlen in e[1]][0] # start of primer
+                revex2 = [e[0] for e in exon_len if revpos in e[1]][0] # end of primer
+
                 if forex1 != forex2: 
-                    row["for_pos"] = [(forex1, forlen/2), (forex2, forlen/2)]
+                    row["for_pos"] = [(forex1, forlen/2), 
+                                      (forex2, forlen/2)]
                     row["rev_pos"] = [(revex1, revlen)]                
                 else: 
                     row["for_pos"] = [(forex1, forlen)]
                     row["rev_pos"] = [(revex1, revlen/2), (revex2, revlen/2)]    
                     
             else: # pdict is c2
-                forex = [e[0] for e in exon_len if forpos in e[1]] # e1 is range
-                revex = [e[0] for e in exon_len if revpos in e[1]] # e1 is range
+                forex = [e[0] for e in exon_len if forpos in e[1]][0] # e1 is range
+                revex = [e[0] for e in exon_len if revpos in e[1]][0] # e1 is range
                 
                 row["for_pos"] = [(forex, forlen)]
                 row["rev_pos"] = [(revex, revlen)]
@@ -137,7 +140,7 @@ def report_design(c1, c2, exon_len, exon_junction, df):
 
 ###############################################################################
 
-def report_one_exon_design(c2, exon_junction, df):    
+def report_one_exon_design(c2, exon_len, exon_junction, df):    
     """
     This function writes a table with the designed primers, only to use for one
     exon designs. 
@@ -151,20 +154,29 @@ def report_one_exon_design(c2, exon_junction, df):
 
     for n in range(c2["PRIMER_PAIR_NUM_RETURNED"]): 
         
-        patt = "_{}_".format(n)
+        patt = "_{}".format(n)
         
         row = {"option": 2, 
                "junction": exon_junction[0], 
                "junction_description": exon_junction[1], 
-               "forward": c2["PRIMER_LEFT{}SEQUENCE".format(patt)].upper(), 
-               "reverse": c2["PRIMER_RIGHT{}SEQUENCE".format(patt)].upper(), 
-               "amplicon_size": c2["PRIMER_PAIR{}PRODUCT_SIZE".format(patt)], 
-               "forward_tm": c2["PRIMER_LEFT{}TM".format(patt)], 
-               "reverse_tm": c2["PRIMER_LEFT{}TM".format(patt)], 
-               "forward_gc": c2["PRIMER_LEFT{}GC_PERCENT".format(patt)],
-               "reverse_gc": c2["PRIMER_LEFT{}GC_PERCENT".format(patt)], 
-               "amplicon_tm": c2["PRIMER_PAIR{}PRODUCT_TM".format(patt)], 
-               "pair_penalty": c2["PRIMER_PAIR{}PENALTY".format(patt)]}
+               "forward": c2["PRIMER_LEFT{}_SEQUENCE".format(patt)].upper(), 
+               "reverse": c2["PRIMER_RIGHT{}_SEQUENCE".format(patt)].upper(), 
+               "amplicon_size": c2["PRIMER_PAIR{}_PRODUCT_SIZE".format(patt)], 
+               "forward_tm": c2["PRIMER_LEFT{}_TM".format(patt)], 
+               "reverse_tm": c2["PRIMER_LEFT{}_TM".format(patt)], 
+               "forward_gc": c2["PRIMER_LEFT{}_GC_PERCENT".format(patt)],
+               "reverse_gc": c2["PRIMER_LEFT{}_GC_PERCENT".format(patt)], 
+               "amplicon_tm": c2["PRIMER_PAIR{}_PRODUCT_TM".format(patt)], 
+               "pair_penalty": c2["PRIMER_PAIR{}_PENALTY".format(patt)]}
+        
+        # get position of primers
+        forpos, forlen = c2["PRIMER_LEFT{}".format(patt)]
+        revpos, revlen = c2["PRIMER_RIGHT{}".format(patt)]
+        forex = [e[0] for e in exon_len if forpos in e[1]][0] # e1 is range
+        revex = [e[0] for e in exon_len if revpos in e[1]][0] # e1 is range
+        row["for_pos"] = [(forex, forlen)]
+        row["rev_pos"] = [(revex, revlen)]
+        
         
         df = pd.concat([df, pd.DataFrame([row])], ignore_index = True)
     

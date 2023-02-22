@@ -57,15 +57,20 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
             "amplicon_tm", "pair_penalty")
     df = pd.DataFrame(columns = cols)
     
-    if junction == None: # only one exon
+    if len(junction) == 0: # only one exon
         design_dict["PRIMER_NUM_RETURN"] = NPRIMERS
         target, index, elen = ensembl.construct_one_exon_cdna(resources.MASKED_SEQS(species), 
+                                                              gene_obj, 
                                                               data, transcripts)        
         # Design primers
         c2 = designPrimers.call_primer3(target, index, design_dict, enum = 1)
-        item = [data.transcript_by_id(transcripts).exons[0].exon_id, 
-                "one exon"]
-        df = designPrimers.report_one_exon_design(c2, item, df)
+        if transcripts == "ALL": 
+            item = [ensembl.get_transcript_from_gene(gene_obj)[0].exons[0].exon_id, 
+                    "one exon"]            
+        else: 
+            item = [data.transcript_by_id(transcripts).exons[0].exon_id, 
+                    "one exon"]
+        df = designPrimers.report_one_exon_design(c2, elen, item, df)
         
     else: # Normal design (more than 1 exon)
         # number of primers to design for each junction and option
@@ -81,7 +86,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
             # Design primers
             c1, c2 = designPrimers.call_primer3(target, index, design_dict)
     
-            df = designPrimers.report_design(c1, c2, item, df)
+            df = designPrimers.report_design(c1, c2, elen, item, df)
     
 
     df["pair_num"] = ["Pair{}".format(x) for x in range(0, df.shape[0])]

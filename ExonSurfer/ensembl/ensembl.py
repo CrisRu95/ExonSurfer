@@ -189,11 +189,15 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
 
 ###############################################################################
 
-def construct_one_exon_cdna(masked_chr, data, transcript): 
+def construct_one_exon_cdna(masked_chr, gene_obj, data, transcript): 
     """
 
     """
-    t_obj = data.transcript_by_id(transcript)
+    # get only transcript object
+    if transcript == "ALL": 
+        t_obj = gene_obj.transcripts[0]
+    else: 
+        t_obj = data.transcript_by_id(transcript)
     
     # read chromosome 
     chrom_open = open(masked_chr.format(t_obj.contig), "r")

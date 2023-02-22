@@ -109,9 +109,7 @@ def choose_target(d, junctions, to_detect):
     
     # Error: exit function            
     else:
-        print("The tanscript identifier is NOT valid")
-        return
-    
+        print("The tanscript identifier is NOT valid")    
     
     return toreturn
 
