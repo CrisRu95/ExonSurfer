@@ -115,7 +115,8 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                         species)
         
         # Delete fasta file
-        os.remove(FASTA_F)
+        if os.path.exists(FASTA_F):
+          os.remove(FASTA_F)
         
         # Filter blast results
         blast_df = blast.pre_filter_blast(blast_df, transcripts, gene, df, 
@@ -131,7 +132,8 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         
         if save_files == True:
             final_df.to_csv(DESIGN_OUT, sep = "\t")
-        else: 
+        else:
+          if os.path.exists(BLAST_OUT):
             os.remove(BLAST_OUT)
         
         logresult = False # not empty
