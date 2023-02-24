@@ -80,7 +80,7 @@ def filter_intended_al(primer_id, identity, transcript_id, gene_id,
     else: 
         to_keep = True # default situation
         if primer_id not in done_ids: 
-            if transcript_id == t_transcript and identity == 100: 
+            if transcript_id in t_transcript and identity == 100: 
                 to_keep = False
                 # if there is another instance, it will not be removed
                 done_ids.append(primer_id)             
@@ -122,7 +122,7 @@ def pre_filter_blast(blast_df, t_transcript, t_gene, design_df,
     3' end alignment, and with good enough e and identity values. 
     Args: 
         blast_df [in] (pd.df)     Alignment dataframe
-        t_transcript [in] (str)   Target transcript, without version info
+        t_transcript [in] (l|str) List of target transcripts, w/ version info or ALL
         design_df [in] (pd.df)    Design dataframe
         e_cutoff [in] (float)     Maximum e value to consider an alignment
         i_cutoff [in] (float/int) Minimum identity to consider an alignment
@@ -183,63 +183,42 @@ def check_specificity(blast_df, design_df, t_gene, max_sep):
         # for every alignment for a given forward
         
         # Subject is annotated in ensembl nomenclature
-        for subj in [x for x in list(blast_df[blast_df["query id"] == for_id]["ensembl_id"]) if x != "-"]: 
+        for subj in [x for x in list(blast_df[blast_df["query id"] == for_id]["subject id"]) if x != "-"]: 
             
             for forpos in blast_df.loc[(blast_df['query id'] == for_id) & \
-                                      (blast_df['ensembl_id'] == subj)]["s. start"]: 
+                                      (blast_df['subject id'] == subj)]["s. start"]: 
                 forpos = int(forpos)
 
                 # check if there are any reverse alignments on the same subject id
                 rev_id = for_id[:-2] + "_3"
             
                 for revpos in blast_df.loc[(blast_df['query id'] == rev_id) & \
-                                       (blast_df['ensembl_id'] == subj)]["s. start"]: 
+                                       (blast_df['subject id'] == subj)]["s. start"]: 
                     revpos = int(revpos)
                     
                     # both alignments are on the same, untargeted, subject
                     if abs(revpos-forpos) <= max_sep: 
                         
-                        gene = blast_df.loc[(blast_df['query id'] == rev_id) & \
-                                            (blast_df['ensembl_id'] == subj)]["gene"]
+                        gene = blast_df[(blast_df['query id'] == rev_id) & \
+                                        (blast_df['subject id'] == subj)].gene.item()
                         
-                        if t_gene == gene.item(): # same gene, different transcript
-                            design_df.loc[for_id[:-2], "other_transcripts"] += subj +";" 
-                        else:  # different gene
-                            design_df.loc[for_id[:-2], "other_genes"] += subj +";"
-                                
-    
-    
-    # LOOP 2. Subject is NOT annotated in ensembl nomenclature
-    miniblast_df = blast_df[blast_df["ensembl_id"] == "-"]
-    
-    for for_id in [x for x in list(set(miniblast_df["query id"])) if "_5" in x]: 
-        # for every alignment for a given forward
-        
-        # Subject is annotated in ensembl nomenclature
-        for subj in list(miniblast_df[miniblast_df["query id"] == for_id]["subject id"]):        
-
-            for forpos in miniblast_df.loc[(miniblast_df['query id'] == for_id) & \
-                                      (miniblast_df['subject id'] == subj)]["s. start"]: 
-                forpos = int(forpos)
-
-                # check if there are any reverse alignments on the same subject id
-                rev_id = for_id[:-2] + "_3"
-            
-                for revpos in miniblast_df.loc[(miniblast_df['query id'] == rev_id) & \
-                                       (miniblast_df['subject id'] == subj)]["s. start"]: 
-                    revpos = int(revpos)
-                    
-                    # both alignments are on the same, untargeted, subject
-                    if abs(revpos-forpos) <= max_sep: 
-                        
-                        gene = miniblast_df.loc[(miniblast_df['query id'] == rev_id) & \
-                                                (miniblast_df['subject id'] == subj)]["gene"]
-                        
-                        if t_gene == gene.item(): # same gene, different transcript
-                            design_df.loc[for_id[:-2], "other_transcripts_rpred"] += subj +";" 
-                        else:  # different gene
-                            design_df.loc[for_id[:-2], "other_genes_rpred"] += subj +";"
-                                
+                        ensembl_id = blast_df[(blast_df['query id'] == rev_id) & \
+                                              (blast_df['subject id'] == subj)].ensembl_id.item()
+                        try: 
+                            if ensembl_id != "-": 
+                                if t_gene == gene: # same gene, different transcript
+                                    design_df.loc[for_id[:-2], "other_transcripts"] += ensembl_id +";" 
+                                else:  # different gene
+                                    design_df.loc[for_id[:-2], "other_genes"] += ensembl_id +";"
+                            else: 
+                                if t_gene == gene: # same gene, different transcript
+                                    design_df.loc[for_id[:-2], "other_transcripts_rpred"] += subj +";" 
+                                else:  # different gene
+                                    design_df.loc[for_id[:-2], "other_genes_rpred"] += subj +";"
+                        except: 
+                              print("ensembl id: {}".format(ensembl_id))
+                              print("rev_id id: {}".format(rev_id))
+                              print("subj id: {}".format(subj))
     # individual alignments with other genes
     b_ogenes = blast_df[blast_df["gene"] != t_gene]
     design_df["indiv_als"] = design_df.apply(lambda row: b_ogenes[(b_ogenes["query id"] == row.name+"_5") | \

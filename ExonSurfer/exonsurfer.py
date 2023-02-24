@@ -116,9 +116,9 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         
         # Define three output files, with the same name as the gene and transcript
         DESIGN_OUT = os.path.join(path_out, 
-                                  "{}_{}_design.txt".format(gene, transcripts))
+                                  "{}_{}_design.txt".format(gene, "-".join(transcripts)))
         BLAST_OUT = os.path.join(path_out, 
-                                 "{}_{}_blast.txt".format(gene, transcripts))
+                                 "{}_{}_blast.txt".format(gene, "-".join(transcripts)))
         
         # remove in case remaining from previous design
         for file in (DESIGN_OUT, BLAST_OUT): 

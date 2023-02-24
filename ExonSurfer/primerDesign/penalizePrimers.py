@@ -115,7 +115,7 @@ def penalize_final_output(df, transcripts, data, gene_object):
     appended) and returns a list of the best primer pairs for the task
     Args: 
         df [in] (pd.df)          Design df with blast information appended
-        transcripts [in] (str)   Target transcript ID (no version) or ALL
+        transcripts [in] (l|str) List of target transcripts ID (no version) or ALL
         data [in] (Genome obj)   Ensembl Genome object
         gene_obj [in] (Gene obj) Ensembl gene object
         final_df [out] (pd.df)   Filtered df 
@@ -255,7 +255,10 @@ def penalize_final_output(df, transcripts, data, gene_object):
 
 def minmax_norm(v, minv, maxv): 
     """ This function makes the min max normalization"""
-    newv = (v - minv) / (maxv - minv) 
+    if maxv != minv: 
+        newv = (v - minv) / (maxv - minv) 
+    else: 
+        newv = 1
     return newv * 100
 
 ###############################################################################

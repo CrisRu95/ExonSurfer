@@ -70,11 +70,35 @@ def format_junctions(d, to_detect, opt_amp_len, data):
                 junctions[key] = [transcript]
             else: 
                  junctions[key].append(transcript)
-                     
+    
+    # sort all values from dict
+    for item in junctions: 
+        junctions[item] = sorted(junctions[item])  
+               
     return junctions
 
 ###############################################################################
+
+def check_if_all(junctions, to_detect): 
+    """
+    This function returns the junctions keys (junctions names) that include all 
+    the transcript identifiers from to_detect. 
+    Args: 
+        junctions [in] (dict)  Keys are exon junctions, values are transcript ids
+        to_detect [in] (l|str) List of transcript IDs or "ALL" with a junction and 
+                               a explanation message
+        keys [out] (l)         List of exon junctions that contain all the tcripts
+                               from to_detect
+    """    
+    keys = []
+    for k in junctions: 
+        if all([True if x in junctions[k] else False for x in to_detect]): 
+            keys.append(k)
     
+    return keys
+    
+###############################################################################  
+  
 def choose_target(d, junctions, to_detect, canonical_t): 
     """
     This function chooses the best exon junctions to target with primer design, 
@@ -82,41 +106,73 @@ def choose_target(d, junctions, to_detect, canonical_t):
     there are no specific / universal junctions, the function returns the next 
     most acceptable solution. 
     Args: 
-        d [in] (dict)         Keys are trans, values are exons separated by "-"
-        junctions [in] (dict) Keys are exon junctions, values are transcript ids
-        to_detect [in] (str)  Transcript ID or "ALL"
-        canonical_t [in] (l)  List with the canonical transcript (can be empty)
-        toreturn [out] (l)    List of tuples, each tuple with a junction and 
-                              a explanation message
+        d [in] (dict)          Keys are trans, values are exons separated by "-"
+        junctions [in] (dict)  Keys are exon junctions, values are transcript ids
+        to_detect [in] (l|str) List of transcript IDs or "ALL"
+        canonical_t [in] (l)   List with the canonical transcript (can be empty)
+        toreturn [out] (l)     List of tuples, each tuple with a junction and 
+                               a explanation message
     """
     toreturn, p_sols = [], [] # initialize
     
-    # Case 1: Detect only one transcript ID
-    if to_detect in d.keys():
+    # Case 1: Detect only SOME transcripts
+    # check that all the to_detect transcripts are in my data
+    if all([True if x in d.keys() else False for x in to_detect]):
         print("Detecting only {}".format(to_detect)) 
-        perf_j = [j for j in junctions if junctions[j] == [to_detect]]
+        
+        # sort 
+        to_detect = sorted(to_detect)
+        new_to_detect = to_detect # used to check if I can detect all transcripts
+        
+        # search for perfect solution
+        perf_j = [j for j in junctions if junctions[j] == to_detect]
         
         if len(perf_j) >= 1:  # solution found, no need for loop 
             p_sols = perf_j
         
-        else: 
-            i, found = 2, False    # loop initialization
+        else: # subpar solutions
+            
+            # First aim: to detect the transcripts I want
+            e_keys = check_if_all(junctions, to_detect)
+            
+            # keep only exon junctions that contain the transcripts I want
+            if len(e_keys) > 0: 
+                all_keys = junctions.keys()
+            else: # none junctions contain all the transcripts that I want
+                print("The transcripts selected do not contain any common junctions")
+                while len(to_detect) > 0 and len(e_keys) == 0: 
+                    new_to_detect = new_to_detect[:-1] # remove one element
+                    e_keys = check_if_all(junctions, new_to_detect)                    
+            
+            # delete other junctions  
+            keys_to_delete = [k for k in all_keys if k not in e_keys]
+            for k in keys_to_delete: 
+                del junctions[k]
+            
+            # Second aim: to NOT detect transcripts that I do not want
+            i = len(new_to_detect) + 1 # loop initialization
+            found = False    
             while i <= len(d) and found == False: 
                 less_perf_j = [j 
                                for j 
                                in junctions 
-                               if to_detect in junctions[j] and len(junctions[j]) == i]
+                               if len(junctions[j]) == i]
                 if len(less_perf_j) >= 1: 
                     found = True
                     p_sols = less_perf_j 
                 i += 1
-        
+                
+        # annotate solutions
         for sol in p_sols: 
             if junctions[sol] == [to_detect]: 
-                t = (sol, "unique to target")
+                string = "unique to target"
             else: 
-                string = ", ".join([x for x in junctions[sol] if x != to_detect])
-                t = (sol, "also detects: {}".format(string))
+                if new_to_detect != to_detect: 
+                    not_det = [x for x in to_detect if x not in new_to_detect]
+                    string = "fails to detect: {}".format(",".join(not_det))
+                else: 
+                    string = ""
+            t = (sol, string)
             toreturn.append(t)
         
     # Case 2: try to detect all transcript

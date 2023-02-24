@@ -18,7 +18,7 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
         masked_chr [in] (str)    Full path to the masked chromosome files
         gene_obj [in] (Gene obj) Gene object returned by ensembl
         data [in] (Genome obj)   Genome object returned by ensembl
-        transcript [in] (str)    Ensembl transcript ID
+        transcript [in] (l|str)  List of ensembl transcript IDs or ALL
         exon_junction [in] (str) Ensembl exon IDs (e.g. ENS001-ENS002)
         to_return [out] (l)      List of tuples, each tuple formed by: 
             - cdna (str)       Complete cDNA of the transcript 
@@ -68,7 +68,7 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
         
     else:
         # t is a target transcript object
-        t_filt = [x for x in gene_obj.transcripts if x.transcript_id == transcript]
+        t_filt = [x for x in gene_obj.transcripts if x.transcript_id == transcript[0]]
         
         if len(t_filt) > 0: 
             t = t_filt[0]
@@ -123,7 +123,7 @@ def construct_one_exon_cdna(masked_chr, gene_obj, data, transcript):
     if transcript == "ALL": 
         t_obj = gene_obj.transcripts[0]
     else: 
-        t_obj = data.transcript_by_id(transcript)
+        t_obj = data.transcript_by_id(transcript[0])
     
     # read chromosome 
     chrom_open = open(masked_chr.format(t_obj.contig), "r")
