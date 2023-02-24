@@ -51,7 +51,7 @@ def run_blast_list(fastaf, out, db_path, species,
     df = pd.merge(df, table, left_on="subject id", right_on = "id")
     
     # overwrite annotated blast result
-    #df.to_csv(out, sep = "\t", index = False)
+    df.to_csv(out, sep = "\t", index = False)
     os.remove(out)
     return df
 
