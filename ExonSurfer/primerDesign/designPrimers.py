@@ -135,6 +135,14 @@ def report_design(c1, c2, exon_len, junction_id, junction_info, df):
                 
             df = pd.concat([df, pd.DataFrame([row])], ignore_index = True)
             
+    # convert dataframe type
+    df["amplicon_size"] = df["amplicon_size"].astype("int64")
+    df["forward_tm"] = df["forward_tm"].astype("float64").round(2)
+    df["reverse_tm"] = df["reverse_tm"].astype("float64").round(2)
+    df["forward_gc"] = df["forward_gc"].astype("float64").round(2)
+    df["reverse_gc"] = df["reverse_gc"].astype("float64").round(2)
+    df["amplicon_tm"] = df["amplicon_tm"].astype("float64").round(2)      
+    
     return df
 
 ###############################################################################
@@ -179,5 +187,13 @@ def report_one_exon_design(c2, exon_len, exon_junction, df):
         
         
         df = pd.concat([df, pd.DataFrame([row])], ignore_index = True)
+    
+    # convert dataframe type
+    df["amplicon_size"] = df["amplicon_size"].astype("int64")
+    df["forward_tm"] = df["forward_tm"].astype("float64").round(2)
+    df["reverse_tm"] = df["reverse_tm"].astype("float64").round(2)
+    df["forward_gc"] = df["forward_gc"].astype("float64").round(2)
+    df["reverse_gc"] = df["reverse_gc"].astype("float64").round(2)
+    df["amplicon_tm"] = df["amplicon_tm"].astype("float64").round(2)
     
     return df
