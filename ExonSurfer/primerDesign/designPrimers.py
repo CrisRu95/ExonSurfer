@@ -77,7 +77,7 @@ def call_primer3(target_seq, junction_i, design_dict, enum = 2):
 
 ###############################################################################
            
-def report_design(c1, c2, exon_len, exon_junction, df):    
+def report_design(c1, c2, exon_len, junction_id, junction_info, df):    
     """
     This function writes a table with the designed primers
     Args: 
@@ -94,15 +94,15 @@ def report_design(c1, c2, exon_len, exon_junction, df):
             
             patt = "_{}".format(n)            
             row = {"option": 1 if pdict == c1 else 2, # design option, 
-                   "junction": exon_junction[0], 
-                   "junction_description": exon_junction[1], 
+                   "junction": junction_id, 
+                   "junction_description": junction_info, 
                    "forward": pdict["PRIMER_LEFT{}_SEQUENCE".format(patt)].upper(), 
                    "reverse": pdict["PRIMER_RIGHT{}_SEQUENCE".format(patt)].upper(), 
                    "amplicon_size": pdict["PRIMER_PAIR{}_PRODUCT_SIZE".format(patt)], 
                    "forward_tm": pdict["PRIMER_LEFT{}_TM".format(patt)], 
-                   "reverse_tm": pdict["PRIMER_LEFT{}_TM".format(patt)], 
+                   "reverse_tm": pdict["PRIMER_RIGHT{}_TM".format(patt)], 
                    "forward_gc": pdict["PRIMER_LEFT{}_GC_PERCENT".format(patt)],
-                   "reverse_gc": pdict["PRIMER_LEFT{}_GC_PERCENT".format(patt)], 
+                   "reverse_gc": pdict["PRIMER_RIGHT{}_GC_PERCENT".format(patt)], 
                    "amplicon_tm": pdict["PRIMER_PAIR{}_PRODUCT_TM".format(patt)], 
                    "pair_penalty": pdict["PRIMER_PAIR{}_PENALTY".format(patt)]}
             
@@ -112,9 +112,8 @@ def report_design(c1, c2, exon_len, exon_junction, df):
             if pdict == c1: 
                 
                 forex1 = [e[0] for e in exon_len if forpos in e[1]][0] # start of primers
-                forex2 = [e[0] for e in exon_len if forpos+forlen in e[1]][0] # end of primers  
-                
-                
+                forex2 = [e[0] for e in exon_len if forpos+forlen in e[1]][0] # end of primers   
+
                 revex1 = [e[0] for e in exon_len if revpos-revlen in e[1]][0] # start of primer
                 revex2 = [e[0] for e in exon_len if revpos in e[1]][0] # end of primer
 
@@ -146,6 +145,7 @@ def report_one_exon_design(c2, exon_len, exon_junction, df):
     exon designs. 
     Args: 
         c2 [in] (dict)             Dict of primers
+        exon_len [in] (l)          List of tuples, (exon_id, exon length)
         exon_junction [in] (tuple) Tuple with two strings: (1) "Ensemble exon ID
                                    - Ensembl exon ID" (2) Design specification
         df [in|out] (ps.df)        Pandas df with the designed primers info
@@ -163,9 +163,9 @@ def report_one_exon_design(c2, exon_len, exon_junction, df):
                "reverse": c2["PRIMER_RIGHT{}_SEQUENCE".format(patt)].upper(), 
                "amplicon_size": c2["PRIMER_PAIR{}_PRODUCT_SIZE".format(patt)], 
                "forward_tm": c2["PRIMER_LEFT{}_TM".format(patt)], 
-               "reverse_tm": c2["PRIMER_LEFT{}_TM".format(patt)], 
+               "reverse_tm": c2["PRIMER_RIGHT{}_TM".format(patt)], 
                "forward_gc": c2["PRIMER_LEFT{}_GC_PERCENT".format(patt)],
-               "reverse_gc": c2["PRIMER_LEFT{}_GC_PERCENT".format(patt)], 
+               "reverse_gc": c2["PRIMER_RIGHT{}_GC_PERCENT".format(patt)], 
                "amplicon_tm": c2["PRIMER_PAIR{}_PRODUCT_TM".format(patt)], 
                "pair_penalty": c2["PRIMER_PAIR{}_PENALTY".format(patt)]}
         

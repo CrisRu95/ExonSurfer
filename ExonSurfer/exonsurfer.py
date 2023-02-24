@@ -9,8 +9,8 @@ import pandas as pd
 from ExonSurfer.ensembl import ensembl
 from ExonSurfer.blast import blast
 from ExonSurfer.resources import resources
-from ExonSurfer.primerDesign import designPrimers, chooseTarget, designConfig
-from ExonSurfer.primerDesign import penalizePrimers
+from ExonSurfer.primerDesign import chooseTarget, construct_cdna, designPrimers
+from ExonSurfer.primerDesign import penalizePrimers, designConfig
 
 # Constants
 NPRIMERS = 100
@@ -18,7 +18,7 @@ NPRIMERS = 100
 def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                   release = 108, design_dict = designConfig.design_dict, 
                   path_out = ".", save_files = True, e_value = 0.8,
-                  i_cutoff = 70, max_sep = 700):
+                  i_cutoff = 70, max_sep = 700, opt_prod_size = 300):
     """
     This function is the main function of the pipeline. It takes a gene name and
     a transcript name and returns a list of primers.
@@ -42,10 +42,27 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         
     d = ensembl.get_transcripts_dict(gene_obj, exclude_noncoding = True)
     
+    # If ALL transcripts are targeted and human species, get canonical
+    if "homo_sapiens" in species and transcripts == "ALL": 
+        cfile = open(resources.CANONICAL(), "r")
+        lines = cfile.read().split("\n")
+        canonical_t = [  # list comprehension here
+            l.split("\t")[1] 
+            for l 
+            in lines 
+            if gene_obj.gene_id in l and "Ensembl Canonical" in l
+            ]
+    else: 
+        canonical_t = []
+        
     # Get best exonic junction
     print("Getting exon junction")
-    junctions_d = chooseTarget.format_junctions(d)
-    junction = chooseTarget.choose_target(d, junctions_d, transcripts)
+    junctions_d = chooseTarget.format_junctions(d, 
+                                                transcripts, 
+                                                opt_prod_size, 
+                                                data)
+    
+    junction = chooseTarget.choose_target(d, junctions_d, transcripts, canonical_t)
     print("Exon junctions: {}".format(junction))
     
     # Get sequence and junction index
@@ -59,9 +76,10 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
     
     if len(junction) == 0: # only one exon
         design_dict["PRIMER_NUM_RETURN"] = NPRIMERS
-        target, index, elen = ensembl.construct_one_exon_cdna(resources.MASKED_SEQS(species), 
-                                                              gene_obj, 
-                                                              data, transcripts)        
+        target, index, elen = construct_cdna.construct_one_exon_cdna(resources.MASKED_SEQS(species), 
+                                                                     gene_obj, 
+                                                                     data, 
+                                                                     transcripts)        
         # Design primers
         c2 = designPrimers.call_primer3(target, index, design_dict, enum = 1)
         if transcripts == "ALL": 
@@ -76,17 +94,19 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         # number of primers to design for each junction and option
         num_primers = int(NPRIMERS / (len(junction)*2))
         design_dict["PRIMER_NUM_RETURN"] = num_primers
-
+        to_design = []
         for item in junction: 
-            target, index, elen = ensembl.construct_target_cdna(resources.MASKED_SEQS(species), 
-                                                                gene_obj,
-                                                                data, 
-                                                                transcripts, 
-                                                                item)
+            to_design += construct_cdna.construct_target_cdna(resources.MASKED_SEQS(species), 
+                                                              gene_obj,
+                                                              data, 
+                                                              transcripts, 
+                                                              item)
+        for tupla in to_design: 
             # Design primers
-            c1, c2 = designPrimers.call_primer3(target, index, design_dict)
+            c1, c2 = designPrimers.call_primer3(tupla[0], tupla[1], design_dict)
     
-            df = designPrimers.report_design(c1, c2, elen, item, df)
+            df = designPrimers.report_design(c1, c2, tupla[2], tupla[3], 
+                                             tupla[4], df)
     
 
     df["pair_num"] = ["Pair{}".format(x) for x in range(0, df.shape[0])]

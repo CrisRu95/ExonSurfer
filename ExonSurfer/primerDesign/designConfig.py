@@ -30,7 +30,7 @@ design_dict = {
         'PRIMER_PRODUCT_MIN_TM': 65,
         'PRIMER_PRODUCT_MAX_TM': 90,
         
-        'PRIMER_PRODUCT_SIZE_RANGE': [[80, 170]],
+        'PRIMER_PRODUCT_SIZE_RANGE': [[400, 800]],
         
         # PCR parametres
         'PRIMER_SALT_DIVALENT': 1.5,

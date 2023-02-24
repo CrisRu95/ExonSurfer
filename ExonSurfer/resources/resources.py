@@ -33,6 +33,8 @@ FIRST_CHR = {
     "rattus_norvegicus": "rat{}.txt"    
     }
 
+HCANONICAL = "https://ftp.ensembl.org/pub/release-108/tsv/homo_sapiens/Homo_sapiens.GRCh38.108.canonical.tsv.gz"
+
 IDS_TABEL = "table.txt"
 
 ###############################################################################
@@ -140,7 +142,33 @@ def download_blast_db(species):
     # remove extraction file
     os.remove(download_path)
 
-          
+###############################################################################
+
+def download_canonical(): 
+    """
+    This function downloads the human canonical transcripts file
+    """
+    # imported modules
+    import urllib.request
+    import gzip, shutil
+    
+    url = HCANONICAL
+    download_path = os.path.join(str(get_maskedseq_path("homo_sapiens")), 
+                                 "canonical.gz")
+    
+    # download
+    urllib.request.urlretrieve(url, download_path)
+
+    # decompress 
+    with gzip.open(download_path, 'rb') as f_in:
+        with open(download_path.replace(".gz", ""), "wb") as f_out: 
+            shutil.copyfileobj(f_in, f_out)
+    
+    # remove extraction file
+    os.remove(download_path)
+    
+    return download_path.replace(".gz", "")   
+       
 ###############################################################################
         
 ## Function to create a temporary file to save the primers fasta sequence with uuid
@@ -205,6 +233,26 @@ def BLAST_DB(species):
         download_blast_db(species)
 
     return blast_db_path
+
+###############################################################################
+
+def CANONICAL(): 
+    """
+    This function returns the human canonical transcripts file and downloads it
+    if necessary
+    Args: 
+        blast_db_path [out] (str) Path to the BLAST db
+    """
+    # filename to search for
+    download_path = os.path.join(str(get_maskedseq_path("homo_sapiens")), 
+                                 "canonical")
+
+    # check if file exists
+    if not os.path.exists(download_path):
+        download_path = download_canonical()
+
+    return download_path    
+
 ###############################################################################
 
 def download_all_db():

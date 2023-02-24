@@ -45,27 +45,36 @@ def get_junction_seqs(junction, masked_chr, data):
         junction [in] (str)    Exon IDs separated by "-"
         masked_chr [in] (str)  Path to the chr files, should have "{}" 
         data [in] (Genome obj) Genome object returned by ensembl
-        target_s [out] (str)   Exon seqs marked in diff colors (html style)
+        nm_dna [out] (str)     CDNA seqs
+        ji_l [out] (list)      List of ints, marking exon junctions in the nm_dna
     """
-    exon1 = junction.split("-")[0]
-    exon2 = junction.split("-")[1]
-    
-    e_obj1 = data.exon_by_id(exon1)
-    e_obj2 = data.exon_by_id(exon2)
+    # get pyensembl object
+    e_obj = data.exon_by_id(junction.split("-")[0])
     
     # read chromosome 
-    chrom_open = open(masked_chr.format(e_obj1.contig), "r")
+    chrom_open = open(masked_chr.format(e_obj.contig), "r")
     tt = chrom_open.read() # full chromosome sequence
     chrom_open.close()
     
-    if e_obj1.on_positive_strand: 
-        nm_dna = tt[e_obj1.start-1:e_obj1.end] + tt[e_obj2.start-1:e_obj2.end]
-        ji = e_obj1.end - e_obj1.start
+    # get strand
+    if e_obj.on_positive_strand: 
+        list_of_exons = junction.split("-")
     else: 
-        nm_dna = tt[e_obj2.start-1:e_obj2.end] + tt[e_obj1.start-1:e_obj1.end]
-        ji = e_obj2.end - e_obj2.start  
+        list_of_exons = junction.split("-")[::-1]
+    
+    # build cdna and junction index
+    ji_l = [] #  list of indices
+    tosum = 0 # value to sum to the indices
+    nm_dna = "" # cdna
+    
+    for exon in list_of_exons: # exon is string id
+        exon_obj = data.exon_by_id(exon)
+        nm_dna += tt[exon_obj.start-1:exon_obj.end]
+        exon_length = exon_obj.end - exon_obj.start + 1
+        ji_l.append(tosum + exon_length) # list of indices
+        tosum = exon_length
 
-    return nm_dna, ji
+    return nm_dna, ji_l
     
 ###############################################################################
 
@@ -105,43 +114,77 @@ def get_primers_i(dna, forward, reverse, e = 0):
 
 ###############################################################################
 
-def create_par_string(nm_dna, option, ji, f1, f2, r1, r2): 
+def format_indices(ji, f1, f2, r1, r2): 
+    """
+    This func returns the start and end of forward and reverse primers on a DNA
+    Args: 
+        ji [in] (l)        List of ints, marking exon junctions in the nm_dna
+        f1, f2 [in] (int)  Forward start and end indices
+        r1, r2 [in] (int)  Reverse start and end indices
+        indices [out] (l)  List of ordered tuples (index, description)
+    """    
+    indices = [(i, "j") for i in ji]
+    indices += [(f1, "f1")]
+    indices += [(f2, "f2")]
+    indices += [(r1, "r1")]
+    indices += [(r2, "r2")]
+    
+    # order
+    print("indices preorder is: {}".format(indices))
+    indices = sorted(indices, key = lambda x: x[0])
+    
+    return indices
+    
+###############################################################################
+
+def create_par_string(nm_dna, indices): 
     """
     This func creates the html string with the marked primers
     Args: 
         nm_dna [in] (str)  Junction seq
-        option [in] (int)  design option used (1 OR 2)
-        ji [in] (str)      Junction index
-        f1, f2 [in] (int)  Forward start and end indices
-        r1, r2 [in] (int)  Reverse start and end indices   
+        indices [out] (l)  List of ordered tuples (index, description)
         string [out] (str) Annotated html string
-    
     """
-    if option == 1: 
-        if f2 > ji: # the forward is ON the junction     
-            string = '<p class="ex1">' + nm_dna[:f1] + '</p>'
-            string += '<p class="ex1H">' + nm_dna[f1:ji] + '</p>' # forward ini
-            string += '<p class="ex2H">' + nm_dna[ji:f2] + "➛"+ '</p>' # forward final
-            string += '<p class="ex2">' + nm_dna[f2:r1] + '</p>'
-            string += '<p class="ex2H">' + "￩"+nm_dna[r1:r2] + '</p>' # full reverse
-            string += '<p class="ex2">' + nm_dna[r2:] + '</p>'
+    # initialize 
+    string = ""
+    ex = 1
+    h = False
+    
+    # start string until first index
+    string = '<p class="ex{}">'.format(ex) + nm_dna[0:indices[0][0]] + '</p>'
+    
+    for i in range(0, len(indices)-1): 
         
-        else: # the reverse is ON the junction
+        # exon - exon junction
+        if indices[i][1] == "j": # here change the pointer of the exon 
+            ex = 1 if ex == 2 else 2 # change exon color
+            if h == True: 
+                flag = '<p class="ex{}H">'.format(ex) # highlighted
+            else: 
+                flag = '<p class="ex{}">'.format(ex)
+            string += flag + nm_dna[indices[i][0]:indices[i+1][0]] + '</p>'
         
-            string = '<p class="ex1">' + nm_dna[:f1] + '</p>'
-            string += '<p class="ex1H">' + nm_dna[f1:f2] + "➛" + '</p>' # full forward
-            string += '<p class="ex1">' + nm_dna[f2:r1] + '</p>' 
-            string += '<p class="ex1H">' + "￩"+nm_dna[r1:ji] + '</p>' # reverse on ex1
-            string += '<p class="ex2H">' + nm_dna[ji:r2] + '</p>' # reverse on ex2
-            string += '<p class="ex2">' + nm_dna[r2:] + '</p>'
-    else: 
-        string = '<p class="ex1">' + nm_dna[:f1] + '</p>'
-        string += '<p class="ex1H">' + nm_dna[f1:f2] + "➛"+ '</p>' # full forward
-        string += '<p class="ex1">' + nm_dna[f2:ji+1] + '</p>' 
-        string += '<p class="ex2">' + nm_dna[ji+1:r1] + '</p>'
-        string += '<p class="ex2H">' + "￩"+nm_dna[r1:r2] + '</p>' # full reverse
-        string += '<p class="ex2">' + nm_dna[r2:] + '</p>'      
+        # start of primer (highlight)
+        elif indices[i][1] == "f1" or indices[i][1] == "r1": 
+            h = True
+            flag = '<p class="ex{}H">'.format(ex)
+            string += flag + nm_dna[indices[i][0]:indices[i+1][0]] + '</p>'
         
+        # end of highlight
+        elif indices[i][1] == "f2" or indices[i][1] == "r2": 
+            h = False
+            flag = '<p class="ex{}">'.format(ex)
+            string += flag + nm_dna[indices[i][0]:indices[i+1][0]] + '</p>'
+
+    # end sequence
+    if indices[-1][1] == "j": 
+        ex = 1 if ex == 2 else 2 # change exon color
+        flag = '<p class="ex{}">'.format(ex)  
+    elif indices[-1][1] == "f2" or indices[-1][1] == "r2": 
+        flag = '<p class="ex{}">'.format(ex)   
+        
+    string += flag + nm_dna[indices[-1][0]:] + '</p>'
+    
     return string
 
 ###############################################################################
@@ -313,10 +356,11 @@ def highlight_ontarget(pair_id, final_df, species, release):
     nm_dna, ji = get_junction_seqs(junction, masked_chr, data)
     f1, f2, r1, r2 = get_primers_i(nm_dna, final_df.loc[pair_id]["forward"], 
                                    final_df.loc[pair_id]["reverse"])
+    # format indices
+    indices = format_indices(ji, f1, f2, r1, r2)
     
     # marked string
-    string = create_par_string(nm_dna, final_df.loc[pair_id]["option"],
-                               ji, f1, f2, r1, r2)    
+    string = create_par_string(nm_dna, indices)    
     
     return HEADER_LINE.format(pair_id, junction) + "<br>" + string
 
