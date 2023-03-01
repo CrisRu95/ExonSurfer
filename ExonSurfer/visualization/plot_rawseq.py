@@ -72,8 +72,8 @@ def get_junction_seqs(junction, masked_chr, data):
         nm_dna += tt[exon_obj.start-1:exon_obj.end]
         exon_length = exon_obj.end - exon_obj.start + 1
         ji_l.append(tosum + exon_length) # list of indices
-        tosum = exon_length
-
+        tosum += exon_length
+        
     return nm_dna, ji_l
     
 ###############################################################################
