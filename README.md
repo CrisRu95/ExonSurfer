@@ -2,7 +2,7 @@
 # ExonSurfer
 
 <p align="center">
-  <img src=".ExonSurfer/resources/ES.png" width="200" height="200">
+  <img src="./ExonSurfer/resources/ES.png" width="200" height="200">
 </p>
 
 ExonSurfer is a python3 program, designed for the design of high specific transcript primers, using the Ensembl database and the blastn algorithm in order to identify and find the proper exon binding of the transcripts.
