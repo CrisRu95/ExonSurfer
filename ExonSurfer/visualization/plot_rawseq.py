@@ -18,7 +18,8 @@ from ExonSurfer.resources import resources
 #                        CONSTANTS FOR THE HTML FILE                          #
 ###############################################################################
 
-HEADER_LINE ='<h3 class="header"> {} {}</h3>'
+HEADER_LINE ='<h3 class="header"> {} - {}</h3>'
+OFFT_LENGTH ='<p> Amplicon length: {}</p><br>'
 
 ###############################################################################
 #                          Function definition site                           #
@@ -200,42 +201,33 @@ def create_offt_string(seq, f1, f2, r1, r2, mm_i):
         string [out] (str) Sequence with marked primers and mismatches
     """
 
-    string = '<p class="ex">' + seq[:f1] + '</p>'
+    #string = '<p class="ex">' + seq[:f1] + '</p>'
     # all possible mismatches in the forward primer
     if any([x for x in mm_i if x in range(f1, f2)]):
         for_mmi = [x for x in mm_i if x in range(f1, f2)]
         start = f1
         for i in range(0, len(for_mmi)): 
-            string += '<p class="exH">' + seq[start:for_mmi[i]] + '</p>'
+            string = '<p class="ex">' + seq[start:for_mmi[i]] + '</p>'
             string += '<p class="mismatch">' + seq[for_mmi[i]] + '</p>'
             start = for_mmi[i] + 1
-        string += '<p class="exH">' + seq[start:f2] + '</p>'
+        string += '<p class="ex">' + seq[start:f2] + '</p>'
     else: 
-        string += '<p class="exH">' + seq[f1:f2] + '</p>' # full forward
+        string = '<p class="ex">' + seq[f1:f2]  + '</p>' # full forward
     
-    string += '<p class="ex">' + seq[f2:r1] + '</p>' # in between primers
+    string += '<p class="ex">' + "... ..." + '</p>' # in between primers
     
     if any([x for x in mm_i if x in range(r1, r2)]):
         rev_mmi = [x for x in mm_i if x in range(r1, r2)]
         start = r1
         for mi in range(0, len(rev_mmi)): 
-            string += '<p class="exH">' + seq[start:rev_mmi[i]] + '</p>'
+            string += '<p class="ex">' + seq[start:rev_mmi[i]] + '</p>'
             string += '<p class="mismatch">' + seq[rev_mmi[i]] + '</p>'
             start = rev_mmi[i] + 1
-        string += '<p class="exH">' + seq[start:r2] + '</p>'
+        string += '<p class="ex">' + seq[start:r2] + '</p>'
     else: 
-        string += '<p class="exH">' + seq[r1:r2] + '</p>' # full reverse   
+        string += '<p class="ex">' + seq[r1:r2] + '</p>' # full reverse   
         
-    string += '<p class="ex">' + seq[r2:] + '</p>'
-        
-    # cut start and end of sequence if too long: 
-    if len(seq[:f1]) > 200: 
-        string = '<p class="ex">' + "..." + string[100:]
-        if len(seq[r2:]) > 350: 
-            string = string[:r2+200] + "..." + '</p>'
-    else: 
-        if len(seq[r2:]) > 350: 
-            string = string[:r2+200] + "..." + '</p>'
+    #string += '<p class="ex">' + seq[r2:] + '</p>'
         
     return string
 
@@ -389,7 +381,7 @@ def highlight_offtarget(pair_id, final_df, species):
                                        final_df.loc[pair_id]["forward"], 
                                        final_df.loc[pair_id]["reverse"], 
                                        e = 3)
-        
+        offt_len = r2 - f1 + 1
         mm_i = get_mismatch_indices(seq, f1, r1, 
                                     final_df.loc[pair_id]["forward"], 
                                     final_df.loc[pair_id]["reverse"])
@@ -397,8 +389,8 @@ def highlight_offtarget(pair_id, final_df, species):
     
         string = create_offt_string(seq, f1, f2, r1, r2, mm_i)
         
-        fullstr = HEADER_LINE.format(pair_id, item) + "<br>" + string 
-        
+        fullstr = HEADER_LINE.format(pair_id, item) + OFFT_LENGTH.format(offt_len) 
+        fullstr += string 
         strings.append(fullstr)
     
     return strings
