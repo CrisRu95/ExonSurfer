@@ -219,7 +219,7 @@ def create_offt_string(seq, f1, f2, r1, r2, mm_i):
     if any([x for x in mm_i if x in range(r1, r2)]):
         rev_mmi = [x for x in mm_i if x in range(r1, r2)]
         start = r1
-        for mi in range(0, len(rev_mmi)): 
+        for i in range(0, len(rev_mmi)): 
             string += '<p class="ex">' + seq[start:rev_mmi[i]] + '</p>'
             string += '<p class="mismatch">' + seq[rev_mmi[i]] + '</p>'
             start = rev_mmi[i] + 1
@@ -377,21 +377,27 @@ def highlight_offtarget(pair_id, final_df, species):
     for item in refseq_ids: 
         seq = get_offtarget_sequence(item, species) # refseq sequence
         # get primer match indices
-        f1, f2, r1, r2 = get_primers_i(seq, 
-                                       final_df.loc[pair_id]["forward"], 
-                                       final_df.loc[pair_id]["reverse"], 
-                                       e = 3)
-        offt_len = r2 - f1 + 1
-        mm_i = get_mismatch_indices(seq, f1, r1, 
-                                    final_df.loc[pair_id]["forward"], 
-                                    final_df.loc[pair_id]["reverse"])
+        try: 
+            f1, f2, r1, r2 = get_primers_i(seq, 
+                                           final_df.loc[pair_id]["forward"], 
+                                           final_df.loc[pair_id]["reverse"], 
+                                           e = 3)
+            offt_len = r2 - f1 + 1
+            mm_i = get_mismatch_indices(seq, f1, r1, 
+                                        final_df.loc[pair_id]["forward"], 
+                                        final_df.loc[pair_id]["reverse"])
+            
         
-    
-        string = create_offt_string(seq, f1, f2, r1, r2, mm_i)
-        
-        fullstr = HEADER_LINE.format(pair_id, item) + OFFT_LENGTH.format(offt_len) 
-        fullstr += string 
-        strings.append(fullstr)
+            string = create_offt_string(seq, f1, f2, r1, r2, mm_i)
+            
+            fullstr = HEADER_LINE.format(pair_id, item) + OFFT_LENGTH.format(offt_len) 
+            fullstr += string 
+            strings.append(fullstr)
+            
+        except UnboundLocalError: 
+            continue
+            # the error is because some ensemble identifiers match multiple 
+            # refseq ids, but the sequence is not que same. 
     
     return strings
         
