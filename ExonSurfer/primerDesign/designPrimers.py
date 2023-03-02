@@ -94,7 +94,6 @@ def report_design(c1, c2, exon_len, junction_id, junction_info, df):
             
             patt = "_{}".format(n)            
             row = {"option": 1 if pdict == c1 else 2, # design option, 
-                   "junction": junction_id, 
                    "junction_description": junction_info, 
                    "forward": pdict["PRIMER_LEFT{}_SEQUENCE".format(patt)].upper(), 
                    "reverse": pdict["PRIMER_RIGHT{}_SEQUENCE".format(patt)].upper(), 
@@ -125,6 +124,8 @@ def report_design(c1, c2, exon_len, junction_id, junction_info, df):
                     row["for_pos"] = [(forex1, forlen)]
                     row["rev_pos"] = [(revex1, revlen/2), (revex2, revlen/2)]    
                     
+                first_exon_to_search = forex1   
+                last_exon_to_search = revex2
             else: # pdict is c2
                 forex = [e[0] for e in exon_len if forpos in e[1]][0] # e1 is range
                 revex = [e[0] for e in exon_len if revpos in e[1]][0] # e1 is range
@@ -132,7 +133,21 @@ def report_design(c1, c2, exon_len, junction_id, junction_info, df):
                 row["for_pos"] = [(forex, forlen)]
                 row["rev_pos"] = [(revex, revlen)]
                 
-                
+                first_exon_to_search = forex   
+                last_exon_to_search = revex
+            
+            # add junction information
+            i, first_found, junction = 0, False, ""
+            while exon_len[i][0] != last_exon_to_search: 
+                if exon_len[i][0] == first_exon_to_search: 
+                    first_found = True
+                if first_found: 
+                    junction += exon_len[i][0] + "-"
+                i += 1
+            junction += exon_len[i][0] # add last one  
+            row["junction"] = junction
+            
+            # add row to dataframe
             df = pd.concat([df, pd.DataFrame([row])], ignore_index = True)
             
     # convert dataframe type

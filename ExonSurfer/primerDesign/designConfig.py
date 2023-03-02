@@ -5,12 +5,12 @@ design_dict = {
         
         # primer paramters:
         'PRIMER_OPT_SIZE': 20,
-        'PRIMER_MIN_SIZE': 17,
-        'PRIMER_MAX_SIZE': 35,
+        'PRIMER_MIN_SIZE': 18,
+        'PRIMER_MAX_SIZE': 27,
         
-        'PRIMER_OPT_TM': 59,
-        'PRIMER_MIN_TM': 57.5,
-        'PRIMER_MAX_TM': 60.5,
+        'PRIMER_OPT_TM': 60,
+        'PRIMER_MIN_TM': 57,
+        'PRIMER_MAX_TM': 63,
         'PRIMER_TM_FORMULA': 1, # use santaLucia (1998) formula 
         
         'PRIMER_OPT_GC_PERCENT': 50,
@@ -27,10 +27,10 @@ design_dict = {
                 
         # product parameters
         'PRIMER_PRODUCT_OPT_TM': 80,
-        'PRIMER_PRODUCT_MIN_TM': 65,
+        'PRIMER_PRODUCT_MIN_TM': 76,
         'PRIMER_PRODUCT_MAX_TM': 90,
         
-        'PRIMER_PRODUCT_SIZE_RANGE': [[400, 800]],
+        'PRIMER_PRODUCT_SIZE_RANGE': [[120, 250]],
         
         # PCR parametres
         'PRIMER_SALT_DIVALENT': 1.5,
