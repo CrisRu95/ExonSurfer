@@ -133,6 +133,9 @@ def create_par_string(nm_dna, indices):
         indices [out] (l)  List of ordered tuples (index, description)
         string [out] (str) Annotated html string
     """
+    # Constants
+    MAXEX = 10
+    
     # initialize 
     string = ""
     ex = 1
@@ -145,7 +148,9 @@ def create_par_string(nm_dna, indices):
         
         # exon - exon junction
         if indices[i][1] == "j": # here change the pointer of the exon 
-            ex = 1 if ex == 2 else 2 # change exon color
+            ex = ex + 1
+            if ex > MAXEX: 
+                ex = 1
             if h == True: 
                 flag = '<p class="ex{}H">'.format(ex) # highlighted
             else: 
