@@ -8,7 +8,6 @@ Created on Wed Jan 25 12:34:41 2023
 import re
 from itertools import product
 
-
 ###############################################################################
 #                penalizePrimers module FUNCTION DEFINITION SITE              #
 ###############################################################################    

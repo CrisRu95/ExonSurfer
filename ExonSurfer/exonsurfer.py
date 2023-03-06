@@ -7,7 +7,7 @@ import pandas as pd
 
 # own modules
 from ExonSurfer.ensembl import ensembl
-from ExonSurfer.blast import blast
+from ExonSurfer.specificity import blast, annotate_detected
 from ExonSurfer.resources import resources
 from ExonSurfer.primerDesign import chooseTarget, construct_cdna, designPrimers
 from ExonSurfer.primerDesign import penalizePrimers, designConfig
@@ -40,7 +40,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                        species.replace("_masked", ""))
     gene_obj = ensembl.get_gene_by_symbol(gene, data)
         
-    d = ensembl.get_transcripts_dict(gene_obj, exclude_noncoding = True)
+    d = ensembl.get_transcripts_dict(gene_obj, exclude_noncoding = False)
     
     # If ALL transcripts are targeted and human species, get canonical
     if "homo_sapiens" in species and transcripts == "ALL": 
@@ -143,12 +143,16 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                           e_value, i_cutoff, False)
         
         # Check blast results positions
-        df = blast.check_specificity(blast_df, df, gene, max_sep)
+        df = blast.check_specificity(blast_df, df, gene, transcripts, max_sep)
+        
         
         # Filter final DF 
         final_df = penalizePrimers.penalize_final_output(df, transcripts, data, 
                                                          gene_obj)
-        final_df = penalizePrimers.make_penalty_score(final_df)
+        final_df = penalizePrimers.make_penalty_score(final_df)     
+        
+        # Annotate transcripts detected
+        final_df = annotate_detected.annotate_detected(final_df, data, gene_obj, species)
         
         if save_files == True:
             final_df.to_csv(DESIGN_OUT, sep = "\t")

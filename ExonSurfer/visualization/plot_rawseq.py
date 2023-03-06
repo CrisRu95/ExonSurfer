@@ -25,19 +25,6 @@ OFFT_LENGTH ='<p> Amplicon length: {}</p><br>'
 #                          Function definition site                           #
 ###############################################################################
 
-def reverse_complement(seq):
-    """
-    This function returns a sequence read from right to left. 
-    Args: 
-        seq [in] (str) Sequence to be inverted. 
-    """
-    seq = seq.upper()
-    compdict = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'N': 'N'} 
-    bases = [compdict[base] for base in seq]
-    bases = "".join(bases)
-    return bases[::-1]     
-                
-###############################################################################
 
 def get_junction_seqs(junction, masked_chr, data): 
     """
@@ -94,8 +81,8 @@ def get_primers_i(dna, forward, reverse, e = 0):
         f1 = re.search(forward, dna, re.I).start()
         f2 =  re.search(forward, dna, re.I).end()
     
-        r1 = re.search(reverse_complement(reverse), dna, re.I).start()
-        r2 =  re.search(reverse_complement(reverse), dna, re.I).end()
+        r1 = re.search(resources.reverse_complement(reverse), dna, re.I).start()
+        r2 =  re.search(resources.reverse_complement(reverse), dna, re.I).end()
     
     else: 
         err_patt = "){s<=" + str(e) + "}" # only substitutions allowed
@@ -107,8 +94,8 @@ def get_primers_i(dna, forward, reverse, e = 0):
             print("not found: dna")
         
         try: 
-            r1 = regex.search("(?:"+reverse_complement(reverse) + err_patt, dna).span()[0]
-            r2 = regex.search("(?:"+reverse_complement(reverse) + err_patt, dna).span()[1]        
+            r1 = regex.search("(?:"+resources.reverse_complement(reverse) + err_patt, dna).span()[0]
+            r2 = regex.search("(?:"+resources.reverse_complement(reverse) + err_patt, dna).span()[1]        
         except: 
             print("not found: dna")    
     return f1, f2, r1, r2
@@ -320,7 +307,7 @@ def get_mismatch_indices(seq, f1, r1, forward, reverse):
             
     for i in range(0, len(reverse)): 
         # there is a mismatch
-        if reverse_complement(reverse)[i] != seq[i + r1]: 
+        if resources.reverse_complement(reverse)[i] != seq[i + r1]: 
             mm_i.append(i + r1)        
         
     return mm_i

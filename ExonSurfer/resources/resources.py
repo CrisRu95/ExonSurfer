@@ -41,6 +41,20 @@ IDS_TABEL = "table.txt"
 #                   resources module FUNCTION DEFINITION SITE                 #
 ###############################################################################
 
+def reverse_complement(seq):
+    """
+    This function returns a sequence read from right to left. 
+    Args: 
+        seq [in] (str) Sequence to be inverted. 
+    """
+    seq = seq.upper()
+    compdict = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'N': 'N'} 
+    bases = [compdict[base] for base in seq]
+    bases = "".join(bases)
+    return bases[::-1]     
+                
+###############################################################################
+
 def _get_path_data():
     """Return the path to the data directory."""
     custom_path = os.environ.get("EXONSURFER_CACHE_DIR", None)

@@ -31,14 +31,20 @@ def get_gene_by_symbol(gene_symbol, data):
     
 ###############################################################################
 
-def get_transcript_from_gene(gene):
+def get_transcript_from_gene(gene_obj, only_id = False):
     """
     This function takes a gene object and returns a list of transcript objects.
     Args:
-        gene [in] (gene object)  Gene object
-        transcripts [out] (list) List of transcript objects
+        gene_obj [in] (gene object)  Gene object
+        only_id [in] (bool)      True if to return only tcript ids, not objects
+        to_return [out] (l)      List of transcript object of transcript ids
     """
-    return gene.transcripts
+    if only_id == False: 
+        to_return = gene_obj.transcripts
+    else: 
+        to_return = [t.id for t in gene_obj.transcripts]
+        
+    return to_return
 
 ###############################################################################
     
@@ -53,6 +59,41 @@ def get_exons_from_transcript(transcript):
 
 ###############################################################################
     
+def get_cdna_seq(data, transcript_id, masked_chr): 
+    """
+    This function returns the CDNA of a specific transcript
+    Args: 
+        data [in] (Genome obj)    EnsemblRelease object
+        transcript_it [in] (str)  Ensembl transcript id without versoin info
+        masked_chr  [in] (str)    Full path to the masked chromosome files
+    """
+    # transcript object
+    t_obj = data.transcript_by_id(transcript_id)
+    
+    # read chromosome 
+    chrom_open = open(masked_chr.format(t_obj.contig), "r")
+    tt = chrom_open.read() # full chromosome sequence
+    chrom_open.close()
+    
+    # initialize all
+    cdna = ""
+    tosum = 0
+    
+    # check strand
+    if t_obj.strand == "+": 
+        list_of_exons = t_obj.exons
+    else: 
+        list_of_exons = reversed(t_obj.exons)
+    
+    # iterate ALL exons in the transcript and build cdna
+    for exon in list_of_exons: # exon is pyensembl object
+        cdna += tt[exon.start-1:exon.end]
+        tosum += exon.end - exon.start + 1
+        
+    return cdna         
+
+###############################################################################
+
 def get_coding_transcript(transcripts):
     """
     This function takes a list of transcript objects and keep only the
@@ -65,7 +106,7 @@ def get_coding_transcript(transcripts):
     
 ###############################################################################
     
-def get_transcripts_dict(gene, exclude_noncoding = True):
+def get_transcripts_dict(gene, exclude_noncoding):
     """
     This function takes a gene object and returns a dictionary of transcript
     objects, with transcript ID as keys, and exon objects as values.
@@ -85,7 +126,6 @@ def get_transcripts_dict(gene, exclude_noncoding = True):
     else: 
         tcripts = get_coding_transcript(all_transcripts)
     
-
     for tcript in tcripts:
         d[tcript.id] = "-".join(get_exons_from_transcript(tcript))
      
