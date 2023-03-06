@@ -19,7 +19,7 @@ from ExonSurfer.resources import resources
 ###############################################################################
 
 HEADER_LINE1 ='<h3 class="header"> {} - {}</h3>'
-HEADER_LINE2 ='<b"> >{} - {}</b> Amplicon length: {}'
+HEADER_LINE2 ='<b"> >{} - {}</b> Amplicon length: {}<br>'
 
 ###############################################################################
 #                          Function definition site                           #
@@ -226,7 +226,7 @@ def create_offt_string(seq, f1, f2, r1, r2, mm_i):
 
 ###############################################################################
 
-def obtain_offtarget_list(pair_id, final_df, species): 
+def obtain_offtarget_list(pair_id, final_df, species, transcripts): 
     """
     This function returns a list of refseq identifiers, corresponding to the
     possible off-target amplification. 
@@ -234,13 +234,15 @@ def obtain_offtarget_list(pair_id, final_df, species):
         pair_id [in] (str)   Primer pair identifier (ex "Pair1")
         final_df [in] (str)  Final design DF returned by exon surfer
         species [in] (str)   Organism
+        transcripts [in] (str|l) List of targeted transcripts or ALL
         refseq_ids [out] (l) List of refseq identifiers
     """
     refseq_ids = [] # to return
     
     # Obtain ensembl ids
     ensembl_ids = final_df.loc[pair_id]["other_genes"].split(";")
-    ensembl_ids += final_df.loc[pair_id]["other_transcripts"].split(";")    
+    if transcripts != "ALL": 
+        ensembl_ids += final_df.loc[pair_id]["other_transcripts"].split(";")    
     
     # Remove empty ones
     ensembl_ids = [x for x in ensembl_ids if x != ""]
@@ -258,7 +260,8 @@ def obtain_offtarget_list(pair_id, final_df, species):
 
     # Obtain refseq_ids
     refseq_ids += final_df.loc[pair_id]["other_genes_rpred"].split(";")
-    refseq_ids += final_df.loc[pair_id]["other_transcripts_rpred"].split(";")    
+    if transcripts != "ALL": 
+        refseq_ids += final_df.loc[pair_id]["other_transcripts_rpred"].split(";")    
 
     # Remove empty ones
     refseq_ids = [x for x in refseq_ids if x != ""]
@@ -350,22 +353,23 @@ def highlight_ontarget(pair_id, final_df, species, release):
     return HEADER_LINE1.format(pair_id, junction) + "<br>" + string
 
 ###############################################################################
-#                MAIN FUNCTION FOR off TARGET HIGHLIGHTING                     #
+#                MAIN FUNCTION FOR off TARGET HIGHLIGHTING                    #
 ###############################################################################
         
-def highlight_offtarget(pair_id, final_df, species): 
+def highlight_offtarget(pair_id, final_df, species, transcripts): 
     """
     MAIN FUNCTION: highlights the OFF target alignment of the primers. 
     Args: 
         pair_id [in] (str)  Primer pair identifier (ex "Pair1")
         final_df [in] (str) Final design DF returned by exon surfer
         species [in] (str)  Organism
+        transcripts [in] (l|str) List of targeted transcripts or ALL
         strings [out] (l)   List of strings to write to the html file
     """
     strings = [] # list to return
     
     # Obtain all off-target ids
-    refseq_ids = obtain_offtarget_list(pair_id, final_df, species)
+    refseq_ids = obtain_offtarget_list(pair_id, final_df, species, transcripts)
     
     for item in refseq_ids: 
         seq = get_offtarget_sequence(item, species) # refseq sequence
