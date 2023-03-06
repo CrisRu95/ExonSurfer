@@ -135,15 +135,17 @@ def transform_primers_pos(for_pos, rev_pos, de):
         
 ###############################################################################
 
-def plot_primerpair_aligment(transd, exd, primers, for_pos, rev_pos):
+def plot_primerpair_aligment(transd, exd, primers, for_pos, rev_pos, aline, pline):
     """
     This function takes the transcripts, exons and primers and return a plotly fig
     Args:
-        transcripts [in] (dict) Dict with the exons of each transcript
-        exons [in] (dict)       Dict with exons positions
+        transd [in] (dict) Dict with the exons of each transcript
+        exd [in] (dict)       Dict with exons positions
         primers [in] (dict)     Dict with primers positions
         for_pos [in] (l)   List of 1|2 tuples. Each tuple contains: (ENSE, plen)
         rev_pos [in] (l)   List of 1|2 tuples. Each tuple contains: (ENSE, plen)
+        aline [in] (int)   Amplicon line width
+        pline [in] (int)   Primer line width
     """
     mex = [x for x in exd if any([p for p in primers if for_pos[0][0]== x or rev_pos[0][0]== x])]
     colors = dict(zip(transd.keys(), COLS[:len(transd)]))
@@ -182,43 +184,43 @@ def plot_primerpair_aligment(transd, exd, primers, for_pos, rev_pos):
                             line = dict(color = 'red'),
                             opacity = 1)  
                 
-                
+                updist = 0.55
+                updist_t = 0.60
                 # add amplicon lines
                 fig.add_shape(type = 'line',
                             x0 = primers["forward1"][1],
-                            y0 = i + 0.52,
+                            y0 = i + updist,
                             x1 = primers["forward2"][0],
-                            y1 = i + 0.52,
-                            line = dict(color = 'grey', width = 5, dash='dash'))   
+                            y1 = i + updist,
+                            line = dict(color = 'grey', width = aline, dash='dash'))   
                 # add amplicon lines
                 fig.add_shape(type = 'line',
                             x0 = primers["forward2"][1],
-                            y0 = i + 0.52,
+                            y0 = i + updist,
                             x1 = primers["reverse1"][0],
-                            y1 = i + 0.52,
-                            line = dict(color = 'grey', width = 5))   
+                            y1 = i + updist,
+                            line = dict(color = 'grey', width = aline))   
                 # add amplicon lines
                 fig.add_shape(type = 'line',
                             x0 = primers["reverse1"][1],
-                            y0 = i + 0.52,
+                            y0 = i + updist,
                             x1 = primers["reverse2"][0],
-                            y1 = i + 0.52,
-                            line = dict(color = 'grey', width = 5, dash='dash'))   
+                            y1 = i + updist,
+                            line = dict(color = 'grey', width = aline, dash='dash'))   
                 
                 
                 for primer in primers:
                     fig.add_annotation(text = primer[:1],
                                     x = (primers[primer][0] + primers[primer][1])/2,
-                                    y = i + 0.55,
+                                    y = i + updist_t,
                                     showarrow = False, 
-                                    font = dict(family = "Courier New, monospace", 
-                                                size = 10, color = "black"))
+                                    font = dict(size = 10, color = "black"))
                     fig.add_shape(type='line',
                                 x0 = primers[primer][0],
-                                y0 = i + 0.52,
+                                y0 = i + updist,
                                 x1 = primers[primer][1],
-                                y1 = i + 0.52,
-                                line = dict(color = 'black', width = 7))  
+                                y1 = i + updist,
+                                line = dict(color = 'black', width = pline))  
                     
 
 
