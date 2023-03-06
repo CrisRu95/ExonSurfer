@@ -18,8 +18,8 @@ from ExonSurfer.resources import resources
 #                        CONSTANTS FOR THE HTML FILE                          #
 ###############################################################################
 
-HEADER_LINE ='<h3 class="header"> {} - {}</h3>'
-OFFT_LENGTH ='<p> Amplicon length: {}</p><br>'
+HEADER_LINE1 ='<h3 class="header"> {} - {}</h3>'
+HEADER_LINE2 ='<b"> >{} - {}</b> Amplicon length: {}'
 
 ###############################################################################
 #                          Function definition site                           #
@@ -37,15 +37,16 @@ def get_junction_seqs(junction, masked_chr, data):
         ji_l [out] (list)      List of ints, marking exon junctions in the nm_dna
     """
     # get pyensembl object
-    e_obj = data.exon_by_id(junction.split("-")[0])
+    e_obj1 = data.exon_by_id(junction.split("-")[0])
+    e_obj2 = data.exon_by_id(junction.split("-")[1])
     
     # read chromosome 
-    chrom_open = open(masked_chr.format(e_obj.contig), "r")
+    chrom_open = open(masked_chr.format(e_obj1.contig), "r")
     tt = chrom_open.read() # full chromosome sequence
     chrom_open.close()
     
     # get strand
-    if e_obj.on_positive_strand: 
+    if e_obj1.start < e_obj2.start: 
         list_of_exons = junction.split("-")
     else: 
         list_of_exons = junction.split("-")[::-1]
@@ -346,7 +347,7 @@ def highlight_ontarget(pair_id, final_df, species, release):
     # marked string
     string = create_par_string(nm_dna, indices)    
     
-    return HEADER_LINE.format(pair_id, junction) + "<br>" + string
+    return HEADER_LINE1.format(pair_id, junction) + "<br>" + string
 
 ###############################################################################
 #                MAIN FUNCTION FOR off TARGET HIGHLIGHTING                     #
@@ -382,7 +383,7 @@ def highlight_offtarget(pair_id, final_df, species):
         
             string = create_offt_string(seq, f1, f2, r1, r2, mm_i)
             
-            fullstr = HEADER_LINE.format(pair_id, item) + OFFT_LENGTH.format(offt_len) 
+            fullstr = HEADER_LINE2.format(pair_id, item, offt_len)
             fullstr += string 
             strings.append(fullstr)
             
