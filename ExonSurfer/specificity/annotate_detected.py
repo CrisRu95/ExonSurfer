@@ -41,32 +41,31 @@ def search_primers(seq, forward, reverse):
         
 ###############################################################################
 
-def return_detected_list(data, transcript_l, forward, reverse, 
-                         other_transcripts_str, species): 
+def return_detected_list(cdna_d, transcript_l, forward, reverse, 
+                         other_transcripts_str): 
     """
     This function searches the transcripts that a primer pair amplifies perfectly
     (allowing 0 mismatches) + the identifiers found by BLAST. 
     Args: 
-        data [in] (Genome obj)    Ensembl release genome object
+        cdna_d [in] (d)       Dict with trans ids as keys and seqs as values
         transcript_l [in] (l)     List of transcript ids
         forward [in] (str)        Forward primer sequence (all caps)
         reverse [in] (str)        Reverse primer sequence (all caps)
         other_transcripts_str [in] (str) "other_transcripts" column info
-        species [in] (str)        Species
         unique_det [out] (str)        Transcript ids returned as joined list
     """
     # STEP 1. Check detected by 100% match of primers
     detected = [] # return detected list
     
     for t_id in transcript_l: 
-        tseq = ensembl.get_cdna_seq(data, t_id, resources.MASKED_SEQS(species))
+        tseq = cdna_d[t_id]
         
         if search_primers(tseq, forward, reverse): 
             detected.append(t_id)
     
     # STEP 2. Sum with BLAST output
     # clean other_transcripts list
-    other_trans_clean = [x.replace("(protein coding)", "") for x in other_transcripts_str.split(";")]
+    other_trans_clean = [x.replace("(protein_coding)", "") for x in other_transcripts_str.split(";")]
     
     # build complete list
     c_list = detected + other_trans_clean
@@ -97,23 +96,22 @@ def return_not_detected_list(transcript_l, detected_str):
 #                      annotate_detected MAIN FUNCTION                        #
 ###############################################################################
     
-def annotate_detected(final_df, data, gene_obj, species): 
+def annotate_detected(final_df, cdna_d, gene_obj): 
     """
     This function annotates the detected and not detected transcripts in the 
     dataframe. Perfect matches to consider detected. 
     Args: 
-        final_df
-        data
-        gene_obj
+        final_df [in] (pd.df) Design dataframe
+        cdna_d [in] (d)       Dict with trans ids as keys and seqs as values
+        gene_obj [in] (Gene obj) Pyensembl gene object
     """
     tlist = ensembl.get_transcript_from_gene(gene_obj, only_id = True)
     
-    final_df["detected"] = final_df.apply(lambda row: return_detected_list(data, 
+    final_df["detected"] = final_df.apply(lambda row: return_detected_list(cdna_d, 
                                                                            tlist, 
                                                                             row["forward"], 
                                                                             row["reverse"], 
-                                                                            row["other_transcripts"], 
-                                                                            species), 
+                                                                            row["other_transcripts"]), 
                                           axis = 1)
     
     final_df["not_detected"] = final_df.apply(lambda row: return_not_detected_list(tlist, 

@@ -42,6 +42,8 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         
     d = ensembl.get_transcripts_dict(gene_obj, exclude_noncoding = False)
     
+    cdna_d = ensembl.build_cdna_dict(data, gene_obj, resources.MASKED_SEQS(species))
+    
     # If ALL transcripts are targeted and human species, get canonical
     if "homo_sapiens" in species and transcripts == "ALL": 
         cfile = open(resources.CANONICAL(), "r")
@@ -145,14 +147,13 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         # Check blast results positions
         df = blast.check_specificity(blast_df, df, gene, transcripts, max_sep)
         
-        
         # Filter final DF 
         final_df = penalizePrimers.penalize_final_output(df, transcripts, data, 
                                                          gene_obj)
         final_df = penalizePrimers.make_penalty_score(final_df)     
         
         # Annotate transcripts detected
-        final_df = annotate_detected.annotate_detected(final_df, data, gene_obj, species)
+        final_df = annotate_detected.annotate_detected(final_df, cdna_d, gene_obj)
         
         if save_files == True:
             final_df.to_csv(DESIGN_OUT, sep = "\t")

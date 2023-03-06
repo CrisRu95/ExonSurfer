@@ -94,6 +94,23 @@ def get_cdna_seq(data, transcript_id, masked_chr):
 
 ###############################################################################
 
+def build_cdna_dict(data, gene_obj, masked_chr): 
+    """
+    This function returns a dictionary of transcripts and cDNA
+    Args: 
+        data [in] (Genome obj)    EnsemblRelease object
+        gene_obj [in] (Gene obj)  Ensembl gene object
+        masked_chr  [in] (str)    Full path to the masked chromosome files
+        cdna_dict [out] (d)       Dictionary with cDNA
+    """
+    cdna_dict = {}
+    for t in get_transcript_from_gene(gene_obj, only_id = True): 
+        cdna_dict[t] = get_cdna_seq(data, t, masked_chr)
+    
+    return cdna_dict
+
+###############################################################################
+
 def get_coding_transcript(transcripts):
     """
     This function takes a list of transcript objects and keep only the
