@@ -147,8 +147,8 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
           os.remove(FASTA_F)
         
         # Filter blast results
-        blast_df = blast.pre_filter_blast(blast_df, transcripts, gene, df, 
-                                          e_value, i_cutoff, False)
+        blast_df, df = blast.pre_filter_blast(blast_df, transcripts, gene, df, 
+                                              e_value, i_cutoff, False)
         
         # Check blast results positions
         df = blast.check_specificity(blast_df, df, gene, transcripts, max_sep)

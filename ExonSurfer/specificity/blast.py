@@ -109,8 +109,31 @@ def pre_filter_blast(blast_df, t_transcript, t_gene, design_df,
     # apply filters
     blast_df = blast_df[blast_df["evalue"] <= e_cutoff]
     blast_df = blast_df[blast_df["identity"] >= i_cutoff]
-
-    return blast_df
+    
+    # if dataframe is still very big
+    # import median function
+    from numpy import median
+    
+    to_continue = True # initialize
+    while blast_df.shape[0] > 10000 and to_continue == True: 
+        raw_counts = blast_df["query id"].value_counts()
+        clean_counts = []
+        for ppair in list(design_df.index): 
+            c = raw_counts["{}_3".format(ppair)] + raw_counts["{}_5".format(ppair)]
+            clean_counts.append((ppair, c))
+    
+        # now filter and keep only primer pairs that less appear in the blast 
+        cutval = median([x[1] for x in clean_counts])
+        to_remove_pairs = [x[0] for x in clean_counts if x[1] >= cutval]
+        to_remove_primers = [x+"_5"for x in to_remove_pairs] + [x+"_3"for x in to_remove_pairs]
+        
+        if len(to_remove_pairs) < design_df.shape[0]: 
+            blast_df = blast_df[~blast_df['query id'].isin(to_remove_primers)]
+            design_df = design_df.drop(to_remove_pairs)
+        else: 
+            to_continue = False
+            
+    return blast_df, design_df
 
 
 ###############################################################################
@@ -136,7 +159,7 @@ def check_specificity(blast_df, design_df, t_gene, t_transcript, max_sep):
     design_df["other_genes_rpred"] = ""
     
     # not for filters, just to inform
-
+    
     
     # LOOP 1. only for ensembl nomenclature (not predicte)
     # for every forward primer
