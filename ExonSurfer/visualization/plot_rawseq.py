@@ -82,6 +82,7 @@ def get_primers_i(dna, forward, reverse, e = 0):
         r1, r2 [out] (int)      Reverse start and end indices
         on_reverse [out] (bool) True if forward if found on minus strand
     """
+    on_reverse = False
     if e == 0: 
         f1 = re.search(forward, dna, re.I).start()
         f2 =  re.search(forward, dna, re.I).end()
@@ -90,7 +91,6 @@ def get_primers_i(dna, forward, reverse, e = 0):
         r2 =  re.search(resources.reverse_complement(reverse), dna, re.I).end()
     
     else: 
-        on_reverse = False
         err_patt = "){s<=" + str(e) + "}" # only substitutions allowed
         try: 
             f1 = regex.search("(?:"+forward + err_patt, dna).span()[0]
