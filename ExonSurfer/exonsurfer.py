@@ -155,6 +155,9 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         # Annotate transcripts detected
         final_df = annotate_detected.annotate_detected(final_df, cdna_d, gene_obj)
         
+        # Annotate if there are off_targets or not
+        final_df = blast.show_off_targets(final_df, transcripts)
+        
         if save_files == True:
             final_df.to_csv(DESIGN_OUT, sep = "\t")
         else:

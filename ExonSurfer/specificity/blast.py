@@ -190,3 +190,47 @@ def check_specificity(blast_df, design_df, t_gene, t_transcript, max_sep):
                                              axis = 1)    
     
     return design_df
+
+###############################################################################
+
+def show_ot_for_pair(transcripts, other_genes, other_genes_rpred, 
+                     other_transcripts, other_transcripts_rpred): 
+    """
+    This function says if a primer pair has off-targets to return or not. 
+    Args: 
+        transcripts [in] (str|l)      List of transcripts or ALL
+        other_genes [in] (str)        List of other genes or empty
+        other_genes_rpred [in] (str)  List other genes refseq annotated
+        other_genes [in] (str)        List of other transcripts or empty
+        other_genes_rpred [in] (str)  List other transcripts refseq annotated
+        to_return [out] (int)         1 if there are off_targets, 0 if not
+    """
+    to_return = 0 #  default not show 
+    
+    if transcripts == "ALL": 
+        if other_genes != "" or other_genes_rpred != "": 
+            to_return = 1
+    else: 
+        if other_genes != "" or other_genes_rpred != "" or other_transcripts != "" or other_transcripts_rpred != "":
+            to_return = 1
+            
+    return to_return
+
+###############################################################################
+
+def show_off_targets(final_df, transcripts): 
+    """
+    This function says if a primer pair has off-targets to return or not. 
+    Args: 
+        final_df [in] (pd.df)  Final pandas dataframe with the design
+        transcripts [in] (str|l)      List of transcripts or ALL
+    """
+    final_df["off_targets"] = final_df.apply(lambda row: show_ot_for_pair(transcripts, 
+                                                                          row["other_genes"], 
+                                                                          row["other_genes_rpred"],
+                                                                          row["other_transcripts"], 
+                                                                          row["other_transcripts_rpred"]), 
+                                             axis = 1)
+    
+    return final_df
+    
