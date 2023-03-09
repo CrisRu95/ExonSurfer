@@ -19,8 +19,11 @@ from ExonSurfer.resources import resources
 ###############################################################################
 
 HEADER_LINE1 ='<h3 class="header"> {} - {}</h3>'
-HEADER_LINE2 ='<b"> >{} - {}</b> Amplicon length: {}<br>'
+HEADER_LINE2 ='<b> >{} - {}</b> Amplicon length: {}<br>'
 
+OFFT1 = '<div id="cdna-container" style="margin: 5%; padding: 5%">'
+OFFT2 = '</div>'
+          
 ###############################################################################
 #                          Function definition site                           #
 ###############################################################################
@@ -77,6 +80,7 @@ def get_primers_i(dna, forward, reverse, e = 0):
         e [in] (int)            Mismatches allowed (mismatches)
         f1, f2 [out] (int)      Forward start and end indices
         r1, r2 [out] (int)      Reverse start and end indices
+        on_reverse [out] (bool) True if forward if found on minus strand
     """
     if e == 0: 
         f1 = re.search(forward, dna, re.I).start()
@@ -105,7 +109,7 @@ def get_primers_i(dna, forward, reverse, e = 0):
             r1 = regex.search("(?:"+reverse + err_patt, dna).span()[0]
             r2 = regex.search("(?:"+reverse + err_patt, dna).span()[1]   
             
-    return f1, f2, r1, r2
+    return f1, f2, r1, r2, on_reverse
 
 ###############################################################################
 
@@ -302,27 +306,35 @@ def get_offtarget_sequence(refseq_id, species):
 
 ###############################################################################
 
-def get_mismatch_indices(seq, f1, r1, forward, reverse): 
+def get_mismatch_indices(seq, f1, r1, rc, forward, reverse): 
     """
     This function returns the mismatch indices between the off-target 
     alignment and the primers. 
     Args: 
         seq [in] (str)     Off-target DNA seq
         f1, r1 [in] (int)  Start indices for forward and reverse primer
+        rc [in] (bool)     True if to find sequence on reverse complement
         forward [in] (str) Forward sequence
         reverse [in] (str) Reverse sequence
         mm_i [out] (l)     List of indices where mismatches are found
     """
     mm_i = [] # to return
     
-    for i in range(0, len(forward)): 
+    if rc == False: # default situation, we find forward primer on string
+        fprimer = forward
+        rprimer = resources.reverse_complement(reverse)
+    else: 
+        fprimer = resources.reverse_complement(forward)
+        rprimer = reverse
+        
+    for i in range(0, len(fprimer)): 
         # there is a mismatch
-        if forward[i] != seq[i + f1]: 
+        if fprimer[i] != seq[i + f1]: 
             mm_i.append(i + f1)
             
-    for i in range(0, len(reverse)): 
+    for i in range(0, len(rprimer)): 
         # there is a mismatch
-        if resources.reverse_complement(reverse)[i] != seq[i + r1]: 
+        if rprimer[i] != seq[i + r1]: 
             mm_i.append(i + r1)        
         
     return mm_i
@@ -348,8 +360,8 @@ def highlight_ontarget(pair_id, final_df, species, release):
                                        species.replace("_masked", ""))
     # obtain sequence and indices
     nm_dna, ji = get_junction_seqs(junction, masked_chr, data)
-    f1, f2, r1, r2 = get_primers_i(nm_dna, final_df.loc[pair_id]["forward"], 
-                                   final_df.loc[pair_id]["reverse"])
+    f1, f2, r1, r2, _ = get_primers_i(nm_dna, final_df.loc[pair_id]["forward"], 
+                                      final_df.loc[pair_id]["reverse"])
     # format indices
     indices = format_indices(ji, f1, f2, r1, r2)
     
@@ -370,9 +382,11 @@ def highlight_offtarget(pair_id, final_df, species, transcripts):
         final_df [in] (str) Final design DF returned by exon surfer
         species [in] (str)  Organism
         transcripts [in] (l|str) List of targeted transcripts or ALL
-        strings [out] (l)   List of strings to write to the html file
+        all_string [out] (str)   Complete HTML string
     """
-    strings = [] # list to return
+    OFFT1 = '<div id="cdna-container" style="margin: 5%; padding: 5%">'
+    OFFT2 = '</div>'
+    all_string = "" # str to return
     
     # Obtain all off-target ids
     refseq_ids = obtain_offtarget_list(pair_id, final_df, species, transcripts)
@@ -381,26 +395,26 @@ def highlight_offtarget(pair_id, final_df, species, transcripts):
         seq = get_offtarget_sequence(item, species) # refseq sequence
         # get primer match indices
         try: 
-            f1, f2, r1, r2 = (seq, 
-                                           final_df.loc[pair_id]["forward"], 
-                                           final_df.loc[pair_id]["reverse"], 
-                                           e = 3)
-            offt_len = r2 - f1 + 1
-            mm_i = get_mismatch_indices(seq, f1, r1, 
+            f1, f2, r1, r2, rc = get_primers_i(seq, 
+                                               final_df.loc[pair_id]["forward"], 
+                                               final_df.loc[pair_id]["reverse"], 
+                                               e = 3)
+            offt_len = abs(r2 - f1 + 1)
+            mm_i = get_mismatch_indices(seq, f1, r1, rc,
                                         final_df.loc[pair_id]["forward"], 
                                         final_df.loc[pair_id]["reverse"])
             
         
             string = create_offt_string(seq, f1, f2, r1, r2, mm_i)
             
-            fullstr = HEADER_LINE2.format(pair_id, item, offt_len)
-            fullstr += string 
-            strings.append(fullstr)
+            fullstr = OFFT1 + HEADER_LINE2.format(pair_id, item, offt_len)
+            fullstr += string + OFFT2
+            all_string += fullstr
             
         except UnboundLocalError: 
             continue
             # the error is because some ensemble identifiers match multiple 
             # refseq ids, but the sequence is not que same. 
     
-    return strings
+    return all_string
         
