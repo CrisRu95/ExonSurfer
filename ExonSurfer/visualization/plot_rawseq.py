@@ -86,19 +86,25 @@ def get_primers_i(dna, forward, reverse, e = 0):
         r2 =  re.search(resources.reverse_complement(reverse), dna, re.I).end()
     
     else: 
+        on_reverse = False
         err_patt = "){s<=" + str(e) + "}" # only substitutions allowed
         try: 
             f1 = regex.search("(?:"+forward + err_patt, dna).span()[0]
             f2 = regex.search("(?:"+forward + err_patt, dna).span()[1]
             
         except: 
-            print("not found: dna")
+            on_reverse = True
+            f1 = regex.search("(?:"+resources.reverse_complement(forward) + err_patt, dna).span()[0]
+            f2 = regex.search("(?:"+resources.reverse_complement(forward) + err_patt, dna).span()[1]            
         
-        try: 
+        if on_reverse == False: 
             r1 = regex.search("(?:"+resources.reverse_complement(reverse) + err_patt, dna).span()[0]
-            r2 = regex.search("(?:"+resources.reverse_complement(reverse) + err_patt, dna).span()[1]        
-        except: 
-            print("not found: dna")    
+            r2 = regex.search("(?:"+resources.reverse_complement(reverse) + err_patt, dna).span()[1]    
+            
+        else: 
+            r1 = regex.search("(?:"+reverse + err_patt, dna).span()[0]
+            r2 = regex.search("(?:"+reverse + err_patt, dna).span()[1]   
+            
     return f1, f2, r1, r2
 
 ###############################################################################
@@ -375,7 +381,7 @@ def highlight_offtarget(pair_id, final_df, species, transcripts):
         seq = get_offtarget_sequence(item, species) # refseq sequence
         # get primer match indices
         try: 
-            f1, f2, r1, r2 = get_primers_i(seq, 
+            f1, f2, r1, r2 = (seq, 
                                            final_df.loc[pair_id]["forward"], 
                                            final_df.loc[pair_id]["reverse"], 
                                            e = 3)
