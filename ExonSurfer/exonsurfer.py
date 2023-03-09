@@ -93,9 +93,6 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         df = designPrimers.report_one_exon_design(c2, elen, item, df)
         
     else: # Normal design (more than 1 exon)
-        # number of primers to design for each junction and option
-        num_primers = int(NPRIMERS / (len(junction)*2))
-        design_dict["PRIMER_NUM_RETURN"] = num_primers
         to_design = []
         for item in junction: 
             to_design += construct_cdna.construct_target_cdna(resources.MASKED_SEQS(species), 
@@ -104,6 +101,10 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                                               transcripts, 
                                                               item)
         for tupla in to_design: 
+            # Decide number of primers to design
+            num_primers = int(NPRIMERS / (len(to_design)*2))
+            design_dict["PRIMER_NUM_RETURN"] = num_primers
+            
             # Design primers
             c1, c2 = designPrimers.call_primer3(tupla[0], tupla[1], design_dict)
     
@@ -117,11 +118,16 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
     if df.shape[0] > 1: # we designed primers
         
         # Define three output files, with the same name as the gene and transcript
-        DESIGN_OUT = os.path.join(path_out, 
-                                  "{}_{}_design.txt".format(gene, "-".join(transcripts)))
-        BLAST_OUT = os.path.join(path_out, 
-                                 "{}_{}_blast.txt".format(gene, "-".join(transcripts)))
-        
+        if transcripts != "ALL": 
+            DESIGN_OUT = os.path.join(path_out, 
+                                      "{}_{}_design.txt".format(gene, "-".join(transcripts)))
+            BLAST_OUT = os.path.join(path_out, 
+                                     "{}_{}_blast.txt".format(gene, "-".join(transcripts)))
+        else: 
+            DESIGN_OUT = os.path.join(path_out, 
+                                      "{}_{}_design.txt".format(gene, transcripts))
+            BLAST_OUT = os.path.join(path_out, 
+                                     "{}_{}_blast.txt".format(gene,transcripts))          
         # remove in case remaining from previous design
         for file in (DESIGN_OUT, BLAST_OUT): 
             if os.path.exists(file):

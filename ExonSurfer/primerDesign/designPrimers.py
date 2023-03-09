@@ -158,6 +158,9 @@ def report_design(c1, c2, exon_len, junction_id, junction_info, df):
     df["reverse_gc"] = df["reverse_gc"].astype("float64").round(2)
     df["amplicon_tm"] = df["amplicon_tm"].astype("float64").round(2)      
     
+    # remove possible duplicates
+    df = df.drop_duplicates(subset=['forward', 'reverse'])    
+    
     return df
 
 ###############################################################################
@@ -210,5 +213,8 @@ def report_one_exon_design(c2, exon_len, exon_junction, df):
     df["forward_gc"] = df["forward_gc"].astype("float64").round(2)
     df["reverse_gc"] = df["reverse_gc"].astype("float64").round(2)
     df["amplicon_tm"] = df["amplicon_tm"].astype("float64").round(2)
+    
+    # remove possible duplicates
+    df = df.drop_duplicates(subset=['forward', 'reverse'])
     
     return df
