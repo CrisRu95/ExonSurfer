@@ -7,10 +7,10 @@ import uuid
 
 # Constants
 BLAST_DB_LINKS = {
-    "homo_sapiens": "https://zenodo.org/record/7638757/files/human.zip?download=1", 
-    "homo_sapiens_masked": "https://zenodo.org/record/7638757/files/human.zip?download=1", 
-    "mus_musculus": "https://zenodo.org/record/7638757/files/mouse.zip?download=1", 
-    "rattus_norvegicus": "https://zenodo.org/record/7638757/files/rat.zip?download=1"
+    "homo_sapiens": "https://zenodo.org/record/7712864/files/human.zip?download=1", 
+    "homo_sapiens_masked": "https://zenodo.org/record/7712864/files/human.zip?download=1", 
+    "mus_musculus": "https://zenodo.org/record/7712864/files/mouse.zip?download=1", 
+    "rattus_norvegicus": "https://zenodo.org/record/7712864/files/rat.zip?download=1"
     }
 
 BLAST_DB_NAMES = {
@@ -280,3 +280,4 @@ def download_all_db():
         print("[+] Downloading {} masked sequences...".format(species), flush=True)
         MASKED_SEQS(species)
         print("[+] Done.", flush=True)
+        

@@ -147,8 +147,9 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
           os.remove(FASTA_F)
         
         # Filter blast results
-        blast_df, df = blast.pre_filter_blast(blast_df, transcripts, gene, df, 
-                                              e_value, i_cutoff, False)
+        blast_df = blast.pre_filter_blast(blast_df, transcripts, gene, df, 
+                                          e_value, i_cutoff, False)
+        blast_df, df = blast.filter_big_blast(blast_df, df)
         
         # Check blast results positions
         df = blast.check_specificity(blast_df, df, gene, transcripts, max_sep)
@@ -159,7 +160,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         final_df = penalizePrimers.make_penalty_score(final_df)     
         
         # Annotate transcripts detected
-        final_df = annotate_detected.annotate_detected(final_df, cdna_d, gene_obj)
+        final_df = annotate_detected.annotate_notdetected(final_df, cdna_d, gene_obj)
         
         # Annotate if there are off_targets or not
         final_df = blast.show_off_targets(final_df, transcripts)

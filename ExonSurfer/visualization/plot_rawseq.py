@@ -238,53 +238,35 @@ def create_offt_string(seq, f1, f2, r1, r2, mm_i):
 
 def obtain_offtarget_list(pair_id, final_df, species, transcripts): 
     """
-    This function returns a list of refseq identifiers, corresponding to the
+    This function returns a list of ensembl identifiers, corresponding to the
     possible off-target amplification. 
     Args: 
         pair_id [in] (str)   Primer pair identifier (ex "Pair1")
         final_df [in] (str)  Final design DF returned by exon surfer
         species [in] (str)   Organism
         transcripts [in] (str|l) List of targeted transcripts or ALL
-        refseq_ids [out] (l) List of refseq identifiers
+        offt_ids [out] (l) List of refseq identifiers
     """
-    refseq_ids = [] # to return
-    
-    # Obtain ensembl ids
+    # Obtain offtarget ids
     ensembl_ids = final_df.loc[pair_id]["other_genes"].split(";")
     if transcripts != "ALL": 
         ensembl_ids += final_df.loc[pair_id]["other_transcripts"].split(";")    
     
-    # Remove empty ones
-    ensembl_ids = [x for x in ensembl_ids if x != ""]
-    
     # Remove annotation
-    ensembl_ids = [x.replace("(protein_coding)", "") for x in ensembl_ids]
-    
-    # Transform to refseq ids
-    if len(ensembl_ids) > 0: 
-        table_file = os.path.join(resources.get_blastdb_path(species), 
-                                  resources.IDS_TABEL)
-        with open(table_file, "r") as op: 
-            lines = op.readlines()
-        refseq_ids += [l.split("\t")[0] for l in lines if any([x for x in ensembl_ids if x in l])]
-
-    # Obtain refseq_ids
-    refseq_ids += final_df.loc[pair_id]["other_genes_rpred"].split(";")
-    if transcripts != "ALL": 
-        refseq_ids += final_df.loc[pair_id]["other_transcripts_rpred"].split(";")    
+    offt_ids = [re.sub("\(.*\)", "", x) for x in ensembl_ids]
 
     # Remove empty ones
-    refseq_ids = [x for x in refseq_ids if x != ""]
+    offt_ids = [x for x in offt_ids if x != ""]
     
-    return refseq_ids
+    return offt_ids
   
 ###############################################################################
 
-def get_offtarget_sequence(refseq_id, species): 
+def get_offtarget_sequence(t_id, species): 
     """
     This function returns the complete sequence of an off-target location. 
     Args: 
-        refseq_id [in] (str) Refseq identifier
+        t_id [in] (str)      Transcript identifier
         species [in] (str)   Organism
         seq [out] (str)      Complete sequence of the refseq identifier
 
@@ -297,7 +279,7 @@ def get_offtarget_sequence(refseq_id, species):
         cseq = cseq.split(">") # list
         
     # add "." to ensure complete match
-    string = [x for x in cseq if refseq_id+"." in x][0]
+    string = [x for x in cseq if t_id+"." in x][0]
     string = string.split("\n") # list
     string = string[1:] # remove header
     string = "".join(string).upper()
@@ -384,15 +366,13 @@ def highlight_offtarget(pair_id, final_df, species, transcripts):
         transcripts [in] (l|str) List of targeted transcripts or ALL
         all_string [out] (str)   Complete HTML string
     """
-    OFFT1 = '<div id="cdna-container" style="margin: 5%; padding: 5%">'
-    OFFT2 = '</div>'
     all_string = "" # str to return
     
     # Obtain all off-target ids
-    refseq_ids = obtain_offtarget_list(pair_id, final_df, species, transcripts)
+    ensembl_ids = obtain_offtarget_list(pair_id, final_df, species, transcripts)
     
-    for item in refseq_ids: 
-        seq = get_offtarget_sequence(item, species) # refseq sequence
+    for item in ensembl_ids: 
+        seq = get_offtarget_sequence(item, species) # sequence
         # get primer match indices
         try: 
             f1, f2, r1, r2, rc = get_primers_i(seq, 

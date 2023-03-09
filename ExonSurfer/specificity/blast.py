@@ -46,13 +46,17 @@ def run_blast_list(fastaf, out, db_path, species,
     
     
     table = pd.read_csv(os.path.join(resources.get_blastdb_path(species),
-                                     resources.IDS_TABEL), sep = "\t")
+                                     resources.IDS_TABEL), 
+                        sep = "\t", names=["id", "gene"], header=None)
+    # remove transcript version information
+    table["id"] = table["id"].map(lambda x: x.split(".")[0])
     
-    df = pd.merge(df, table, left_on="subject id", right_on = "id")
+    df = pd.merge(df, table, left_on="subject id", right_on = "id", how = "left")
     
     # overwrite annotated blast result
     df.to_csv(out, sep = "\t", index = False)
     os.remove(out)
+    
     return df
 
 ###############################################################################
@@ -110,12 +114,17 @@ def pre_filter_blast(blast_df, t_transcript, t_gene, design_df,
     blast_df = blast_df[blast_df["evalue"] <= e_cutoff]
     blast_df = blast_df[blast_df["identity"] >= i_cutoff]
     
-    # if dataframe is still very big
+    return blast_df
+
+###############################################################################
+
+def filter_big_blast(blast_df, design_df, maxrows = 15000): 
+    
     # import median function
     from numpy import median
     
     to_continue = True # initialize
-    while blast_df.shape[0] > 10000 and to_continue == True: 
+    while blast_df.shape[0] > maxrows and to_continue == True: 
         raw_counts = blast_df["query id"].value_counts()
         clean_counts = []
         for ppair in list(design_df.index): 
@@ -134,7 +143,6 @@ def pre_filter_blast(blast_df, t_transcript, t_gene, design_df,
             to_continue = False
             
     return blast_df, design_df
-
 
 ###############################################################################
     
@@ -155,11 +163,9 @@ def check_specificity(blast_df, design_df, t_gene, t_transcript, max_sep):
     # new columns to fill in 
     design_df["other_transcripts"] = ""
     design_df["other_genes"] = ""
-    design_df["other_transcripts_rpred"] = ""
-    design_df["other_genes_rpred"] = ""
     
     # not for filters, just to inform
-    
+    design_df["detected"] = ""
     
     # LOOP 1. only for ensembl nomenclature (not predicte)
     # for every forward primer
@@ -187,25 +193,17 @@ def check_specificity(blast_df, design_df, t_gene, t_transcript, max_sep):
                                         (blast_df['subject id'] == subj)].gene.item()
                         
                         ensembl_id = blast_df[(blast_df['query id'] == rev_id) & \
-                                              (blast_df['subject id'] == subj)].ensembl_id.item()
-                        try: 
-                            if ensembl_id != "-": 
-                                if t_gene == gene: # same gene, different transcript
-                                    # annotate for filters
-                                    if ensembl_id not in t_transcript: 
-                                        design_df.loc[for_id[:-2], "other_transcripts"] += ensembl_id +";" 
-                                else:  # different gene
-                                    design_df.loc[for_id[:-2], "other_genes"] += ensembl_id +";"
-                            else: 
-                                if t_gene == gene: # same gene, different transcript
-                                    design_df.loc[for_id[:-2], "other_transcripts_rpred"] += subj +";" 
-                                else:  # different gene
-                                    design_df.loc[for_id[:-2], "other_genes_rpred"] += subj +";"
-                        except: 
-                              print("ensembl id: {}".format(ensembl_id))
-                              print("rev_id id: {}".format(rev_id))
-                              print("subj id: {}".format(subj))
-                              
+                                              (blast_df['subject id'] == subj)].id.item()
+
+                        if t_gene == gene: # same gene, different transcript
+                            # annotate for filters
+                            design_df.loc[for_id[:-2], "detected"] += ensembl_id +";"
+                            if t_transcript != "ALL" and ensembl_id not in t_transcript: 
+                                design_df.loc[for_id[:-2], "other_transcripts"] += ensembl_id +";" 
+                        else:  # different gene
+                            design_df.loc[for_id[:-2], "other_genes"] += ensembl_id +";"
+
+            
     # individual alignments with other genes
     b_ogenes = blast_df[blast_df["gene"] != t_gene]
     design_df["indiv_als"] = design_df.apply(lambda row: b_ogenes[(b_ogenes["query id"] == row.name+"_5") | \
@@ -216,25 +214,22 @@ def check_specificity(blast_df, design_df, t_gene, t_transcript, max_sep):
 
 ###############################################################################
 
-def show_ot_for_pair(transcripts, other_genes, other_genes_rpred, 
-                     other_transcripts, other_transcripts_rpred): 
+def show_ot_for_pair(transcripts, other_genes, other_transcripts): 
     """
     This function says if a primer pair has off-targets to return or not. 
     Args: 
         transcripts [in] (str|l)      List of transcripts or ALL
         other_genes [in] (str)        List of other genes or empty
-        other_genes_rpred [in] (str)  List other genes refseq annotated
         other_genes [in] (str)        List of other transcripts or empty
-        other_genes_rpred [in] (str)  List other transcripts refseq annotated
         to_return [out] (int)         1 if there are off_targets, 0 if not
     """
     to_return = 0 #  default not show 
     
     if transcripts == "ALL": 
-        if other_genes != "" or other_genes_rpred != "": 
+        if other_genes != "": 
             to_return = 1
     else: 
-        if other_genes != "" or other_genes_rpred != "" or other_transcripts != "" or other_transcripts_rpred != "":
+        if other_genes != "" or other_transcripts != "":
             to_return = 1
             
     return to_return
@@ -250,9 +245,7 @@ def show_off_targets(final_df, transcripts):
     """
     final_df["off_targets"] = final_df.apply(lambda row: show_ot_for_pair(transcripts, 
                                                                           row["other_genes"], 
-                                                                          row["other_genes_rpred"],
-                                                                          row["other_transcripts"], 
-                                                                          row["other_transcripts_rpred"]), 
+                                                                          row["other_transcripts"]), 
                                              axis = 1)
     
     return final_df
