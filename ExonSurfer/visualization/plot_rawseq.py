@@ -9,6 +9,7 @@ Created on Tue Feb 14 17:31:44 2023
 import os
 import re
 import regex
+import pandas as pd
 
 # own modules
 from ExonSurfer.ensembl import ensembl
@@ -19,7 +20,7 @@ from ExonSurfer.resources import resources
 ###############################################################################
 
 HEADER_LINE1 ='<h3 class="header"> {} - {}</h3>'
-HEADER_LINE2 ='<b> >{} - {}</b> Amplicon length: {}<br>'
+HEADER_LINE2 ='<b> >{} - Gene: {}, transcript: {}</b> Amplicon length: {}<br>'
 
 OFFT1 = '<div id="cdna-container" style="margin: 5%; padding: 5%">'
 OFFT2 = '</div>'
@@ -251,15 +252,38 @@ def obtain_offtarget_list(pair_id, final_df, species, transcripts):
     ensembl_ids = final_df.loc[pair_id]["other_genes"].split(";")
     if transcripts != "ALL": 
         ensembl_ids += final_df.loc[pair_id]["other_transcripts"].split(";")    
-    
-    # Remove annotation
-    offt_ids = [re.sub("\(.*\)", "", x) for x in ensembl_ids]
 
     # Remove empty ones
-    offt_ids = [x for x in offt_ids if x != ""]
+    offt_ids = [x for x in ensembl_ids if x != ""]
     
     return offt_ids
-  
+
+###############################################################################
+
+def annotate_genes(offt_ids, species): 
+    """
+    This function returns a list of genes, corresponding to a list of transcript
+    ids (in the same order). 
+    Args: 
+        offt_ids [in] (l) List of transcript identifiers
+        species [in] (str) Species name
+        genes [out] (d) Dict of gene symbols
+    """ 
+    genes = {}
+    table = pd.read_csv(os.path.join(resources.get_blastdb_path(species),
+                                     resources.IDS_TABEL), 
+                        sep = "\t", names=["id", "gene"], header=None)
+    
+    # remove transcript version information
+    table["id"] = table["id"].map(lambda x: x.split(".")[0])
+    
+    for item in offt_ids: 
+        t_id = re.sub("\(.*\)", "", item) 
+        g = table[table["id"] == t_id].gene.item()
+        genes[t_id] = g
+    
+    return genes
+    
 ###############################################################################
 
 def get_offtarget_sequence(t_id, species): 
@@ -371,8 +395,12 @@ def highlight_offtarget(pair_id, final_df, species, transcripts):
     # Obtain all off-target ids
     ensembl_ids = obtain_offtarget_list(pair_id, final_df, species, transcripts)
     
+    # Obtain genes info
+    genes = annotate_genes(ensembl_ids, species)
+    
     for item in ensembl_ids: 
-        seq = get_offtarget_sequence(item, species) # sequence
+        without_annot = re.sub("\(.*\)", "", item) 
+        seq = get_offtarget_sequence(without_annot, species) # sequence
         # get primer match indices
         try: 
             f1, f2, r1, r2, rc = get_primers_i(seq, 
@@ -387,7 +415,8 @@ def highlight_offtarget(pair_id, final_df, species, transcripts):
         
             string = create_offt_string(seq, f1, f2, r1, r2, mm_i)
             
-            fullstr = OFFT1 + HEADER_LINE2.format(pair_id, item, offt_len)
+            fullstr = OFFT1 + HEADER_LINE2.format(pair_id, genes[without_annot], 
+                                                  item, offt_len)
             fullstr += string + OFFT2
             all_string += fullstr
             
