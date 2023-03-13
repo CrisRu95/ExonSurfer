@@ -13,12 +13,12 @@ from ExonSurfer.primerDesign import chooseTarget, construct_cdna, designPrimers
 from ExonSurfer.primerDesign import penalizePrimers, designConfig
 
 # Constants
-NPRIMERS = 100
+
 
 def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                   release = 108, design_dict = designConfig.design_dict, 
                   path_out = ".", save_files = True, e_value = 0.8,
-                  i_cutoff = 70, max_sep = 700, opt_prod_size = 200):
+                  i_cutoff = 70, max_sep = 700, opt_prod_size = 200, NPRIMERS = 100):
     """
     This function is the main function of the pipeline. It takes a gene name and
     a transcript name and returns a list of primers.
