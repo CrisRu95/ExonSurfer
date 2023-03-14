@@ -29,7 +29,7 @@ def annotate_other_transcripts(transcript_list, data):
         try: 
             new_ts += ";{}({})".format(x, data.transcript_by_id(x).biotype)
         except: 
-            pass
+            new_ts += ";{}({})".format(x, "not_annotated")
         
     return new_ts
     
@@ -234,13 +234,13 @@ def penalize_final_output(df, transcripts, data, gene_object):
 
 ###############################################################################
 
-def minmax_norm(v, minv, maxv): 
+def minmax_norm(v, minv=0, maxv=15): 
     """ This function makes the min max normalization"""
     if maxv != minv: 
-        newv = (v - minv) / (maxv - minv) 
+        newv = abs((v - maxv) / (maxv - minv))
     else: 
         newv = 1
-    return newv * 100
+    return round(newv * 100, 2)
 
 ###############################################################################
 
@@ -251,10 +251,7 @@ def make_penalty_score(df, complete_max = 20):
     # Collapse values bigger than 20 at 20
     df['pair_penalty'].values[df['pair_penalty'].values > complete_max] = complete_max
     
-    minv = min(df["pair_penalty"])
-    maxv = max(df["pair_penalty"])
-    df["pair_score"] = df["pair_penalty"].apply(lambda x: minmax_norm(x, 
-                                                                      minv, maxv))
+    df["pair_score"] = df["pair_penalty"].apply(lambda x: minmax_norm(x))
     
     # remove penalty score
     df = df.drop("pair_penalty", axis = 1)

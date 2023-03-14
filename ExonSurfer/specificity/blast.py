@@ -114,6 +114,9 @@ def pre_filter_blast(blast_df, t_transcript, t_gene, design_df,
     blast_df = blast_df[blast_df["evalue"] <= e_cutoff]
     blast_df = blast_df[blast_df["identity"] >= i_cutoff]
     
+    # reset index just in case
+    blast_df = blast_df.reset_index()
+    
     return blast_df
 
 ###############################################################################
@@ -142,74 +145,64 @@ def filter_big_blast(blast_df, design_df, maxrows = 15000):
         else: 
             to_continue = False
             
+    # reset index just in case
+    blast_df = blast_df.reset_index()
+            
     return blast_df, design_df
 
 ###############################################################################
+
+def check_row_spec(blast_df, row, design_df, max_sep, t_gene, t_transcripts): 
     
-def check_specificity(blast_df, design_df, t_gene, t_transcript, max_sep):
-    """
-    This function check if the specificity of the blast result and annotates: 
-    (a) productive blast alignments and (b) unproductive blast alignments as 
-    "other_genes" (productive), "other_transcripts" (productive) and "indiv_als"
-    (unproductive), in the design_df. 
-    Args: 
-        blast_df [in] (pd.df)  Filtered alignments dataframe
-        design_df [in] (pd.df) Design dataframe
-        t_gene [in] (str)      Target gene name
-        t_transcript [in] (l|str) List of transcript ids or "ALL"
-        max_sep [in] (int)     Maximum separation between 2 alignments in order
-                               to form an off-target
-    """
+    # get pair name
+    pair_name = row["query id"][:-2]
+    
+    # if not already annotated
+    if row["subject id"] not in design_df.loc[pair_name, "detected"] and \
+        row["subject id"] not in design_df.loc[pair_name, "other_genes"]: 
+            
+        # iterate blast df WITHOUT row being inspected
+        ppair_num = (row["query id"][:-2] + "_5", 
+                     row["query id"][:-2] + "_3")
+        
+        poss_offts = blast_df.index[(blast_df["query id"].isin(ppair_num)) &\
+                                    (blast_df["subject id"] == row["subject id"])]
+    
+        for i in [ind for ind in poss_offts if ind != row.name]: 
+            # if opposite strand
+            if row["strand"] != blast_df.iloc[i]["strand"]: 
+                # if close enough
+                if abs(row["s. start"] - blast_df.iloc[i]["s. start"]) < max_sep: 
+                    # if amplifies same gene
+                    if t_gene == row["gene"]: 
+                        design_df.loc[pair_name, "detected"] += row["subject id"] +";"
+                        if t_transcripts != "ALL" and row["subject id"] not in t_transcripts: 
+                            design_df.loc[pair_name, "other_transcripts"] += row["subject id"] +";"
+                    else: 
+                        design_df.loc[pair_name, "other_genes"] += row["subject id"] +";"
+        
+###############################################################################
+
+def check_specificity(blast_df, design_df, t_gene, t_transcript, max_sep): 
+    
     # new columns to fill in 
-    design_df["other_transcripts"] = ""
     design_df["other_genes"] = ""
+    design_df["other_transcripts"] = ""
     
     # not for filters, just to inform
     design_df["detected"] = ""
+
+    # check off-targets
+    blast_df.apply(lambda row: check_row_spec(blast_df, row, design_df, max_sep, 
+                                              t_gene, t_transcript), 
+                   axis = 1)   
     
-    # LOOP 1. only for ensembl nomenclature (not predicte)
-    # for every forward primer
-    for for_id in [x for x in list(set(blast_df["query id"])) if "_5" in x]: 
-        # for every alignment for a given forward
-        
-        # Subject is annotated in ensembl nomenclature
-        for subj in [x for x in list(blast_df[blast_df["query id"] == for_id]["subject id"]) if x != "-"]: 
-            
-            for forpos in blast_df.loc[(blast_df['query id'] == for_id) & \
-                                      (blast_df['subject id'] == subj)]["s. start"]: 
-                forpos = int(forpos)
-
-                # check if there are any reverse alignments on the same subject id
-                rev_id = for_id[:-2] + "_3"
-            
-                for revpos in blast_df.loc[(blast_df['query id'] == rev_id) & \
-                                       (blast_df['subject id'] == subj)]["s. start"]: 
-                    revpos = int(revpos)
-                    
-                    # both alignments are on the same, untargeted, subject
-                    if abs(revpos-forpos) <= max_sep: 
-                        
-                        gene = blast_df[(blast_df['query id'] == rev_id) & \
-                                        (blast_df['subject id'] == subj)].gene.item()
-                        
-                        ensembl_id = blast_df[(blast_df['query id'] == rev_id) & \
-                                              (blast_df['subject id'] == subj)].id.item()
-
-                        if t_gene == gene: # same gene, different transcript
-                            # annotate for filters
-                            design_df.loc[for_id[:-2], "detected"] += ensembl_id +";"
-                            if t_transcript != "ALL" and ensembl_id not in t_transcript: 
-                                design_df.loc[for_id[:-2], "other_transcripts"] += ensembl_id +";" 
-                        else:  # different gene
-                            design_df.loc[for_id[:-2], "other_genes"] += ensembl_id +";"
-
-            
     # individual alignments with other genes
     b_ogenes = blast_df[blast_df["gene"] != t_gene]
     design_df["indiv_als"] = design_df.apply(lambda row: b_ogenes[(b_ogenes["query id"] == row.name+"_5") | \
                                                                   (b_ogenes["query id"] == row.name+"_3")].shape[0], 
                                              axis = 1)    
-    
+        
     return design_df
 
 ###############################################################################

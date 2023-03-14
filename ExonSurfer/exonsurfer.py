@@ -12,8 +12,6 @@ from ExonSurfer.resources import resources
 from ExonSurfer.primerDesign import chooseTarget, construct_cdna, designPrimers
 from ExonSurfer.primerDesign import penalizePrimers, designConfig
 
-# Constants
-
 
 def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                   release = 108, design_dict = designConfig.design_dict, 
