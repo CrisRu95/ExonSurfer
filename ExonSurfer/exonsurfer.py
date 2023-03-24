@@ -31,7 +31,9 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         BLAST_OUT [out] (df):   Dataframe with blast results
         DESIGN_OUT [out] (df):  Ddataframe with primer design results
     """ 
-        
+    ###########################################################################
+    #                        STEP 1. RETRIEVE INFORMATION                     #
+    ########################################################################### 
     # Construct transcripts dictionary
     print("Extracting ensemble info")
     data = ensembl.create_ensembl_data(release, 
@@ -55,6 +57,9 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
     else: 
         canonical_t = []
         
+    ###########################################################################
+    #                           STEP 2: CHOOSE TARGET                         #
+    ###########################################################################         
     # Get best exonic junction
     print("Getting exon junction")
     junctions_d = chooseTarget.format_junctions(d, 
@@ -74,6 +79,9 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
             "amplicon_tm", "pair_penalty")
     df = pd.DataFrame(columns = cols)
     
+    ###########################################################################
+    #                          STEP 3:  DESIGN PRIMERS                        #
+    ###########################################################################      
     if len(junction) == 0: # only one exon
         design_dict["PRIMER_NUM_RETURN"] = NPRIMERS
         target, index, elen = construct_cdna.construct_one_exon_cdna(resources.MASKED_SEQS(species), 
@@ -109,23 +117,27 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
             df = designPrimers.report_design(c1, c2, tupla[2], tupla[3], 
                                              tupla[4], df)
     
-
     df["pair_num"] = ["Pair{}".format(x) for x in range(0, df.shape[0])]
     df = df.set_index('pair_num')
     
     if df.shape[0] > 1: # we designed primers
-        
+    
+        #######################################################################
+        #                       STEP 4:  BLAST AGAINST CDNA                   #
+        #######################################################################          
         # Define three output files, with the same name as the gene and transcript
         if transcripts != "ALL": 
-            DESIGN_OUT = os.path.join(path_out, 
-                                      "{}_{}_design.txt".format(gene, "-".join(transcripts)))
-            BLAST_OUT = os.path.join(path_out, 
-                                     "{}_{}_blast.txt".format(gene, "-".join(transcripts)))
+            t_string = "-".join(transcripts[:3])
         else: 
-            DESIGN_OUT = os.path.join(path_out, 
-                                      "{}_{}_design.txt".format(gene, transcripts))
-            BLAST_OUT = os.path.join(path_out, 
-                                     "{}_{}_blast.txt".format(gene,transcripts))          
+            t_string = transcripts
+        
+        DESIGN_OUT = os.path.join(path_out, 
+                                  "{}_{}_design.txt".format(gene, t_string))
+        BLAST_OUT = os.path.join(path_out, 
+                                 "{}_{}_blast.txt".format(gene, t_string))
+        GBLAST_OUT = os.path.join(path_out, 
+                                  "{}_{}_gblast.txt".format(gene, t_string))
+   
         # remove in case remaining from previous design
         for file in (DESIGN_OUT, BLAST_OUT): 
             if os.path.exists(file):
@@ -141,8 +153,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                         species)
         
         # Delete fasta file
-        if os.path.exists(FASTA_F):
-          os.remove(FASTA_F)
+        if os.path.exists(FASTA_F): os.remove(FASTA_F)
         
         # Filter blast results
         blast_df = blast.pre_filter_blast(blast_df, transcripts, gene, df, 
@@ -152,10 +163,39 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         # Check blast results positions
         df = blast.check_specificity(blast_df, df, gene, transcripts, max_sep)
         
-        # Filter final DF 
+        #######################################################################
+        #                        STEP 5:  FILTER DATAFRAME                    #
+        #######################################################################   
         final_df = penalizePrimers.penalize_final_output(df, transcripts, data, 
                                                          gene_obj)
+        
+        #######################################################################
+        #                         STEP 6:  GENOMIC BLAST                      #
+        #######################################################################           
+        # Write genomic blast input
+        resources.fillin_temp_fasta(final_df, FASTA_F)
+        
+        # Call genomic blast
+        blast_df = blast.run_blast_list(FASTA_F, GBLAST_OUT, 
+                                        resources.BLAST_GENOMIC_DB(species), 
+                                        species, tomerge = False)    
+        # Filter big blast if needed
+        blast_df = blast.pre_filter_blast(blast_df, transcripts, gene, df, 
+                                          e_value, i_cutoff, False)
+        blast_df, final_df = blast.filter_big_blast(blast_df, final_df)
+        
+        # Delete fasta file
+        if os.path.exists(FASTA_F): os.remove(FASTA_F)
+        
+        # Check blast results positions
+        final_df = blast.check_genomic_specificity(blast_df, final_df, max_sep)
+
+        #######################################################################
+        #                      STEP 7: PREPARE FINAL RESULT                   #
+        #######################################################################          
+        # Make penalty score
         final_df = penalizePrimers.make_penalty_score(final_df)     
+        final_df = penalizePrimers.genomic_filter(final_df)
         
         # Annotate transcripts detected
         final_df = annotate_detected.annotate_notdetected(final_df, cdna_d, gene_obj)

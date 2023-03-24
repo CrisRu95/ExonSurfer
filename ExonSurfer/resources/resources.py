@@ -6,11 +6,11 @@ import os
 import uuid
 
 # Constants
-BLAST_DB_LINKS = {
-    "homo_sapiens": "https://zenodo.org/record/7712864/files/human.zip?download=1", 
-    "homo_sapiens_masked": "https://zenodo.org/record/7712864/files/human.zip?download=1", 
-    "mus_musculus": "https://zenodo.org/record/7712864/files/mouse.zip?download=1", 
-    "rattus_norvegicus": "https://zenodo.org/record/7712864/files/rat.zip?download=1"
+BLAST_DB_LINKS = { #  cDNA and genomic DNA
+    "homo_sapiens": "https://zenodo.org/record/7766234/files/human.zip?download=1", 
+    "homo_sapiens_masked": "https://zenodo.org/record/7766234/files/human.zip?download=1", 
+    "mus_musculus": "https://zenodo.org/record/7766234/files/mouse.zip?download=1", 
+    "rattus_norvegicus": "https://zenodo.org/record/7766234/files/rat.zip?download=1"
     }
 
 BLAST_DB_NAMES = {
@@ -19,6 +19,14 @@ BLAST_DB_NAMES = {
     "mus_musculus": "mouse.rna.fna", 
     "rattus_norvegicus": "rat.rna.fna"
     }
+
+BLAST_GENOMIC_DB_NAMES = {
+    "homo_sapiens": "human.dna.fna", 
+    "homo_sapiens_masked": "human.dna.fna", 
+    "mus_musculus": "mouse.dna.fna", 
+    "rattus_norvegicus": "rat.dna.fna"
+    }
+
 
 CHROM_LINKS = {
     "homo_sapiens": "https://zenodo.org/record/7638757/files/human_seqs.zip?download=1", 
@@ -247,6 +255,21 @@ def BLAST_DB(species):
         download_blast_db(species)
 
     return blast_db_path
+
+###############################################################################
+    
+def BLAST_GENOMIC_DB(species):
+    """
+    This function returns the blast DB path AND constructs it if necessary. 
+    Args: 
+        species [in] (str)        homo_sapiens, mus_musculus or rattus_norvegicus
+        blast_db_path [out] (str) Path to the BLAST db
+    """
+    # filename to search for
+    blast_gdb_path = os.path.join(get_blastdb_path(species), 
+                                 BLAST_GENOMIC_DB_NAMES[species])
+
+    return blast_gdb_path
 
 ###############################################################################
 

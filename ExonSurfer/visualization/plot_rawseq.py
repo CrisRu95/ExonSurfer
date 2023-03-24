@@ -21,6 +21,7 @@ from ExonSurfer.resources import resources
 
 HEADER_LINE1 ='<h3 class="header"> {} - {}</h3>'
 HEADER_LINE2 ='<b> >{} - Gene: {}, transcript: {}</b> Amplicon length: {}<br>'
+HEADER_LINE3 ='<b> >{} - Genomic DNA: {}</b> Amplicon length: {}<br>'
 
 OFFT1 = '<div id="cdna-container" style="margin: 5%; padding: 5%">'
 OFFT2 = '</div>'
@@ -250,11 +251,13 @@ def obtain_offtarget_list(pair_id, final_df, species, transcripts):
     """
     # Obtain offtarget ids
     ensembl_ids = final_df.loc[pair_id]["other_genes"].split(";")
+    genomic_ids = final_df.loc[pair_id]["genomic_amp"].split(";")
+    
     if transcripts != "ALL": 
         ensembl_ids += final_df.loc[pair_id]["other_transcripts"].split(";")    
 
     # Remove empty ones
-    offt_ids = [x for x in ensembl_ids if x != ""]
+    offt_ids = [x for x in ensembl_ids if x != ""] + [x for x in genomic_ids if x != ""]
     
     return offt_ids
 
@@ -278,9 +281,12 @@ def annotate_genes(offt_ids, species):
     table["id"] = table["id"].map(lambda x: x.split(".")[0])
     
     for item in offt_ids: 
-        t_id = re.sub("\(.*\)", "", item) 
-        g = table[table["id"] == t_id].gene.item()
-        genes[t_id] = g
+        if ":" not in item: # it is NOT a genomic location
+            t_id = re.sub("\(.*\)", "", item) 
+            g = table[table["id"] == t_id].gene.item()
+            genes[t_id] = g
+        else: 
+            genes[item] = "Genomic DNA"
     
     return genes
     
@@ -308,6 +314,32 @@ def get_offtarget_sequence(t_id, species):
     string = string[1:] # remove header
     string = "".join(string).upper()
         
+    return string
+
+###############################################################################
+
+def get_offtarget_gseq(without_annot, species): 
+    """
+    This function returns the off-target sequence for a genomic amplification. 
+    Args: 
+        without_annot [in] (str) Chrom location "1:1000-2000" like string
+        species [in] (str)       Species designed
+        string [out] (str)       Off-target sequence
+    """
+    # obtain chromosome, first and last position
+    chrom = without_annot.split(":")[0][1:] # remove "("
+    pos1 = int((without_annot.split(":")[1]).split("-")[0])
+    pos2 = int((without_annot.split(":")[1]).split("-")[1][:-1]) # remove ")"
+    
+    # open chromosome file and read sequence
+    chrom_file = resources.MASKED_SEQS(species).format(chrom)
+    op = open(chrom_file, "r")
+    chrom_seq = op.read()
+    op.close()
+    
+    # substract alignment sequence
+    string = chrom_seq[pos1-30:pos2+30].upper()
+    
     return string
 
 ###############################################################################
@@ -399,8 +431,12 @@ def highlight_offtarget(pair_id, final_df, species, transcripts):
     genes = annotate_genes(ensembl_ids, species)
     
     for item in ensembl_ids: 
-        without_annot = re.sub("\(.*\)", "", item) 
-        seq = get_offtarget_sequence(without_annot, species) # sequence
+        if ":" not in item: # item is cDNA alignment
+            without_annot = re.sub("\(.*\)", "", item) 
+            seq = get_offtarget_sequence(without_annot, species) # sequence
+        else: 
+            without_annot = item
+            seq = get_offtarget_gseq(without_annot, species)
         # get primer match indices
         try: 
             f1, f2, r1, r2, rc = get_primers_i(seq, 
@@ -415,8 +451,13 @@ def highlight_offtarget(pair_id, final_df, species, transcripts):
         
             string = create_offt_string(seq, f1, f2, r1, r2, mm_i)
             
-            fullstr = OFFT1 + HEADER_LINE2.format(pair_id, genes[without_annot], 
-                                                  item, offt_len)
+            if ":" not in item: 
+                fullstr = OFFT1 + HEADER_LINE2.format(pair_id, 
+                                                      genes[without_annot], 
+                                                      item, offt_len)
+            else: 
+                fullstr = OFFT1 + HEADER_LINE3.format(pair_id, item[1:-1], offt_len)
+                
             fullstr += string + OFFT2
             all_string += fullstr
             

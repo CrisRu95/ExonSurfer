@@ -257,3 +257,23 @@ def make_penalty_score(df, complete_max = 20):
     df = df.drop("pair_penalty", axis = 1)
     
     return df
+
+###############################################################################
+
+def genomic_filter(df): 
+    """
+    This function filters the primers with genomic amplification (if possible)
+    Args: 
+        df [in] (pd.df) Final_df with genomic_amp column
+    """
+    df["genomic_filt"] = df.apply(lambda r: \
+                                 len([x for x in r["genomic_amp"].split(";") if x != ""]), 
+                                 axis= 1)
+        
+    minval = min(df["genomic_filt"])
+    
+    df = df.loc[df["genomic_filt"] == minval]
+    
+    return df
+    
+        
