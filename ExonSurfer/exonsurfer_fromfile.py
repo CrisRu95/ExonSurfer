@@ -7,13 +7,14 @@ import pandas as pd
 
 # own modules
 from ExonSurfer.ensembl import ensembl
-from ExonSurfer.specificity import blast, offtargets, g_offtargets, annotate
+from ExonSurfer.readFiles import readGBK, readFasta, commonFunctions
+from ExonSurfer.specificity import blast, annotate, offtargets_file_input, g_offtargets
 from ExonSurfer.resources import resources
-from ExonSurfer.primerDesign import chooseTarget, construct_cdna, designPrimers
+from ExonSurfer.primerDesign import designPrimers
 from ExonSurfer.primerDesign import penalizePrimers, designConfig
 
 
-def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
+def CreatePrimers(file, species = "homo_sapiens_masked",
                   release = 108, design_dict = designConfig.design_dict, 
                   path_out = ".", save_files = True, e_value = 0.8,
                   i_cutoff = 70, max_sep = 700, opt_prod_size = 200, NPRIMERS = 100, 
@@ -35,44 +36,29 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         final_df [out] (df)    Dataframe with primer design results
     """ 
     ###########################################################################
-    #                        STEP 1. RETRIEVE INFORMATION                     #
+    #                 STEP 1. RETRIEVE INFORMATION & CHOOSE TARGET            #
     ########################################################################### 
-    # Construct transcripts dictionary
     print("Extracting ensemble info")
     data = ensembl.create_ensembl_data(release, 
                                        species.replace("_masked", ""))
-    gene_obj = ensembl.get_gene_by_symbol(gene, data)
-        
-    d = ensembl.get_transcripts_dict(gene_obj, exclude_noncoding = False)
     
-    cdna_d = ensembl.build_cdna_dict(data, gene_obj, resources.MASKED_SEQS(species))
-    
-    # If ALL transcripts are targeted and human species, get canonical
-    if "homo_sapiens" in species and transcripts == "ALL": 
-        cfile = open(resources.CANONICAL(), "r")
-        lines = cfile.read().split("\n")
-        canonical_t = [  # list comprehension here
-            l.split("\t")[1] 
-            for l 
-            in lines 
-            if gene_obj.gene_id in l and "Ensembl Canonical" in l
-            ]
+    # GenBank file format
+    if file[-3:] == ".gb": 
+        gb_record = readGBK.read_genbank_file(file)
+        target = readGBK.extract_cdna(gb_record)
+        junction = readGBK.extract_junctions(gb_record)
+
+    # Fasta file format 
     else: 
-        canonical_t = []
+        header, target = readFasta.read_fasta_file(file)
+        junction = readFasta.extract_junctions(header)
         
+    jdict = readGBK.get_junc_dict(junction)
+    elen = readGBK.get_elen(junction, target)
+    
     ###########################################################################
-    #                           STEP 2: CHOOSE TARGET                         #
-    ###########################################################################         
-    # Get best exonic junction
-    print("Getting exon junction")
-    junctions_d = chooseTarget.format_junctions(d, 
-                                                transcripts, 
-                                                opt_prod_size, 
-                                                data)
-    
-    junction = chooseTarget.choose_target(d, junctions_d, transcripts, canonical_t)
-    print("Exon junctions: {}".format(junction))
-    
+    #                          STEP 2:  DESIGN PRIMERS                        #
+    ###########################################################################    
     # Get sequence and junction index
     print("Starting primer design")
     
@@ -82,48 +68,31 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
             "amplicon_tm", "pair_penalty")
     df = pd.DataFrame(columns = cols)
     
-    ###########################################################################
-    #                          STEP 3:  DESIGN PRIMERS                        #
-    ###########################################################################      
     if len(junction) == 0: # only one exon
-        design_dict["PRIMER_NUM_RETURN"] = NPRIMERS
-        target, index, elen = construct_cdna.construct_one_exon_cdna(resources.MASKED_SEQS(species), 
-                                                                     gene_obj, 
-                                                                     data, 
-                                                                     transcripts)        
+        design_dict["PRIMER_NUM_RETURN"] = NPRIMERS  
         # Design primers
-        c2 = designPrimers.call_primer3(target, index, design_dict, d_option, 
-                                        enum = 1)
-        if transcripts == "ALL": 
-            item = [ensembl.get_transcript_from_gene(gene_obj)[0].exons[0].exon_id, 
-                    "one exon"]            
-        else: 
-            item = [data.transcript_by_id(transcripts).exons[0].exon_id, 
-                    "one exon"]
+        c2 = designPrimers.call_primer3(target, int(len(target)/2), design_dict, 
+                                        d_option, enum = 1)
+        
+        item = ["EXON1", "one exon"]            
+
         df = designPrimers.report_one_exon_design(c2, elen, item, df)
         
     else: # Normal design (more than 1 exon)
-        to_design = []
-        for item in junction: 
-            to_design += construct_cdna.construct_target_cdna(resources.MASKED_SEQS(species), 
-                                                              gene_obj,
-                                                              data, 
-                                                              transcripts, 
-                                                              item)
-        for tupla in to_design: 
+
+        for item in jdict: 
             # Decide number of primers to design
             if d_option == 1: 
-                num_primers = int(NPRIMERS / len(to_design))
+                num_primers = int(NPRIMERS / len(junction))
             else: 
-                num_primers = int(NPRIMERS / (len(to_design)*2))
+                num_primers = int(NPRIMERS / (len(junction)*2))
             design_dict["PRIMER_NUM_RETURN"] = num_primers
             
             # Design primers
-            c1, c2 = designPrimers.call_primer3(tupla[0], tupla[1], design_dict, 
+            c1, c2 = designPrimers.call_primer3(target, jdict[item], design_dict, 
                                                 d_option)
-    
-            df = designPrimers.report_design(c1, c2, tupla[2], tupla[3], 
-                                             tupla[4], df)
+
+            df = designPrimers.report_design(c1, c2, elen, item, "", df)
     
     df["pair_num"] = ["Pair{}".format(x) for x in range(0, df.shape[0])]
     df = df.set_index('pair_num')
@@ -134,17 +103,14 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         #                       STEP 4:  BLAST AGAINST CDNA                   #
         #######################################################################          
         # Define three output files, with the same name as the gene and transcript
-        if transcripts != "ALL": 
-            t_string = "-".join(transcripts[:3])
+        if file[-3:] == ".gb": 
+            t_string = gb_record.name
         else: 
-            t_string = transcripts
-        
-        DESIGN_OUT = os.path.join(path_out, 
-                                  "{}_{}_design.txt".format(gene, t_string))
-        BLAST_OUT = os.path.join(path_out, 
-                                 "{}_{}_blast.txt".format(gene, t_string))
-        GBLAST_OUT = os.path.join(path_out, 
-                                  "{}_{}_gblast.txt".format(gene, t_string))
+            t_string = header.split(" ")[0]
+
+        DESIGN_OUT = os.path.join(path_out, "{}_design.txt".format(t_string))
+        BLAST_OUT = os.path.join(path_out, "{}_blast.txt".format(t_string))
+        GBLAST_OUT = os.path.join(path_out, "{}_gblast.txt".format( t_string))
    
         # remove in case remaining from previous design
         for file in (DESIGN_OUT, BLAST_OUT): 
@@ -168,12 +134,12 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         blast_df, df = blast.filter_big_blast(blast_df, df)
         
         # Check blast results positions
-        df = offtargets.check_specificity(blast_df, df, gene, transcripts, max_sep)
+        df = offtargets_file_input.check_specificity(blast_df, df, max_sep)
         
         #######################################################################
         #                        STEP 5:  FILTER DATAFRAME                    #
         #######################################################################   
-        final_df = penalizePrimers.penalize_final_output(df, transcripts, data)
+        final_df = penalizePrimers.penalize_final_output(df, "transcripts", data)
         
         #######################################################################
         #                         STEP 6:  GENOMIC BLAST                      #
@@ -205,10 +171,10 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         final_df = penalizePrimers.make_penalty_score(final_df)     
         
         # Annotate transcripts detected
-        final_df = annotate.annotate_notdetected(final_df, cdna_d, gene_obj)
+        final_df["not_detected"] = ""
         
         # Annotate if there are off_targets or not
-        final_df = annotate.show_off_targets(final_df, transcripts)
+        final_df = annotate.show_off_targets(final_df, "transcripts")
         
         # Remove files if necessary
         if save_files == True:

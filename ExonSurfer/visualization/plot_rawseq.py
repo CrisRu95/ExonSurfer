@@ -14,6 +14,7 @@ import pandas as pd
 # own modules
 from ExonSurfer.ensembl import ensembl
 from ExonSurfer.resources import resources
+from ExonSurfer.readFiles import readGBK, readFasta
 
 ###############################################################################
 #                        CONSTANTS FOR THE HTML FILE                          #
@@ -184,7 +185,9 @@ def create_par_string(nm_dna, indices):
 
     # end sequence
     if indices[-1][1] == "j": 
-        ex = 1 if ex == 2 else 2 # change exon color
+        ex += 1 # change exon color
+        if ex > MAXEX: 
+            ex = 1
         flag = '<p class="ex{}">'.format(ex)  
     elif indices[-1][1] == "f2" or indices[-1][1] == "r2": 
         flag = '<p class="ex{}">'.format(ex)   
@@ -381,7 +384,7 @@ def get_mismatch_indices(seq, f1, r1, rc, forward, reverse):
 #                MAIN FUNCTION FOR ON TARGET HIGHLIGHTING                     #
 ###############################################################################
 
-def highlight_ontarget(pair_id, final_df, species, release): 
+def highlight_ontarget(pair_id, final_df, species, release, file = False): 
     """
     MAIN FUNCTION: highlights the ON target alignment of the primers. 
     Args: 
@@ -397,7 +400,20 @@ def highlight_ontarget(pair_id, final_df, species, release):
     data = ensembl.create_ensembl_data(release, 
                                        species.replace("_masked", ""))
     # obtain sequence and indices
-    nm_dna, ji = get_junction_seqs(junction, masked_chr, data)
+    if file == False: 
+        nm_dna, ji = get_junction_seqs(junction, masked_chr, data)
+    else: 
+        # GenBank file format
+        if file[-3:] == ".gb": 
+            gb_record = readGBK.read_genbank_file(file)
+            nm_dna = readGBK.extract_cdna(gb_record)
+            ji = readGBK.extract_junctions(gb_record)
+    
+        # Fasta file format 
+        else: 
+            header, nm_dna = readFasta.read_fasta_file(file)
+            ji = readFasta.extract_junctions(header)
+            
     f1, f2, r1, r2, _ = get_primers_i(nm_dna, final_df.loc[pair_id]["forward"], 
                                       final_df.loc[pair_id]["reverse"])
     # format indices

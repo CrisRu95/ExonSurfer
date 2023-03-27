@@ -108,7 +108,7 @@ def make_df_comparison(df, condition, columns):
 
 ###############################################################################
 
-def penalize_final_output(df, transcripts, data, gene_object): 
+def penalize_final_output(df, transcripts, data): 
     """
     This function penalizes the last data design DF (with blast information 
     appended) and returns a list of the best primer pairs for the task
@@ -116,7 +116,6 @@ def penalize_final_output(df, transcripts, data, gene_object):
         df [in] (pd.df)          Design df with blast information appended
         transcripts [in] (l|str) List of target transcripts ID (no version) or ALL
         data [in] (Genome obj)   Ensembl Genome object
-        gene_obj [in] (Gene obj) Ensembl gene object
         final_df [out] (pd.df)   Filtered df 
     """
     # Annotate other_transcripts and other_genes columns: 
@@ -178,20 +177,6 @@ def penalize_final_output(df, transcripts, data, gene_object):
             i = i + 1 # keep iterating...
     
     else: # transcripts == ALL
-    
-        # STEP 1. Verify all the trans are included or, at least, the most imp
-        vip_trans = gene_object.transcripts[0].transcript_id
-        
-        # without junction description (ALL transcripts included)
-        if df.loc[(df["junction_description"] == "")].shape[0] > 0: 
-            df = df.loc[(df["junction_description"] == "")]
-        
-        # first transcript covered by the primers
-        elif df.loc[(df.apply(lambda row: vip_trans not in row["junction_description"], 
-                              axis=1))].shape[0] > 0: 
-            df = df.loc[(df.apply(lambda row: vip_trans not in row["junction_description"], 
-                                  axis=1))]
-        
         # STEP 2. Get best results according to combinations of "if statements"
         columns = ["other_genes", 
                    "pcod_genes",
@@ -217,19 +202,20 @@ def penalize_final_output(df, transcripts, data, gene_object):
             shape = final_df.shape[0]
             i = i + 1 # keep iterating...    
             
-        # Report final conditions for the filter(i-1)
-        if transcripts != "ALL": 
-            print("FINAL CONDITIONS MET ARE:\nProductive als with other genes\t{}".format(all_comb[i-1][0]))
-            print("Num of productive als with other pcod genes\t{}".format(all_comb[i-1][1]))
-            print("Prod als with other transcripts\t{}".format(all_comb[i-1][2]))
-            print("Num of productive als with other pcod trans\t{}".format(all_comb[i-1][3]))
-            print("Num of individual als\t{}".format(all_comb[i-1][4]))
-            print("Desin option\t{}".format(all_comb[i-1][5]))   
-        else: 
-            print("FINAL CONDITIONS MET ARE:\nProductive als with other genes\t{}".format(all_comb[i-1][0]))
-            print("Num of productive als with other pcod genes\t{}".format(all_comb[i-1][1]))
-            print("Num of individual als\t{}".format(all_comb[i-1][2]))
-            print("Desin option\t{}".format(all_comb[i-1][3]))            
+    # Report final conditions for the filter(i-1)
+    if transcripts != "ALL": 
+        print("FINAL CONDITIONS MET ARE:\nProductive als with other genes\t{}".format(all_comb[i-1][0]))
+        print("Num of productive als with other pcod genes\t{}".format(all_comb[i-1][1]))
+        print("Prod als with other transcripts\t{}".format(all_comb[i-1][2]))
+        print("Num of productive als with other pcod trans\t{}".format(all_comb[i-1][3]))
+        print("Num of individual als\t{}".format(all_comb[i-1][4]))
+        print("Desin option\t{}".format(all_comb[i-1][5]))   
+    else: 
+        print("FINAL CONDITIONS MET ARE:\nProductive als with other genes\t{}".format(all_comb[i-1][0]))
+        print("Num of productive als with other pcod genes\t{}".format(all_comb[i-1][1]))
+        print("Num of individual als\t{}".format(all_comb[i-1][2]))
+        print("Desin option\t{}".format(all_comb[i-1][3]))         
+        
     return final_df
 
 ###############################################################################
