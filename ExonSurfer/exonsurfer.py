@@ -16,20 +16,23 @@ from ExonSurfer.primerDesign import penalizePrimers, designConfig
 def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                   release = 108, design_dict = designConfig.design_dict, 
                   path_out = ".", save_files = True, e_value = 0.8,
-                  i_cutoff = 70, max_sep = 700, opt_prod_size = 200, NPRIMERS = 100):
+                  i_cutoff = 70, max_sep = 700, opt_prod_size = 200, NPRIMERS = 100, 
+                  d_option = 1):
     """
     This function is the main function of the pipeline. It takes a gene name and
     a transcript name and returns a list of primers.
     Args:
-        gene [in] (str):        Gene name
-        transcripts [in] (str): Transcript name or ALL
-        species [in] (str):     Species for the data (human, mus_musculus or 
+        gene [in] (str)        Gene name
+        transcripts [in] (str) Transcript name or ALL
+        species [in] (str)     Species for the data (human, mus_musculus or 
                                                       rattus_novegicus)
-        release [in] (str):     Ensembl release number. Change with caution
-        design_dict [in] (d):   Dict with primer3 parameters
-        path_out [in] (str):    Path to output direct
-        BLAST_OUT [out] (df):   Dataframe with blast results
-        DESIGN_OUT [out] (df):  Ddataframe with primer design results
+        release [in] (str)     Ensembl release number. Change with caution
+        design_dict [in] (d)   Dict with primer3 parameters
+        path_out [in] (str)    Path to output direct
+        d_option [in] (int)    1 for primers only on the junctions or "ALL"
+        logresult [out] (str)  False if everything OK, str if design error
+        blast_df [out] (df)    Dataframe with blast results
+        final_df [out] (df)    Dataframe with primer design results
     """ 
     ###########################################################################
     #                        STEP 1. RETRIEVE INFORMATION                     #
@@ -89,7 +92,8 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                                                      data, 
                                                                      transcripts)        
         # Design primers
-        c2 = designPrimers.call_primer3(target, index, design_dict, enum = 1)
+        c2 = designPrimers.call_primer3(target, index, design_dict, d_option, 
+                                        enum = 1)
         if transcripts == "ALL": 
             item = [ensembl.get_transcript_from_gene(gene_obj)[0].exons[0].exon_id, 
                     "one exon"]            
@@ -108,11 +112,15 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                                               item)
         for tupla in to_design: 
             # Decide number of primers to design
-            num_primers = int(NPRIMERS / (len(to_design)*2))
+            if d_option == 1: 
+                num_primers = int(NPRIMERS / len(to_design))
+            else: 
+                num_primers = int(NPRIMERS / (len(to_design)*2))
             design_dict["PRIMER_NUM_RETURN"] = num_primers
             
             # Design primers
-            c1, c2 = designPrimers.call_primer3(tupla[0], tupla[1], design_dict)
+            c1, c2 = designPrimers.call_primer3(tupla[0], tupla[1], design_dict, 
+                                                d_option)
     
             df = designPrimers.report_design(c1, c2, tupla[2], tupla[3], 
                                              tupla[4], df)
@@ -189,13 +197,15 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         
         # Check blast results positions
         final_df = blast.check_genomic_specificity(blast_df, final_df, max_sep)
+        
+        # Filter according to genomic specificity
+        final_df = penalizePrimers.genomic_filter(final_df)
 
         #######################################################################
         #                      STEP 7: PREPARE FINAL RESULT                   #
         #######################################################################          
         # Make penalty score
         final_df = penalizePrimers.make_penalty_score(final_df)     
-        final_df = penalizePrimers.genomic_filter(final_df)
         
         # Annotate transcripts detected
         final_df = annotate_detected.annotate_notdetected(final_df, cdna_d, gene_obj)
@@ -203,6 +213,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         # Annotate if there are off_targets or not
         final_df = blast.show_off_targets(final_df, transcripts)
         
+        # Remove files if necessary
         if save_files == True:
             final_df.to_csv(DESIGN_OUT, sep = "\t")
         else:
@@ -213,7 +224,10 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
     
     else: 
         # extract c2 reason
-        msg = c2["PRIMER_PAIR_EXPLAIN"].split(",")
+        if "PRIMER_PAIR_EXPLAIN" in c2: 
+            msg = c2["PRIMER_PAIR_EXPLAIN"].split(",")
+        else: 
+            msg = c1["PRIMER_PAIR_EXPLAIN"].split(",")
         msg_f = [x for x in msg if "ok" not in x and "considered" not in x]
         
         if len(msg_f) > 1: 

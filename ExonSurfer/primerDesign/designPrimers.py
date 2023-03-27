@@ -18,8 +18,23 @@ CASE2_PRIMERS = 100
 #                 primerDesign module FUNCTION DEFINITION SITE                #
 ###############################################################################
 
+def extract_error_message(e): 
+    """
+    This function extracts the reason for the primer failed design from the error
+    message. 
+    Args: 
+        e [in] (error)  Exception as error
+        msg [out] (str) Reason for design failure
+    """
+    msg = getattr(e, 'message', repr(e)).replace("OSError", "")
+    msg = msg.replace("(", "")
+    msg = msg.replace("'", "")
+    msg = msg.replace("(", "")
+    return msg
+
+###############################################################################
     
-def call_primer3(target_seq, junction_i, design_dict, enum = 2): 
+def call_primer3(target_seq, junction_i, design_dict, d_option = 1, enum = 2): 
     """
     This function calls primers3 for 2 design options: (1) primers are placed 
     ON the exon junction and (2) primers are placed FLANKING the exon junction. 
@@ -27,6 +42,8 @@ def call_primer3(target_seq, junction_i, design_dict, enum = 2):
         target_seq [in] (str)      Full cDNA sequence of the transcript
         junction_i [in] (int)      Index of the exonic junction on the target_seq
         design_dict [in] (str)     Dict of arguments for primer3
+        enum [in] (int)            Exon number, 1 if only 1 exon per transcript 
+        d_option [in] (int)        1 if all primers ON junction, "ALL" otherwise
         case1_primers [out] (dict) Dictionary of primers designed with option 1
         case2_primers [out] (dict) Dictionary of primers designed with option 2
     """
@@ -36,8 +53,12 @@ def call_primer3(target_seq, junction_i, design_dict, enum = 2):
                 'SEQUENCE_TEMPLATE': target_seq,
                 'SEQUENCE_TARGET': [junction_i, 1],
                 }
-        case2_primers = primer3.bindings.designPrimers(target_dict, design_dict)
-        
+        try: 
+            case2_primers = primer3.bindings.designPrimers(target_dict, design_dict)
+        except OSError as e: 
+            case2_primers = {"PRIMER_PAIR_NUM_RETURNED":0}
+            case2_primers["PRIMER_PAIR_EXPLAIN"] = extract_error_message(e)
+            
         return case2_primers
         
     else:
@@ -52,26 +73,28 @@ def call_primer3(target_seq, junction_i, design_dict, enum = 2):
         try: 
             case1_primers = primer3.bindings.designPrimers(target_dict, 
                                                            design_dict)
-        except OSError: 
-            case1_primers = {"PRIMER_PAIR_NUM_RETURNED":0}
-            
-        # Case 2: place each primer on one exon
-        target_dict = {
-                'SEQUENCE_ID': 'InternalID',
-                'SEQUENCE_TEMPLATE': target_seq,
-                'SEQUENCE_TARGET': [junction_i, 1],
-                }
-        
-        try: 
-            case2_primers = primer3.bindings.designPrimers(target_dict, 
-                                                           design_dict)
         except OSError as e: 
-            msg = getattr(e, 'message', repr(e)).replace("OSError", "")
-            msg = msg.replace("(", "")
-            msg = msg.replace("'", "")
-            msg = msg.replace("(", "")
-            case2_primers = {"PRIMER_PAIR_NUM_RETURNED":0}
-            case2_primers["PRIMER_PAIR_EXPLAIN"] = msg
+            case1_primers = {"PRIMER_PAIR_NUM_RETURNED":0}
+            case1_primers["PRIMER_PAIR_EXPLAIN"] = extract_error_message(e)
+        
+        
+        if d_option == 1:          
+            case2_primers = {}
+            case2_primers["PRIMER_PAIR_NUM_RETURNED"] = 0
+        else: # if design option != 1, design also case 2 primers
+            target_dict = {
+                    'SEQUENCE_ID': 'InternalID',
+                    'SEQUENCE_TEMPLATE': target_seq,
+                    'SEQUENCE_TARGET': [junction_i, 1],
+                    }
+            
+            try: 
+                case2_primers = primer3.bindings.designPrimers(target_dict, 
+                                                               design_dict)
+            except OSError as e: 
+                case2_primers = {"PRIMER_PAIR_NUM_RETURNED":0}
+                case2_primers["PRIMER_PAIR_EXPLAIN"] = extract_error_message(e)
+           
             
         return case1_primers, case2_primers
 
