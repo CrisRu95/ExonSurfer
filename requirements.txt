@@ -1,5 +1,6 @@
 appdirs==1.4.4
 astroid==2.11.7
+biopython==1.79
 certifi==2021.5.30
 charset-normalizer==2.0.12
 datacache==1.2.1
