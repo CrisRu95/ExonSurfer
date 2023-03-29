@@ -58,3 +58,30 @@ def get_elen(exon_junctions, exon_sequence):
         elen.append(last_exon)
     
     return elen
+
+###############################################################################
+
+def get_junction_i(jdict, junction, nm_dna, ji): 
+    """
+    This function returns only the sequence for a specific junction. 
+    Args: 
+        jdict [in] (d)         Dict of junctions as keys and indexes as values
+        junction [in] (str)    Junction identifier (Ex "EXON1-EXON2")
+        nm_dna [in] (str)      Complete cDNA
+        ji [in] (l)            List of junction indixes
+        cut_nm_dna [out] (str) Junction sequence
+        cut_ji [out] (l)       Indexes corresponding to the cut_nm_dna
+    """
+    fe = junction.split("-")[0] # first exon
+    le = junction.split("-")[-1] # last exon
+    
+    c1 = [jdict[k] for k in jdict.keys() if k.split("-")[1] == fe][0]
+    c2 = [jdict[k] for k in jdict.keys() if k.split("-")[0] == le][0]
+    
+    cut_nm_dna = nm_dna[c1:c2]
+    cut_ji = [x for x in ji if x in range(c1+1, c2)]
+    cut_ji = [x-c1 for x in cut_ji]
+    
+    return cut_nm_dna, cut_ji
+    
+    

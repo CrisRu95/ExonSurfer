@@ -14,7 +14,7 @@ import pandas as pd
 # own modules
 from ExonSurfer.ensembl import ensembl
 from ExonSurfer.resources import resources
-from ExonSurfer.readFiles import readGBK, readFasta
+from ExonSurfer.readFiles import readGBK, readFasta, commonFunctions
 
 ###############################################################################
 #                        CONSTANTS FOR THE HTML FILE                          #
@@ -408,12 +408,13 @@ def highlight_ontarget(pair_id, final_df, species, release, file = False):
             gb_record = readGBK.read_genbank_file(file)
             nm_dna = readGBK.extract_cdna(gb_record)
             ji = readGBK.extract_junctions(gb_record)
-    
         # Fasta file format 
         else: 
             header, nm_dna = readFasta.read_fasta_file(file)
             ji = readFasta.extract_junctions(header)
-            
+        
+        nm_dna, ji = commonFunctions.get_junction_i(commonFunctions.get_junc_dict(ji), 
+                                            junction, nm_dna, ji)
     f1, f2, r1, r2, _ = get_primers_i(nm_dna, final_df.loc[pair_id]["forward"], 
                                       final_df.loc[pair_id]["reverse"])
     # format indices
