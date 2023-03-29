@@ -53,8 +53,8 @@ def CreatePrimers(file, species = "homo_sapiens_masked",
         header, target = readFasta.read_fasta_file(file)
         junction = readFasta.extract_junctions(header)
         
-    jdict = readGBK.get_junc_dict(junction)
-    elen = readGBK.get_elen(junction, target)
+    jdict = commonFunctions.get_junc_dict(junction)
+    elen = commonFunctions.get_elen(junction, target)
     
     ###########################################################################
     #                          STEP 2:  DESIGN PRIMERS                        #
