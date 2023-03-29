@@ -1,2 +1,2 @@
-import .exonsurfer
-import .exonsurfer_fromfile
+from . import exonsurfer
+from . import exonsurfer_fromfile
