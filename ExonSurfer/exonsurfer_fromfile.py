@@ -86,6 +86,10 @@ def CreatePrimers(file, species = "homo_sapiens_masked",
                 num_primers = int(NPRIMERS / len(junction))
             else: 
                 num_primers = int(NPRIMERS / (len(junction)*2))
+            
+            # avoid 0 primer design
+            if num_primers == 0: 
+                num_primers = 1
             design_dict["PRIMER_NUM_RETURN"] = num_primers
             
             # Design primers
