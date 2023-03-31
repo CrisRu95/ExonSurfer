@@ -54,7 +54,7 @@ def call_primer3(target_seq, junction_i, design_dict, d_option = 1, enum = 2):
                 'SEQUENCE_TARGET': [junction_i, 1],
                 }
         try: 
-            case2_primers = primer3.bindings.designPrimers(target_dict, design_dict)
+            case2_primers = primer3.bindings.design_primers(target_dict, design_dict)
         except OSError as e: 
             case2_primers = {"PRIMER_PAIR_NUM_RETURNED":0}
             case2_primers["PRIMER_PAIR_EXPLAIN"] = extract_error_message(e)
@@ -68,11 +68,12 @@ def call_primer3(target_seq, junction_i, design_dict, d_option = 1, enum = 2):
                 'SEQUENCE_TEMPLATE': target_seq,
                 'SEQUENCE_OVERLAP_JUNCTION_LIST': junction_i,
                 'PRIMER_MIN_3_PRIME_OVERLAP_OF_JUNCTION': 4,
+                'PRIMER_MIN_5_PRIME_OVERLAP_OF_JUNCTION': 6
                 }
         
         try: 
-            case1_primers = primer3.bindings.designPrimers(target_dict, 
-                                                           design_dict)
+            case1_primers = primer3.bindings.design_primers(target_dict, 
+                                                            design_dict)
         except OSError as e: 
             case1_primers = {"PRIMER_PAIR_NUM_RETURNED":0}
             case1_primers["PRIMER_PAIR_EXPLAIN"] = extract_error_message(e)
@@ -89,8 +90,8 @@ def call_primer3(target_seq, junction_i, design_dict, d_option = 1, enum = 2):
                     }
             
             try: 
-                case2_primers = primer3.bindings.designPrimers(target_dict, 
-                                                               design_dict)
+                case2_primers = primer3.bindings.design_primers(target_dict, 
+                                                                design_dict)
             except OSError as e: 
                 case2_primers = {"PRIMER_PAIR_NUM_RETURNED":0}
                 case2_primers["PRIMER_PAIR_EXPLAIN"] = extract_error_message(e)

@@ -16,7 +16,7 @@ from ExonSurfer.primerDesign import penalizePrimers, designConfig
 def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                   release = 108, design_dict = designConfig.design_dict, 
                   path_out = ".", save_files = True, e_value = 0.8,
-                  i_cutoff = 70, max_sep = 700, opt_prod_size = 200, NPRIMERS = 100, 
+                  i_cutoff = 70, max_sep = 700, opt_prod_size = 200, NPRIMERS = 200, 
                   d_option = 1):
     """
     This function is the main function of the pipeline. It takes a gene name and
@@ -124,7 +124,6 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
             # Design primers
             c1, c2 = designPrimers.call_primer3(tupla[0], tupla[1], design_dict, 
                                                 d_option)
-    
             df = designPrimers.report_design(c1, c2, tupla[2], tupla[3], 
                                              tupla[4], df)
     
@@ -161,13 +160,12 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         # Call blast
         blast_df = blast.run_blast_list(FASTA_F, BLAST_OUT, 
                                         resources.BLAST_DB(species), 
-                                        species)
+                                        species, i_cutoff, e_value)
         
         # Delete fasta file
         if os.path.exists(FASTA_F): os.remove(FASTA_F)
         
         # Filter blast results
-        blast_df = blast.pre_filter_blast(blast_df, df, e_value, i_cutoff, False)
         blast_df, df = blast.filter_big_blast(blast_df, df)
         
         # Check blast results positions
@@ -187,9 +185,8 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         # Call genomic blast
         blast_df = blast.run_blast_list(FASTA_F, GBLAST_OUT, 
                                         resources.BLAST_GENOMIC_DB(species), 
-                                        species, tomerge = False)    
+                                        species, i_cutoff, e_value, tomerge = False)    
         # Filter big blast if needed
-        blast_df = blast.pre_filter_blast(blast_df, df, e_value, i_cutoff, False)
         blast_df, final_df = blast.filter_big_blast(blast_df, final_df)
         
         # Delete fasta file

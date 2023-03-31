@@ -13,7 +13,8 @@ from ExonSurfer.resources import resources
 #                    blast module FUNCTION DEFINITION SITE                    #
 ###############################################################################
             
-def run_blast_list(fastaf, out, db_path, species, tomerge = True, 
+def run_blast_list(fastaf, out, db_path, species, i_cutoff, e_value, 
+                   tomerge = True, 
                    blastn_path = "blastn", 
                    num_threads = 4):
     """
@@ -30,7 +31,10 @@ def run_blast_list(fastaf, out, db_path, species, tomerge = True,
                     '-db', db_path,
                     '-outfmt', '6 qseqid sseqid pident length qstart qend sstart send evalue sstrand',
                     '-num_threads', str(num_threads), 
-                    '-strand', 'both']
+                    '-strand', 'both', 
+                    '-perc_identity', str(i_cutoff), 
+                    '-evalue', str(e_value), 
+                    "-max_target_seqs", str(50000)]
 
     # RunBlastDBCommand(command_line)
     call(command_line, stderr = DEVNULL, stdout = DEVNULL)

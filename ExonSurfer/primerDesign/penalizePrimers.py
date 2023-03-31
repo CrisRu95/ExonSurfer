@@ -220,7 +220,7 @@ def penalize_final_output(df, transcripts, data):
 
 ###############################################################################
 
-def minmax_norm(v, minv=0, maxv=15): 
+def minmax_norm(v, minv=0, maxv=20): 
     """ This function makes the min max normalization"""
     if maxv != minv: 
         newv = abs((v - maxv) / (maxv - minv))
