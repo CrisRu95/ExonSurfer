@@ -15,6 +15,7 @@ from ExonSurfer.resources import resources
             
 def run_blast_list(fastaf, out, db_path, species, i_cutoff, e_value, 
                    tomerge = True, 
+                   genomic = False, 
                    blastn_path = "blastn", 
                    num_threads = 4):
     """
@@ -45,8 +46,9 @@ def run_blast_list(fastaf, out, db_path, species, i_cutoff, e_value,
     
     df = pd.read_csv(out, sep = "\t", names = df_header)
     
-    # remove transcript version information
-    df["subject id"] = df["subject id"].map(lambda x: x.split(".")[0])
+    if genomic == False: 
+        # remove transcript version information
+        df["subject id"] = df["subject id"].map(lambda x: x.split(".")[0])
     
     if tomerge == True: 
         table = pd.read_csv(os.path.join(resources.get_blastdb_path(species),

@@ -185,7 +185,8 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         # Call genomic blast
         blast_df = blast.run_blast_list(FASTA_F, GBLAST_OUT, 
                                         resources.BLAST_GENOMIC_DB(species), 
-                                        species, i_cutoff, e_value, tomerge = False)    
+                                        species, i_cutoff, e_value, tomerge = False, 
+                                        genomic = True)    
         # Filter big blast if needed
         blast_df, final_df = blast.filter_big_blast(blast_df, final_df)
         
