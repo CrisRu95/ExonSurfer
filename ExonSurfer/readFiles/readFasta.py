@@ -22,7 +22,7 @@ def read_fasta_file(f_file):
     with open(f_file, "r") as f_open: 
         for line in f_open.readlines(): 
             if ">" in line: 
-                header = line.rstrip()
+                header = line.rstrip().replace(">", "")
             else: 
                 seq += line.rstrip()
 
@@ -39,6 +39,7 @@ def extract_junctions(header):
         exon_junctions [out] (l) List of integers, with one int per junction
     """
     exon_junctions = header.split(" ")[1:]
+    exon_junctions = [int(x) for x in exon_junctions]
             
-    return exon_junctions[:-1]
+    return exon_junctions
 
