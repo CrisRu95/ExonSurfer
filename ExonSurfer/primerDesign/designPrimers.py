@@ -34,7 +34,8 @@ def extract_error_message(e):
 
 ###############################################################################
     
-def call_primer3(target_seq, junction_i, design_dict, d_option = 1, enum = 2): 
+def call_primer3(target_seq, junction_i, design_dict, min_3_overlap, min_5_overlap, 
+                 d_option = 1, enum = 2): 
     """
     This function calls primers3 for 2 design options: (1) primers are placed 
     ON the exon junction and (2) primers are placed FLANKING the exon junction. 
@@ -67,8 +68,8 @@ def call_primer3(target_seq, junction_i, design_dict, d_option = 1, enum = 2):
                 'SEQUENCE_ID': 'InternalID',
                 'SEQUENCE_TEMPLATE': target_seq,
                 'SEQUENCE_OVERLAP_JUNCTION_LIST': junction_i,
-                'PRIMER_MIN_3_PRIME_OVERLAP_OF_JUNCTION': 4,
-                'PRIMER_MIN_5_PRIME_OVERLAP_OF_JUNCTION': 6
+                'PRIMER_MIN_3_PRIME_OVERLAP_OF_JUNCTION': min_3_overlap,
+                'PRIMER_MIN_5_PRIME_OVERLAP_OF_JUNCTION': min_5_overlap
                 }
         
         try: 

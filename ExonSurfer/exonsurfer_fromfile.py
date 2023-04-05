@@ -18,7 +18,7 @@ def CreatePrimers(file, species = "homo_sapiens_masked",
                   release = 108, design_dict = designConfig.design_dict, 
                   path_out = ".", save_files = True, e_value = 0.8,
                   i_cutoff = 70, max_sep = 700, opt_prod_size = 200, NPRIMERS = 100, 
-                  d_option = 1):
+                  d_option = 1, min_3_overlap = 5, min_5_overlap = 6):
     """
     This function is the main function of the pipeline. It takes a gene name and
     a transcript name and returns a list of primers.
@@ -72,7 +72,8 @@ def CreatePrimers(file, species = "homo_sapiens_masked",
         design_dict["PRIMER_NUM_RETURN"] = NPRIMERS  
         # Design primers
         c2 = designPrimers.call_primer3(target, int(len(target)/2), design_dict, 
-                                        d_option, enum = 1)
+                                        min_3_overlap, min_5_overlap, d_option, 
+                                        enum = 1)
         
         item = ["EXON1", "one exon"]            
 
@@ -94,7 +95,7 @@ def CreatePrimers(file, species = "homo_sapiens_masked",
             
             # Design primers
             c1, c2 = designPrimers.call_primer3(target, jdict[item], design_dict, 
-                                                d_option)
+                                                min_3_overlap, min_5_overlap, d_option)
 
             df = designPrimers.report_design(c1, c2, elen, item, "", df)
     
