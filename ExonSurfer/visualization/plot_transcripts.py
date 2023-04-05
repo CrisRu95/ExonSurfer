@@ -233,7 +233,110 @@ def plot_transcripts_alone(species, gene, transcripts, release):
 
     return div    
     
-###############################################################################    
+###############################################################################  
+  
+def plot_transcripts_marked(species, gene, transcripts, release, pair_id, final_df): 
+    """
+    This function plots the list of transcripts a gene has and the primers locations. 
+    """
+    transd, exd = get_exon_transcript_information(species, gene, transcripts, 
+                                                  release)
+    for_pos = final_df.loc[pair_id]["for_pos"]
+    rev_pos = final_df.loc[pair_id]["rev_pos"]
+    
+    mex = []
+    for ex in exd: 
+        if ex in [exon[0] for exon in for_pos] + [exon[0] for exon in rev_pos]: 
+            mex.append(ex)
+
+    
+    colors = get_transcript_color(transd, final_df.loc[pair_id]["detected"])
+    
+    # define spacing between exon boxes
+    box_spacing = 0.5
+    
+    # create the figure
+    fig = go.Figure()
+
+    # loop over transcripts
+    for i, transcript in enumerate(transd):
+        # create the transcript line
+        fig.add_shape(type = 'line',
+                    x0 = min(exd[e][0] for e in transd[transcript]),
+                    y0 = i + 0.25,
+                    x1 = max(exd[e][1] for e in transd[transcript]),
+                    y1 = i + 0.25,
+                    line = dict(color = 'black', width = 2))
+
+        # loop over exons in transcript
+        for j, exon in enumerate(transd[transcript]):
+            # determine x-coordinates of exon box
+            x0 = exd[exon][0]
+            x1 = exd[exon][1]
+            width = x1 - x0
+            
+            # # exon is targeted by that primer pair
+            if exon in mex and transcript in final_df.loc[pair_id]["detected"]: 
+                fig.add_shape(type = 'rect',
+                            x0 = x0,
+                            y0 = i,
+                            x1 = x1,
+                            y1 = i + 0.5,
+                            fillcolor = COL_EXON,
+                            line = dict(color = COL_EXON),
+                            opacity = 1)  
+
+            else: # exon is not targeted
+                fig.add_shape(type = 'rect',
+                            x0 = x0,
+                            y0 = i,
+                            x1 = x1,
+                            y1 = i + 0.5,
+                            fillcolor = colors[transcript],
+                            #line=dict(color='black'),
+                            opacity = 1)
+            # add hover with exon_id
+            # Adding a trace with a fill, setting opacity to 0
+            fig.add_trace(
+                go.Scatter(
+                    x = [x0 + width/2],
+                    y = [i + 0.25],
+                    mode = 'markers',
+                    marker = dict(size = 0.1,
+                                  color = colors[transcript],
+                                  opacity = 0),
+                    hovertext = exon,
+                    hoverinfo = 'text')
+            )
+    # set x-axis range
+    x_range = [min(exd[e][0] for t in transd.values() for e in t) - 1,
+               max(exd[e][1] for t in transd.values() for e in t) + len(transd) * (box_spacing + 1)]
+    fig.update_xaxes(range = x_range)
+
+
+    # set layout properties
+    fig.update_layout(
+        #title='Exon Plot',
+        xaxis_title = 'Position',
+        #yaxis_title='Transcript',
+        showlegend = False,
+        #height=500,
+        #width=800,
+    )
+
+    fig.update_layout(template = "plotly_white")
+    fig.update_layout(yaxis = dict(tickmode = 'array',
+                                  tickvals = [x + 0.25 for x in list(range(len(transd))) ],
+                                  ticktext = ["<b> %s </b>"%x for x in list(transd.keys())],
+                                  range = [-0.6, len(transd)+2]))
+    div = opy.plot(fig, 
+                   auto_open = False, 
+                   config = config,
+                   utput_type = 'div')
+
+    return div
+
+###############################################################################
         
 def plot_transcripts_with_primers(species, gene, transcripts, release, pair_id, 
                                   final_df): 
