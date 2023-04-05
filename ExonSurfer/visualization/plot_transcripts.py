@@ -19,6 +19,9 @@ config = {
     }}
 
 # colors
+COL_UNDETECTED = "#999999" #grey
+COL_DETECTED = "#4daf4a" # green
+COL_EXON = "#E23F3F" # red
 COLS = ['#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', 
         '#a65628','#f781bf', '#999999', '#1b9e77', '#d95f02', '#7570b3', 
         '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666', '#b3e2cd', 
@@ -71,7 +74,7 @@ def get_exon_transcript_information(species, symbol, transcript, release = 108):
         dt [out] (dict)     Dict with the exons of each transcript
         de  [out] (dict)    Dict with exons positions
     """
-    data = ensembl.create_ensembl_data(release, species)
+    data = ensembl.create_ensembl_data(release, species.replace("_masked", ""))
     gene_obj = ensembl.get_gene_by_symbol(symbol, data)
         
     dT, dE = get_transcripts_exons_dict(gene_obj)
@@ -132,27 +135,140 @@ def transform_primers_pos(for_pos, rev_pos, de):
             primd["reverse2"] = (de[exon2][0], de[exon2][0] + 10)
     
     return primd
-        
+
 ###############################################################################
 
-def plot_primerpair_aligment(transd, exd, primers, for_pos, rev_pos, aline, pline):
-    """
-    This function takes the transcripts, exons and primers and return a plotly fig
-    Args:
-        transd [in] (dict) Dict with the exons of each transcript
-        exd [in] (dict)       Dict with exons positions
-        primers [in] (dict)     Dict with primers positions
-        for_pos [in] (l)   List of 1|2 tuples. Each tuple contains: (ENSE, plen)
-        rev_pos [in] (l)   List of 1|2 tuples. Each tuple contains: (ENSE, plen)
-        aline [in] (int)   Amplicon line width
-        pline [in] (int)   Primer line width
-    """
-    mex = [x for x in exd if any([p for p in primers if for_pos[0][0]== x or rev_pos[0][0]== x])]
-    colors = dict(zip(transd.keys(), COLS[:len(transd)]))
+def get_transcript_color(transd, detected): 
+    
+    transcol = {}
+    
+    for key in transd: 
+        if key in detected: 
+            transcol[key] = COL_DETECTED
+        else: 
+            transcol[key] = COL_UNDETECTED
+    return transcol
 
+###############################################################################
+
+def plot_transcripts_alone(species, gene, transcripts, release): 
+    """
+    This function plots the list of transcripts a gene has. 
+    """
+    transd, exd = get_exon_transcript_information(species, gene, transcripts, 
+                                                  release)
+    # create colors dict
+    colors = dict(zip(transd.keys(), COLS[:len(transd)]))
+    
     # define spacing between exon boxes
     box_spacing = 0.5
 
+    # create the figure
+    fig = go.Figure()    
+    
+    # loop over transcripts
+    for i, transcript in enumerate(transd):
+        # create the transcript line
+        fig.add_shape(type = 'line',
+                    x0 = min(exd[e][0] for e in transd[transcript]),
+                    y0 = i + 0.25,
+                    x1 = max(exd[e][1] for e in transd[transcript]),
+                    y1 = i + 0.25,
+                    line = dict(color = 'black', width = 1))
+
+        # loop over exons in transcript
+        for j, exon in enumerate(transd[transcript]):
+            # determine x-coordinates of exon box
+            x0 = exd[exon][0]
+            x1 = exd[exon][1]
+            width = x1 - x0
+            
+            fig.add_shape(type = 'rect',
+                        x0 = x0,
+                        y0 = i,
+                        x1 = x1,
+                        y1 = i + 0.5,
+                        fillcolor = colors[transcript],
+                        #line=dict(color='black'),
+                        opacity = 1)
+            # add hover with exon_id
+            # Adding a trace with a fill, setting opacity to 0
+            fig.add_trace(
+                go.Scatter(
+                    x = [x0 + width/2],
+                    y = [i + 0.25],
+                    mode = 'markers',
+                    marker = dict(size = 0.1,
+                                  color = colors[transcript],
+                                  opacity = 0),
+                    hovertext = exon,
+                    hoverinfo = 'text')
+            )
+    # set x-axis range
+    x_range = [min(exd[e][0] for t in transd.values() for e in t) - 1,
+               max(exd[e][1] for t in transd.values() for e in t) + len(transd) * (box_spacing + 1)]
+    fig.update_xaxes(range = x_range)
+
+
+    # set layout properties
+    fig.update_layout(
+        #title='Exon Plot',
+        xaxis_title = 'Position',
+        #yaxis_title='Transcript',
+        showlegend = False,
+        #height=500,
+        #width=800,
+    )
+
+    fig.update_layout(template = "plotly_white")
+    fig.update_layout(yaxis = dict(tickmode = 'array',
+                                  tickvals = [x + 0.25 for x in list(range(len(transd))) ],
+                                  ticktext = ["<b> %s </b>"%x for x in list(transd.keys())],
+                                  range = [-0.6, len(transd)+2]))
+
+    div = opy.plot(fig, 
+                   auto_open = False, 
+                   config = config,
+                   output_type = 'div')
+
+    return div    
+    
+###############################################################################    
+        
+def plot_transcripts_with_primers(species, gene, transcripts, release, pair_id, 
+                                  final_df): 
+    """
+    This function plots the list of transcripts a gene has and the primers locations. 
+    """
+    transd, exd = get_exon_transcript_information(species, gene, transcripts, 
+                                                  release)
+    for_pos = final_df.loc[pair_id]["for_pos"]
+    rev_pos = final_df.loc[pair_id]["rev_pos"]
+    primd = transform_primers_pos(for_pos, rev_pos, exd)
+    
+    mex = []
+    for ex in exd: 
+        if ex in [exon[0] for exon in for_pos] + [exon[0] for exon in rev_pos]: 
+            mex.append(ex)
+
+    
+    colors = get_transcript_color(transd, final_df.loc[pair_id]["detected"])
+    
+    # define spacing between exon boxes
+    box_spacing = 0.5
+    aline = 2
+    pline = 4
+    
+    # define spacing according to number of transcripts: 
+    if len(transd) < 8: 
+        updist = 0.55
+        updist_t = 0.60  
+        fsize = 10
+    else: 
+        updist = 0.62
+        updist_t = 0.75  
+        fsize = 8       
+    
     # create the figure
     fig = go.Figure()
 
@@ -173,58 +289,54 @@ def plot_primerpair_aligment(transd, exd, primers, for_pos, rev_pos, aline, plin
             x1 = exd[exon][1]
             width = x1 - x0
             
-            # add exon box to figure
-            if exon in mex: # exon is targeted by that primer pair
+            # # exon is targeted by that primer pair
+            if exon in mex and transcript in final_df.loc[pair_id]["detected"]: 
                 fig.add_shape(type = 'rect',
                             x0 = x0,
                             y0 = i,
                             x1 = x1,
                             y1 = i + 0.5,
-                            fillcolor = "red",
-                            line = dict(color = 'red'),
+                            fillcolor = COL_EXON,
+                            line = dict(color = COL_EXON),
                             opacity = 1)  
                 
-                updist = 0.55
-                updist_t = 0.60
+
                 # add amplicon lines
                 fig.add_shape(type = 'line',
-                            x0 = primers["forward1"][1],
+                            x0 = primd["forward1"][1],
                             y0 = i + updist,
-                            x1 = primers["forward2"][0],
+                            x1 = primd["forward2"][0],
                             y1 = i + updist,
-                            line = dict(color = 'grey', width = aline, dash='dash'))   
+                            line = dict(color = 'grey', width = aline, dash='dot'))   
                 # add amplicon lines
                 fig.add_shape(type = 'line',
-                            x0 = primers["forward2"][1],
+                            x0 = primd["forward2"][1],
                             y0 = i + updist,
-                            x1 = primers["reverse1"][0],
+                            x1 = primd["reverse1"][0],
                             y1 = i + updist,
                             line = dict(color = 'grey', width = aline))   
                 # add amplicon lines
                 fig.add_shape(type = 'line',
-                            x0 = primers["reverse1"][1],
+                            x0 = primd["reverse1"][1],
                             y0 = i + updist,
-                            x1 = primers["reverse2"][0],
+                            x1 = primd["reverse2"][0],
                             y1 = i + updist,
-                            line = dict(color = 'grey', width = aline, dash='dash'))   
+                            line = dict(color = 'grey', width = aline, dash='dot'))   
                 
                 
-                for primer in primers:
-                    fig.add_annotation(text = primer[:1],
-                                    x = (primers[primer][0] + primers[primer][1])/2,
+                for primer in primd:
+                    fig.add_annotation(text = primer[:1].upper(),
+                                    x = (primd[primer][0] + primd[primer][1])/2,
                                     y = i + updist_t,
                                     showarrow = False, 
-                                    font = dict(size = 10, color = "black"))
+                                    font = dict(size = fsize, color = "black"))
                     fig.add_shape(type='line',
-                                x0 = primers[primer][0],
+                                x0 = primd[primer][0],
                                 y0 = i + updist,
-                                x1 = primers[primer][1],
+                                x1 = primd[primer][1],
                                 y1 = i + updist,
                                 line = dict(color = 'black', width = pline))  
-                    
 
-
-                    
             else: # exon is not targeted
                 fig.add_shape(type = 'rect',
                             x0 = x0,
@@ -275,3 +387,5 @@ def plot_primerpair_aligment(transd, exd, primers, for_pos, rev_pos, aline, plin
                    utput_type = 'div')
 
     return div
+    
+    
