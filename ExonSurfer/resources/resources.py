@@ -7,8 +7,8 @@ import uuid
 
 # Constants
 BLAST_DB_LINKS = { #  cDNA and genomic DNA
-    "homo_sapiens": "https://zenodo.org/record/7766234/files/human.zip?download=1", 
-    "homo_sapiens_masked": "https://zenodo.org/record/7766234/files/human.zip?download=1", 
+    "homo_sapiens": "https://zenodo.org/record/7802572/files/human.zip?download=1", 
+    "homo_sapiens_masked": "https://zenodo.org/record/7802572/files/human.zip?download=1", 
     "mus_musculus": "https://zenodo.org/record/7766234/files/mouse.zip?download=1", 
     "rattus_norvegicus": "https://zenodo.org/record/7766234/files/rat.zip?download=1"
     }

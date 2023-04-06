@@ -332,7 +332,7 @@ def plot_transcripts_marked(species, gene, transcripts, release, pair_id, final_
     div = opy.plot(fig, 
                    auto_open = False, 
                    config = config,
-                   utput_type = 'div')
+                   output_type = 'div')
 
     return div
 
@@ -487,7 +487,7 @@ def plot_transcripts_with_primers(species, gene, transcripts, release, pair_id,
     div = opy.plot(fig, 
                    auto_open = False, 
                    config = config,
-                   utput_type = 'div')
+                   output_type = 'div')
 
     return div
     
