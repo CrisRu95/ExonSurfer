@@ -224,7 +224,7 @@ def plot_transcripts_alone(species, gene, transcripts, release):
     fig.update_layout(yaxis = dict(tickmode = 'array',
                                   tickvals = [x + 0.25 for x in list(range(len(transd))) ],
                                   ticktext = ["<b> %s </b>"%x for x in list(transd.keys())],
-                                  range = [-0.6, len(transd)+2]))
+                                  range = [-0.6, len(transd)-0.4]))
 
     div = opy.plot(fig, 
                    auto_open = False, 
@@ -328,7 +328,7 @@ def plot_transcripts_marked(species, gene, transcripts, release, pair_id, final_
     fig.update_layout(yaxis = dict(tickmode = 'array',
                                   tickvals = [x + 0.25 for x in list(range(len(transd))) ],
                                   ticktext = ["<b> %s </b>"%x for x in list(transd.keys())],
-                                  range = [-0.6, len(transd)+2]))
+                                  range = [-0.6, len(transd)-0.4]))
     div = opy.plot(fig, 
                    auto_open = False, 
                    config = config,
@@ -482,7 +482,7 @@ def plot_transcripts_with_primers(species, gene, transcripts, release, pair_id,
     fig.update_layout(yaxis = dict(tickmode = 'array',
                                   tickvals = [x + 0.25 for x in list(range(len(transd))) ],
                                   ticktext = ["<b> %s </b>"%x for x in list(transd.keys())],
-                                  range = [-0.6, len(transd)+2]))
+                                  range = [-0.6, len(transd)-0.4]))
 
     div = opy.plot(fig, 
                    auto_open = False, 
