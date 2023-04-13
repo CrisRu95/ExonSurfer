@@ -79,10 +79,6 @@ def get_exon_transcript_information(species, symbol, transcript, release = 108):
         
     dT, dE = get_transcripts_exons_dict(gene_obj)
 
-    # If transcript are provided, only return the information of that transcript
-    if transcript != "ALL":
-        dT = {transcript: dT[transcript]}
-
     return dT, dE
 
 ###############################################################################
@@ -244,12 +240,8 @@ def plot_transcripts_marked(species, gene, transcripts, release, pair_id, final_
     for_pos = final_df.loc[pair_id]["for_pos"]
     rev_pos = final_df.loc[pair_id]["rev_pos"]
     
-    mex = []
-    for ex in exd: 
-        if ex in [exon[0] for exon in for_pos] + [exon[0] for exon in rev_pos]: 
-            mex.append(ex)
+    mex = list(set(for_pos + rev_pos))
 
-    
     colors = get_transcript_color(transd, final_df.loc[pair_id]["detected"])
     
     # define spacing between exon boxes

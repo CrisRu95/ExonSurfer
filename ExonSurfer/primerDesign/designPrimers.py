@@ -141,22 +141,19 @@ def report_design(c1, c2, exon_len, junction_id, junction_info, df):
                 revex1 = [e[0] for e in exon_len if revpos-revlen in e[1]][0] # start of primer
                 revex2 = [e[0] for e in exon_len if revpos in e[1]][0] # end of primer
 
-                if forex1 != forex2: 
-                    row["for_pos"] = [(forex1, forlen/2), 
-                                      (forex2, forlen/2)]
-                    row["rev_pos"] = [(revex1, revlen)]                
-                else: 
-                    row["for_pos"] = [(forex1, forlen)]
-                    row["rev_pos"] = [(revex1, revlen/2), (revex2, revlen/2)]    
-                    
-                first_exon_to_search = forex1   
+                row["for_pos"] = [forex1, forex2]
+                row["rev_pos"] = [revex1, revex2]     
+                row["for_pos"] = list(set(row["for_pos"]))
+                row["rev_pos"] = list(set(row["rev_pos"]))
+                  
+                first_exon_to_search = forex1 
                 last_exon_to_search = revex2
             else: # pdict is c2
                 forex = [e[0] for e in exon_len if forpos in e[1]][0] # e1 is range
                 revex = [e[0] for e in exon_len if revpos in e[1]][0] # e1 is range
                 
-                row["for_pos"] = [(forex, forlen)]
-                row["rev_pos"] = [(revex, revlen)]
+                row["for_pos"] = [forex]
+                row["rev_pos"] = [revex]
                 
                 first_exon_to_search = forex   
                 last_exon_to_search = revex

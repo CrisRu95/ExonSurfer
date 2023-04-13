@@ -183,18 +183,18 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         resources.fillin_temp_fasta(final_df, FASTA_F)
         
         # Call genomic blast
-        blast_df = blast.run_blast_list(FASTA_F, GBLAST_OUT, 
-                                        resources.BLAST_GENOMIC_DB(species), 
-                                        species, i_cutoff, e_value, tomerge = False, 
-                                        genomic = True)    
+        gblast_df = blast.run_blast_list(FASTA_F, GBLAST_OUT, 
+                                         resources.BLAST_GENOMIC_DB(species), 
+                                         species, i_cutoff, e_value, tomerge = False, 
+                                         genomic = True)    
         # Filter big blast if needed
-        blast_df, final_df = blast.filter_big_blast(blast_df, final_df)
+        gblast_df, final_df = blast.filter_big_blast(gblast_df, final_df)
         
         # Delete fasta file
         if os.path.exists(FASTA_F): os.remove(FASTA_F)
         
         # Check blast results positions
-        final_df = g_offtargets.check_genomic_specificity(blast_df, final_df, max_sep)
+        final_df = g_offtargets.check_genomic_specificity(gblast_df, final_df, max_sep)
         
         # Filter according to genomic specificity
         final_df = penalizePrimers.genomic_filter(final_df)
@@ -212,8 +212,10 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         final_df = annotate.show_off_targets(final_df, transcripts)
         
         # Remove files if necessary
-        if save_files == True:
+        if save_files:
             final_df.to_csv(DESIGN_OUT, sep = "\t")
+            blast_df.to_csv(BLAST_OUT, sep = "\t")
+            gblast_df.to_csv(GBLAST_OUT, sep = "\t")
         else:
           if os.path.exists(BLAST_OUT):
             os.remove(BLAST_OUT)
@@ -237,7 +239,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         blast_df = None
         logresult = "Main reason for design failure: {}".format(msg_f)
         
-    return blast_df, final_df, logresult
+    return blast_df, gblast_df, final_df, logresult
     
     
     
