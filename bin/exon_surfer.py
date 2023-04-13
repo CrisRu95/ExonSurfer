@@ -82,19 +82,20 @@ def main():
                       transcripts = args.transcript, 
                       species = args.species, 
                       path_out = args.path_out,
-                      release = args.release,
+                      release = int(args.release),
                       design_dict = args.design_dict,
-                      save_files = args.save_files,
-                      e_value = args.e_value,
-                      i_cutoff = args.i_cutoff,
-                      max_sep = args.max_sep, 
-                      NPRIMERS = args.NPRIMERS, 
-                      opt_prod_size = args.opt_prod_size, 
-                      d_option = args.d_option, 
-                      min_3_overlap = args.min_3_overlap, 
-                      min_5_overlap = args.min_5_overlap,                       
+                      save_files = bool(args.save_files),
+                      e_value = float(args.e_value),
+                      i_cutoff = int(args.i_cutoff),
+                      max_sep = int(args.max_sep), 
+                      NPRIMERS = int(args.NPRIMERS), 
+                      opt_prod_size = int(args.opt_prod_size), 
+                      d_option = int(args.d_option), 
+                      min_3_overlap = int(args.min_3_overlap), 
+                      min_5_overlap = int(args.min_5_overlap),                       
                       )
-    except:
+    except Exception as error:
+        print("[!] Error: ", error)
         pass
 
 if __name__ == "__main__":
