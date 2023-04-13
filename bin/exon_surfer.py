@@ -46,6 +46,21 @@ def arguments_parser():
     
     parser.add_argument("--download", "-db", dest = "download", default = False, 
                         help = "Download all DB") 
+
+    parser.add_argument("--numprimers", "-np", dest = "NPRIMERS", default = 200, 
+                        help = "Number of primers") 
+
+    parser.add_argument("--opt_prod_size", "-ops", dest = "opt_prod_size", default = 200, 
+                        help = "Optimal product size") 
+
+    parser.add_argument("--des_option", "-opt", dest = "d_option", default = 1, 
+                        help = "1 if only primers on junctions") 
+
+    parser.add_argument("--min_3_overlap", "-o3", dest = "min_3_overlap", default = 5, 
+                        help = "Minimum overlap for the 3' end of the primers") 
+
+    parser.add_argument("--min_5_overlap", "-o5", dest = "min_5_overlap", default = 6, 
+                        help = "Minimum overlap for te 5' end of the primer") 
              
     args = parser.parse_args()
     
@@ -72,7 +87,12 @@ def main():
                       save_files = args.save_files,
                       e_value = args.e_value,
                       i_cutoff = args.i_cutoff,
-                      max_sep = args.max_sep
+                      max_sep = args.max_sep, 
+                      NPRIMERS = args.NPRIMERS, 
+                      opt_prod_size = args.opt_prod_size, 
+                      d_option = args.d_option, 
+                      min_3_overlap = args.min_3_overlap, 
+                      min_5_overlap = args.min_5_overlap,                       
                       )
     except:
         pass
