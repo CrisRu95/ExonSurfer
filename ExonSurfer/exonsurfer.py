@@ -237,6 +237,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         
         final_df = None
         blast_df = None
+        gblast_df = None
         logresult = "Main reason for design failure: {}".format(msg_f)
         
     return blast_df, gblast_df, final_df, logresult
