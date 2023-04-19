@@ -214,8 +214,8 @@ def create_offt_string(seq, f1, f2, r1, r2, mm_i):
     if any([x for x in mm_i if x in range(f1, f2)]):
         for_mmi = [x for x in mm_i if x in range(f1, f2)]
         start = f1
+        string = '<p class="ex">' + seq[start:for_mmi[0]] + '</p>'
         for i in range(0, len(for_mmi)): 
-            string = '<p class="ex">' + seq[start:for_mmi[i]] + '</p>'
             string += '<p class="mismatch">' + seq[for_mmi[i]] + '</p>'
             start = for_mmi[i] + 1
         string += '<p class="ex">' + seq[start:f2] + '</p>'
@@ -459,7 +459,7 @@ def highlight_offtarget(pair_id, final_df, species, transcripts):
             f1, f2, r1, r2, rc = get_primers_i(seq, 
                                                final_df.loc[pair_id]["forward"], 
                                                final_df.loc[pair_id]["reverse"], 
-                                               e = 3)
+                                               e = 6)
             offt_len = abs(r2 - f1 + 1)
             mm_i = get_mismatch_indices(seq, f1, r1, rc,
                                         final_df.loc[pair_id]["forward"], 
