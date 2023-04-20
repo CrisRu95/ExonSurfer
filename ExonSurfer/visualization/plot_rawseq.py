@@ -73,7 +73,27 @@ def get_junction_seqs(junction, masked_chr, data):
     
 ###############################################################################
 
-def get_primers_i(dna, forward, reverse, e = 0): 
+def get_primers_i(dna, forward, reverse): 
+    """
+    This func returns the start and end of forward and reverse primers on a DNA
+    Args: 
+        dna [in] (str)          DNA seq where to search
+        forward [in] (str)      Forward primer seq
+        reverse [in] (str)      Reverse primer seq
+        f1, f2 [out] (int)      Forward start and end indices
+        r1, r2 [out] (int)      Reverse start and end indices
+    """
+    f1 = re.search(forward, dna, re.I).start()
+    f2 =  re.search(forward, dna, re.I).end()
+
+    r1 = re.search(resources.reverse_complement(reverse), dna, re.I).start()
+    r2 =  re.search(resources.reverse_complement(reverse), dna, re.I).end()
+            
+    return f1, f2, r1, r2
+
+###############################################################################
+
+def get_offt_i(dna, forward, reverse, e): 
     """
     This func returns the start and end of forward and reverse primers on a DNA
     Args: 
@@ -81,38 +101,52 @@ def get_primers_i(dna, forward, reverse, e = 0):
         forward [in] (str)      Forward primer seq
         reverse [in] (str)      Reverse primer seq
         e [in] (int)            Mismatches allowed (mismatches)
-        f1, f2 [out] (int)      Forward start and end indices
-        r1, r2 [out] (int)      Reverse start and end indices
-        on_reverse [out] (bool) True if forward if found on minus strand
+`        r1, r2 [out] (int)      Reverse start and end indices
+        seq1 [out] (str)        First primer sequence to find 
+        seq2 [out] (str)        Second primer sequence to find
     """
-    on_reverse = False
-    if e == 0: 
-        f1 = re.search(forward, dna, re.I).start()
-        f2 =  re.search(forward, dna, re.I).end()
+
+    err_patt = "){s<=" + str(e) + "}" # only substitutions allowed
     
-        r1 = re.search(resources.reverse_complement(reverse), dna, re.I).start()
-        r2 =  re.search(resources.reverse_complement(reverse), dna, re.I).end()
-    
+    # Look for normal primer
+    if regex.search("(?:"+forward + err_patt, dna): 
+        temp_s1 = regex.search("(?:"+forward + err_patt, dna).span()[0]
+        temp_e1 = regex.search("(?:"+forward + err_patt, dna).span()[1]
+        temp_seq1 = forward
+
+    elif regex.search("(?:"+reverse + err_patt, dna): 
+        temp_s1 = regex.search("(?:"+reverse + err_patt, dna).span()[0]
+        temp_e1 = regex.search("(?:"+reverse + err_patt, dna).span()[1]
+        temp_seq1 = reverse      
+
+    # Look for reverse complement primer
+    if regex.search("(?:"+resources.reverse_complement(forward) + err_patt, dna): 
+        temp_s2 = regex.search("(?:"+resources.reverse_complement(forward) + err_patt, dna).span()[0]
+        temp_e2 = regex.search("(?:"+resources.reverse_complement(forward) + err_patt, dna).span()[1]  
+        temp_seq2 = resources.reverse_complement(forward)      
+          
+    elif regex.search("(?:"+resources.reverse_complement(reverse) + err_patt, dna): 
+        temp_s2 = regex.search("(?:"+resources.reverse_complement(reverse) + err_patt, dna).span()[0]
+        temp_e2 = regex.search("(?:"+resources.reverse_complement(reverse) + err_patt, dna).span()[1]  
+        temp_seq2 = resources.reverse_complement(reverse)    
+                  
+
+    if temp_s1 < temp_s2: 
+        f1 = temp_s1
+        f2 = temp_e1
+        r1 = temp_s2
+        r2 = temp_e2
+        seq1 = temp_seq1
+        seq2 = temp_seq2
     else: 
-        err_patt = "){s<=" + str(e) + "}" # only substitutions allowed
-        try: 
-            f1 = regex.search("(?:"+forward + err_patt, dna).span()[0]
-            f2 = regex.search("(?:"+forward + err_patt, dna).span()[1]
-            
-        except: 
-            on_reverse = True
-            f1 = regex.search("(?:"+resources.reverse_complement(forward) + err_patt, dna).span()[0]
-            f2 = regex.search("(?:"+resources.reverse_complement(forward) + err_patt, dna).span()[1]            
+        f1 = temp_s2
+        f2 = temp_e2
+        r1 = temp_s1
+        r2 = temp_e1
+        seq1 = temp_seq2
+        seq2 = temp_seq1     
         
-        if on_reverse == False: 
-            r1 = regex.search("(?:"+resources.reverse_complement(reverse) + err_patt, dna).span()[0]
-            r2 = regex.search("(?:"+resources.reverse_complement(reverse) + err_patt, dna).span()[1]    
-            
-        else: 
-            r1 = regex.search("(?:"+reverse + err_patt, dna).span()[0]
-            r2 = regex.search("(?:"+reverse + err_patt, dna).span()[1]   
-            
-    return f1, f2, r1, r2, on_reverse
+    return f1, f2, r1, r2, seq1, seq2
 
 ###############################################################################
 
@@ -208,16 +242,18 @@ def create_offt_string(seq, f1, f2, r1, r2, mm_i):
         mm_i   [in] (l)    List of indices where mismatches are found
         string [out] (str) Sequence with marked primers and mismatches
     """
-
+    string = "" # intialize
     #string = '<p class="ex">' + seq[:f1] + '</p>'
     # all possible mismatches in the forward primer
     if any([x for x in mm_i if x in range(f1, f2)]):
         for_mmi = [x for x in mm_i if x in range(f1, f2)]
         start = f1
-        string = '<p class="ex">' + seq[start:for_mmi[0]] + '</p>'
         for i in range(0, len(for_mmi)): 
+            if len(seq[start:for_mmi[i]]) > 0: 
+                string += '<p class="ex">' + seq[start:for_mmi[i]] + '</p>'
             string += '<p class="mismatch">' + seq[for_mmi[i]] + '</p>'
             start = for_mmi[i] + 1
+
         string += '<p class="ex">' + seq[start:f2] + '</p>'
     else: 
         string = '<p class="ex">' + seq[f1:f2]  + '</p>' # full forward
@@ -347,7 +383,7 @@ def get_offtarget_gseq(without_annot, species):
 
 ###############################################################################
 
-def get_mismatch_indices(seq, f1, r1, rc, forward, reverse): 
+def get_mismatch_indices(seq, f1, r1, primer1, primer2): 
     """
     This function returns the mismatch indices between the off-target 
     alignment and the primers. 
@@ -355,27 +391,20 @@ def get_mismatch_indices(seq, f1, r1, rc, forward, reverse):
         seq [in] (str)     Off-target DNA seq
         f1, r1 [in] (int)  Start indices for forward and reverse primer
         rc [in] (bool)     True if to find sequence on reverse complement
-        forward [in] (str) Forward sequence
-        reverse [in] (str) Reverse sequence
+        primer1 [in] (str) First primer sequence to find
+        primer2 [in] (str) Second primer sequence to find
         mm_i [out] (l)     List of indices where mismatches are found
     """
     mm_i = [] # to return
-    
-    if rc == False: # default situation, we find forward primer on string
-        fprimer = forward
-        rprimer = resources.reverse_complement(reverse)
-    else: 
-        fprimer = resources.reverse_complement(forward)
-        rprimer = reverse
         
-    for i in range(0, len(fprimer)): 
+    for i in range(0, len(primer1)): 
         # there is a mismatch
-        if fprimer[i] != seq[i + f1]: 
+        if primer1[i] != seq[i + f1]: 
             mm_i.append(i + f1)
             
-    for i in range(0, len(rprimer)): 
+    for i in range(0, len(primer2)): 
         # there is a mismatch
-        if rprimer[i] != seq[i + r1]: 
+        if primer2[i] != seq[i + r1]: 
             mm_i.append(i + r1)        
         
     return mm_i
@@ -415,8 +444,8 @@ def highlight_ontarget(pair_id, final_df, species, release, file = False):
         
         nm_dna, ji = commonFunctions.get_junction_i(commonFunctions.get_junc_dict(ji), 
                                             junction, nm_dna, ji)
-    f1, f2, r1, r2, _ = get_primers_i(nm_dna, final_df.loc[pair_id]["forward"], 
-                                      final_df.loc[pair_id]["reverse"])
+    f1, f2, r1, r2 = get_primers_i(nm_dna, final_df.loc[pair_id]["forward"], 
+                                   final_df.loc[pair_id]["reverse"])
     # format indices
     indices = format_indices(ji, f1, f2, r1, r2)
     
@@ -456,15 +485,12 @@ def highlight_offtarget(pair_id, final_df, species, transcripts):
             seq = get_offtarget_gseq(without_annot, species)
         # get primer match indices
         try: 
-            f1, f2, r1, r2, rc = get_primers_i(seq, 
+            f1, f2, r1, r2, s1, s2 = get_offt_i(seq, 
                                                final_df.loc[pair_id]["forward"], 
                                                final_df.loc[pair_id]["reverse"], 
-                                               e = 6)
+                                               e = 7)
             offt_len = abs(r2 - f1 + 1)
-            mm_i = get_mismatch_indices(seq, f1, r1, rc,
-                                        final_df.loc[pair_id]["forward"], 
-                                        final_df.loc[pair_id]["reverse"])
-            
+            mm_i = get_mismatch_indices(seq, f1, r1, s1, s2)
         
             string = create_offt_string(seq, f1, f2, r1, r2, mm_i)
             
