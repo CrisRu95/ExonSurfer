@@ -136,11 +136,10 @@ def choose_target(d, junctions, to_detect, canonical_t):
             e_keys = check_if_all(junctions, to_detect)
             
             # keep only exon junctions that contain the transcripts I want
-            if len(e_keys) > 0: 
-                all_keys = junctions.keys()
-            else: # none junctions contain all the transcripts that I want
+            all_keys = junctions.keys()
+            if len(e_keys) == 0: # none junctions contain all the transcripts that I want
                 print("The transcripts selected do not contain any common junctions")
-                while len(to_detect) > 0 and len(e_keys) == 0: 
+                while len(new_to_detect) > 0 and len(e_keys) == 0: 
                     new_to_detect = new_to_detect[:-1] # remove one element
                     e_keys = check_if_all(junctions, new_to_detect)                    
             
