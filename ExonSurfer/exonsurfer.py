@@ -6,7 +6,7 @@ import os
 import pandas as pd
 
 # own modules
-from ExonSurfer.ensembl import ensembl
+from ExonSurfer.ensembl import ensembl, extractCanonical
 from ExonSurfer.specificity import blast, offtargets, g_offtargets, annotate
 from ExonSurfer.resources import resources
 from ExonSurfer.primerDesign import chooseTarget, construct_cdna, designPrimers
@@ -47,18 +47,20 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
     
     cdna_d = ensembl.build_cdna_dict(data, gene_obj, resources.MASKED_SEQS(species))
     
+    # Reverse transcripts list (it goes in reverse to importance)
+    if transcripts != "ALL": 
+        transcripts = sorted(transcripts)
+    
     # If ALL transcripts are targeted and human species, get canonical
-    if "homo_sapiens" in species and transcripts == "ALL": 
-        cfile = open(resources.CANONICAL(), "r")
-        lines = cfile.read().split("\n")
-        canonical_t = [  # list comprehension here
-            l.split("\t")[1] 
-            for l 
-            in lines 
-            if gene_obj.gene_id in l and "Ensembl Canonical" in l
-            ]
+    if "homo_sapiens" in species: 
+        canonical_t = extractCanonical.extract_canonical(gene_obj)
     else: 
         canonical_t = []
+    
+    # Put canonical transcript in the most important position
+    if transcripts != "ALL" and canonical_t != [] and canonical_t in transcripts: 
+        transcripts.remove(canonical_t)
+        transcripts = [canonical_t] + transcripts
         
     ###########################################################################
     #                           STEP 2: CHOOSE TARGET                         #
@@ -70,7 +72,10 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                                 opt_prod_size, 
                                                 data)
     
-    junction = chooseTarget.choose_target(d, junctions_d, transcripts, canonical_t)
+    junction = chooseTarget.choose_target(d, 
+                                          junctions_d, 
+                                          transcripts, 
+                                          canonical_t)
     print("Exon junctions: {}".format(junction))
     
     # Get sequence and junction index

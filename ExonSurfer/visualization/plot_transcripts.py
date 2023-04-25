@@ -97,7 +97,7 @@ def transform_primers_pos(for_pos, rev_pos, de):
     
     # only one exon design
     if len(for_pos) == 1 and len(rev_pos) == 1 and for_pos[0][0] == rev_pos[0][0]: 
-        exon = for_pos[0][0]
+        exon = for_pos[0]
         midpoint1 = int(de[exon][0] + (de[exon][1] - de[exon][0])*0.25)
         midpoint2 = int(de[exon][0] + (de[exon][1] - de[exon][0])*0.75)
         primd["forward1"] = (midpoint1 - 10, midpoint1 + 10)
@@ -108,25 +108,25 @@ def transform_primers_pos(for_pos, rev_pos, de):
     # typical multi exon design
     else: 
         if len(for_pos) == 1: 
-            exon = for_pos[0][0]
+            exon = for_pos[0]
             midpoint = int(de[exon][0] + (de[exon][1] - de[exon][0])/2)
             primd["forward1"] = (midpoint - 10, midpoint + 10)
             primd["forward2"] = (midpoint - 10, midpoint + 10) # same pos
         else: 
-            exon1 = for_pos[0][0]
-            exon2 = for_pos[1][0]
+            exon1 = for_pos[0]
+            exon2 = for_pos[1]
             primd["forward1"] = (de[exon1][1] - 10, de[exon1][1])
             primd["forward2"] = (de[exon2][0], de[exon2][0] + 10)
     
         # reverse position
         if len(rev_pos) == 1: 
-            exon = rev_pos[0][0]
+            exon = rev_pos[0]
             midpoint = int(de[exon][0] + (de[exon][1] - de[exon][0])/2)
             primd["reverse1"] = (midpoint - 10, midpoint + 10)
             primd["reverse2"] = (midpoint - 10, midpoint + 10) # same pos
         else: 
-            exon1 = rev_pos[0][0]
-            exon2 = rev_pos[1][0]
+            exon1 = rev_pos[0]
+            exon2 = rev_pos[1]
             primd["reverse1"] = (de[exon1][1] - 10, de[exon1][1])
             primd["reverse2"] = (de[exon2][0], de[exon2][0] + 10)
     

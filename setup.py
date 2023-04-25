@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
    name='ExonSurfer',
-   version='0.1.11',
+   version='0.1.12',
    author='Pablo Monfort-Lanzas, Cristina Rusu',
    author_email='pablo.monfort@i-med.ac.at',
    packages=['ExonSurfer','ExonSurfer.specificity','ExonSurfer.ensembl',\

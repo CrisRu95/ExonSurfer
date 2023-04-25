@@ -56,8 +56,8 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
         # construct distance-info objects
         e_obj1 = data.exon_by_id(list_of_exons[0])
         e_objF = data.exon_by_id(list_of_exons[-1])
-        ji1 = e_obj1.end - e_obj1.start
-        ji2 = len(cdna) - (e_objF.end - e_objF.start)
+        ji1 = e_obj1.end - e_obj1.start + 1
+        ji2 = len(cdna) - (e_objF.end - e_objF.start + 1)
         
         # build list to return
         if ji1 != ji2: 
