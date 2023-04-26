@@ -61,7 +61,10 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
     if transcripts != "ALL" and canonical_t != [] and canonical_t in transcripts: 
         transcripts.remove(canonical_t)
         transcripts = [canonical_t] + transcripts
-        
+    
+    # Set optimum junction length  
+    opt_junc_len = design_dict["PRIMER_PRODUCT_SIZE_RANGE"][0][1] + 80
+    
     ###########################################################################
     #                           STEP 2: CHOOSE TARGET                         #
     ###########################################################################         
@@ -69,7 +72,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
     print("Getting exon junction")
     junctions_d = chooseTarget.format_junctions(d, 
                                                 transcripts, 
-                                                opt_prod_size, 
+                                                opt_junc_len, 
                                                 data)
     
     junction = chooseTarget.choose_target(d, 

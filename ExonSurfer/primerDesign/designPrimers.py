@@ -48,6 +48,15 @@ def call_primer3(target_seq, junction_i, design_dict, min_3_overlap, min_5_overl
         case1_primers [out] (dict) Dictionary of primers designed with option 1
         case2_primers [out] (dict) Dictionary of primers designed with option 2
     """
+    # Set interactions terms to avoid dimers and hairpins 
+    maxtm_interactions = design_dict["PRIMER_MIN_TM"] - 15
+    design_dict['PRIMER_MAX_SELF_ANY_TH'] = maxtm_interactions
+    design_dict['PRIMER_MAX_SELF_END_TH'] = maxtm_interactions
+    design_dict['PRIMER_MAX_HAIRPIN_TH'] = maxtm_interactions
+    design_dict['PRIMER_PAIR_MAX_COMPL_ANY'] = 4
+    design_dict['PRIMER_PAIR_MAX_COMPL_END '] = 2
+
+    
     if enum == 1: # Only one exon per transcript (no juntion)
         target_dict = {
                 'SEQUENCE_ID': 'InternalID',
