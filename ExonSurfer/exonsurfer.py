@@ -67,7 +67,10 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
     
     ###########################################################################
     #                           STEP 2: CHOOSE TARGET                         #
-    ###########################################################################         
+    ###########################################################################      
+    
+    junction = [0] # initialize for loop
+    
     # Get best exonic junction
     print("Getting exon junction")
     junctions_d = chooseTarget.format_junctions(d, 
@@ -81,59 +84,66 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                           canonical_t)
     print("Exon junctions: {}".format(junction))
     
-    # Get sequence and junction index
-    print("Starting primer design")
-    
     # Create dataframe for design
     cols = ("option", "junction", "junction_description", "forward", "reverse", 
             "amplicon_size", "forward_tm", "reverse_tm", "forward_gc", "reverse_gc", 
             "amplicon_tm", "pair_penalty")
     df = pd.DataFrame(columns = cols)
     
-    ###########################################################################
-    #                          STEP 3:  DESIGN PRIMERS                        #
-    ###########################################################################      
-    if len(junction) == 0: # only one exon
-        design_dict["PRIMER_NUM_RETURN"] = NPRIMERS
-        target, index, elen = construct_cdna.construct_one_exon_cdna(resources.MASKED_SEQS(species), 
-                                                                     gene_obj, 
-                                                                     data, 
-                                                                     transcripts)        
-        # Design primers
-        c2 = designPrimers.call_primer3(target, index, design_dict, min_3_overlap, 
-                                        min_5_overlap, d_option, enum = 1)
-        if transcripts == "ALL": 
-            item = [ensembl.get_transcript_from_gene(gene_obj)[0].exons[0].exon_id, 
-                    "one exon"]            
-        else: 
-            item = [data.transcript_by_id(transcripts).exons[0].exon_id, 
-                    "one exon"]
-        df = designPrimers.report_one_exon_design(c2, elen, item, df)
+    while len(junction) > 0 and df.empty: 
         
-    else: # Normal design (more than 1 exon)
-        to_design = []
-        for item in junction: 
-            to_design += construct_cdna.construct_target_cdna(resources.MASKED_SEQS(species), 
-                                                              gene_obj,
-                                                              data, 
-                                                              transcripts, 
-                                                              item)
-        for tupla in to_design: 
-            # Decide number of primers to design
-            if d_option == 1: 
-                num_primers = int(NPRIMERS / len(to_design))
-            else: 
-                num_primers = int(NPRIMERS / (len(to_design)*2))
-            # avoid 0 primer design
-            if num_primers == 0: 
-                num_primers = 1
-            design_dict["PRIMER_NUM_RETURN"] = num_primers
-            
+        #######################################################################
+        #                          STEP 3:  DESIGN PRIMERS                    #
+        #######################################################################      
+        if len(junction) == 0: # only one exon
+            design_dict["PRIMER_NUM_RETURN"] = NPRIMERS
+            target, index, elen = construct_cdna.construct_one_exon_cdna(resources.MASKED_SEQS(species), 
+                                                                         gene_obj, 
+                                                                         data, 
+                                                                         transcripts)        
             # Design primers
-            c1, c2 = designPrimers.call_primer3(tupla[0], tupla[1], design_dict, 
-                                                min_3_overlap, min_5_overlap, d_option)
-            df = designPrimers.report_design(c1, c2, tupla[2], tupla[3], 
-                                             tupla[4], df)
+            c2 = designPrimers.call_primer3(target, index, design_dict, min_3_overlap, 
+                                            min_5_overlap, d_option, enum = 1)
+            if transcripts == "ALL": 
+                item = [ensembl.get_transcript_from_gene(gene_obj)[0].exons[0].exon_id, 
+                        "one exon"]            
+            else: 
+                item = [data.transcript_by_id(transcripts).exons[0].exon_id, 
+                        "one exon"]
+            df = designPrimers.report_one_exon_design(c2, elen, item, df)
+            
+        else: # Normal design (more than 1 exon)
+            to_design = []
+            for item in junction: 
+                to_design += construct_cdna.construct_target_cdna(resources.MASKED_SEQS(species), 
+                                                                  gene_obj,
+                                                                  data, 
+                                                                  transcripts, 
+                                                                  item)
+            for tupla in to_design: 
+                # Decide number of primers to design
+                if d_option == 1: 
+                    num_primers = int(NPRIMERS / len(to_design))
+                else: 
+                    num_primers = int(NPRIMERS / (len(to_design)*2))
+                # avoid 0 primer design
+                if num_primers == 0: 
+                    num_primers = 1
+                design_dict["PRIMER_NUM_RETURN"] = num_primers
+                
+                # Design primers
+                c1, c2 = designPrimers.call_primer3(tupla[0], tupla[1], design_dict, 
+                                                    min_3_overlap, min_5_overlap, d_option)
+                df = designPrimers.report_design(c1, c2, tupla[2], tupla[3], 
+                                                 tupla[4], df)
+                
+                if df.empty: # no designed primers
+                    # remove the chosen junction from the dict and try again
+                    del junctions_d[junction[0][0]]
+                    junction = chooseTarget.choose_target(d, 
+                                      junctions_d, 
+                                      transcripts, 
+                                      canonical_t)
     
     df["pair_num"] = ["Pair{}".format(x) for x in range(0, df.shape[0])]
     df = df.set_index('pair_num')
