@@ -13,6 +13,8 @@ T2	ENSE1-ENSE2-ENSE3-ENSE4
 T3	ENSE1-ENSE2
 T4	ENSE1-ENSE2-ENSE3
 """
+# imported modules
+from numpy import unique
 
 
 ###############################################################################
@@ -220,3 +222,22 @@ def choose_target(d, junctions, to_detect, canonical_t):
     return toreturn
 
 
+###############################################################################
+    
+def choose_canonical(junctions_d, canonical_t): 
+    """
+    This is run only in case we have a canonical transcript and we target ALL
+    """
+    toreturn = []
+    
+    all_t = unique([item for sublist in list(junctions_d.values()) for item in sublist])
+    
+    for key_junct in junctions_d: 
+        if canonical_t in junctions_d[key_junct]: 
+            undetected = [x for x in all_t if x not in junctions_d[key_junct]]
+            t = (key_junct, "does NOT detect: {}".format(", ".join(undetected)))
+
+            toreturn.append(t)
+    return toreturn
+    
+        

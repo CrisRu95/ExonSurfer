@@ -68,7 +68,6 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
     ###########################################################################
     #                           STEP 2: CHOOSE TARGET                         #
     ###########################################################################      
-    
     junction = [0] # initialize for loop
     
     # Get best exonic junction
@@ -78,10 +77,14 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                                 opt_junc_len, 
                                                 data)
     
-    junction = chooseTarget.choose_target(d, 
-                                          junctions_d, 
-                                          transcripts, 
-                                          canonical_t)
+    if transcripts != "ALL" and canonical_t != []: 
+        junction = chooseTarget.choose_target(d, 
+                                              junctions_d, 
+                                              transcripts, 
+                                              canonical_t)
+
+    else: 
+        junction = chooseTarget.choose_canonical(junctions_d, canonical_t)
     print("Exon junctions: {}".format(junction))
     
     # Create dataframe for design
