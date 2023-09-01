@@ -11,7 +11,7 @@ from ExonSurfer.specificity import blast, offtargets, g_offtargets, annotate
 from ExonSurfer.resources import resources
 from ExonSurfer.primerDesign import chooseTarget, construct_cdna, designPrimers
 from ExonSurfer.primerDesign import penalizePrimers, designConfig
-
+from ExonSurfer.dimers import dimers
 
 def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                   release = 108, design_dict = designConfig.design_dict, 
@@ -147,6 +147,11 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                       junctions_d, 
                                       transcripts, 
                                       canonical_t)
+    
+    # Calculate dimers
+    df["dimers"] = df.apply(lambda row: dimers.get_max_comp(row["forward"],row["reverse"]),axis=1)
+    # Filter dimers
+    df = df[df['dimers'] < 5]
     
     df["pair_num"] = ["Pair{}".format(x) for x in range(0, df.shape[0])]
     df = df.set_index('pair_num')

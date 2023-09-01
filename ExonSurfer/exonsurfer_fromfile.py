@@ -12,7 +12,7 @@ from ExonSurfer.specificity import blast, annotate, offtargets_file_input, g_off
 from ExonSurfer.resources import resources
 from ExonSurfer.primerDesign import designPrimers
 from ExonSurfer.primerDesign import penalizePrimers, designConfig
-
+from ExonSurfer.dimers import dimers
 
 def CreatePrimers(file, species = "homo_sapiens_masked",
                   release = 108, design_dict = designConfig.design_dict, 
@@ -98,6 +98,12 @@ def CreatePrimers(file, species = "homo_sapiens_masked",
                                                 min_3_overlap, min_5_overlap, d_option)
 
             df = designPrimers.report_design(c1, c2, elen, item, "", df)
+
+
+    # Calculate dimers
+    df["dimers"] = df.apply(lambda row: dimers.get_max_comp(row["forward"],row["reverse"]),axis=1)
+    # Filter dimers
+    df = df[df['dimers'] < 5]
     
     df["pair_num"] = ["Pair{}".format(x) for x in range(0, df.shape[0])]
     df = df.set_index('pair_num')
