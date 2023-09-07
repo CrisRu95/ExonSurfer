@@ -20,7 +20,8 @@ The program is easy to install, simply clone the repository to your local machin
 Clone the repository:
 
 ```git
-git clone https://github.com/username/ExonSurfer.git
+git clone https://github.com/CrisRu95/ExonSurfer.git
+
 ```
 
 Install the dependencies:
