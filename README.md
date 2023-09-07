@@ -20,7 +20,7 @@ The program is easy to install, simply clone the repository to your local machin
 Clone the repository:
 
 ```git
-git clone https://github.com/username/ExonPrimerSurfer.git
+git clone https://github.com/username/ExonSurfer.git
 ```
 
 Install the dependencies:
