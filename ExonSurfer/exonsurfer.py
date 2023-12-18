@@ -77,14 +77,15 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                                 opt_junc_len, 
                                                 data)
     
-    if transcripts != "ALL" and canonical_t != []: 
-        junction = chooseTarget.choose_target(d, 
-                                              junctions_d, 
-                                              transcripts, 
-                                              canonical_t)
+    if transcripts == "ALL" and canonical_t != []: 
+        junction = chooseTarget.choose_canonical(junctions_d, canonical_t)
 
     else: 
-        junction = chooseTarget.choose_canonical(junctions_d, canonical_t)
+        junction = chooseTarget.choose_target(d, 
+                                            junctions_d, 
+                                            transcripts, 
+                                            canonical_t)
+        
     print("Exon junctions: {}".format(junction))
     
     # Create dataframe for design

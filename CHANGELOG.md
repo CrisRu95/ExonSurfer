@@ -31,3 +31,8 @@ straightforward as possible.
 ### Fixed
 - Fixed the "make_blast_db" function, to create the blast database with the
   correct cDNA file
+
+## [1.0] - 2023-12-18
+
+### Fixed
+- Fixed the if else to obtain the junctions in CreatePrimers
