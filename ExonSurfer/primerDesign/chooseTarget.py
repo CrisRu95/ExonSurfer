@@ -125,8 +125,11 @@ def choose_target(d, junctions, to_detect, canonical_t):
         new_to_detect = to_detect # used to check if I can detect all transcripts
         
         # search for perfect solution
-        perf_j = [j for j in junctions if len(junctions[j]) == len(to_detect) and \
-                  check_if_all(junctions, to_detect)]
+        perf_j = []
+        for j in junctions: 
+            if len(junctions[j]) == len(to_detect): 
+                if all([True if x in junctions[j] else False for x in to_detect]): 
+                    perf_j.append(j)
         
         if len(perf_j) >= 1:  # solution found, no need for loop 
             p_sols = perf_j

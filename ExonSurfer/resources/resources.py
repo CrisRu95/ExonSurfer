@@ -10,35 +10,61 @@ BLAST_DB_LINKS = { #  cDNA and genomic DNA
     "homo_sapiens": "https://zenodo.org/record/7802572/files/human.zip?download=1", 
     "homo_sapiens_masked": "https://zenodo.org/record/7802572/files/human.zip?download=1", 
     "mus_musculus": "https://zenodo.org/record/7766234/files/mouse.zip?download=1", 
-    "rattus_norvegicus": "https://zenodo.org/record/7766234/files/rat.zip?download=1"
+    "rattus_norvegicus": "https://zenodo.org/record/7766234/files/rat.zip?download=1",
+    
+    "danio_rerio": "https://zenodo.org/records/10936138/files/danio_rerio.zip?download=1", 
+    "arabidopsis_thaliana": "https://zenodo.org/records/10936138/files/arabidopsis.zip?download=1", 
+    "drosophila_melanogaster": "https://zenodo.org/records/10936138/files/fruitfly.zip?download=1", 
+    "rice": "https://zenodo.org/records/10936138/files/rice.zip?download=1"    
+    
     }
 
 BLAST_DB_NAMES = {
     "homo_sapiens": "human.rna.fna", 
     "homo_sapiens_masked": "human.rna.fna", 
     "mus_musculus": "mouse.rna.fna", 
-    "rattus_norvegicus": "rat.rna.fna"
+    "rattus_norvegicus": "rat.rna.fna",
+
+    "danio_rerio": "zebrafish.rna.fna", 
+    "arabidopsis_thaliana": "arabidopsis.rna.fna", 
+    "drosophila_melanogaster": "fruitfly.rna.fna", 
+    "rice": "rice.rna.fna"
     }
 
 BLAST_GENOMIC_DB_NAMES = {
     "homo_sapiens": "human.dna.fna", 
     "homo_sapiens_masked": "human.dna.fna", 
     "mus_musculus": "mouse.dna.fna", 
-    "rattus_norvegicus": "rat.dna.fna"
+    "rattus_norvegicus": "rat.dna.fna",
+
+    "danio_rerio": "zebrafish.dna.fna", 
+    "arabidopsis_thaliana": "arabidopsis.dna.fna", 
+    "drosophila_melanogaster": "fruitfly.dna.fna", 
+    "rice": "rice.dna.fna"
     }
 
 
 CHROM_LINKS = {
     "homo_sapiens": "https://zenodo.org/record/7638757/files/human_seqs.zip?download=1", 
     "homo_sapiens_masked": "https://zenodo.org/record/7638757/files/human_masked_seqs.zip?download=1", 
-    "mus_musculus": "https://zenodo.org/record/7638757/files/mouse_seqs.zip?download=1", 
-    "rattus_norvegicus": "https://zenodo.org/record/7638757/files/rat_seqs.zip?download=1"}
+    "mus_musculus": "https://zenodo.org/records/10936138/files/mouse_seqs.zip?download=1", 
+    "rattus_norvegicus": "https://zenodo.org/record/7638757/files/rat_seqs.zip?download=1", 
+    
+    "danio_rerio": "https://zenodo.org/records/10936138/files/zebrafish_seqs.zip?download=1", 
+    "arabidopsis_thaliana": "https://zenodo.org/records/10936138/files/arabidopsis_seqs.zip?download=1", 
+    "drosophila_melanogaster": "https://zenodo.org/records/10936138/files/fruitfly_seqs.zip?download=1", 
+    "rice": "https://zenodo.org/records/10936138/files/rice_seqs.zip?download=1", }
 
 FIRST_CHR = {
     "homo_sapiens": "human{}.txt", 
     "homo_sapiens_masked": "human{}_masked.txt", 
     "mus_musculus": "mouse{}.txt", 
-    "rattus_norvegicus": "rat{}.txt"    
+    "rattus_norvegicus": "rat{}.txt",    
+    
+    "danio_rerio": "arabidopsis_thaliana_{}.txt", # take into account Pt and Mt
+    "arabidopsis_thaliana": "daniorerio_{}.txt",
+    "drosophila_melanogaster": "rat{}.txt",   
+    "rice": "rat{}.txt",   
     }
 
 HCANONICAL = "https://ftp.ensembl.org/pub/release-108/tsv/homo_sapiens/Homo_sapiens.GRCh38.108.canonical.tsv.gz"
