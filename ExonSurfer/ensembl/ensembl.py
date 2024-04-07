@@ -30,7 +30,24 @@ def get_gene_by_symbol(gene_symbol, data):
         print("Invalid name")
     
 ###############################################################################
-
+    
+def get_gene_by_id(gene_symbol, data):
+    # release 77 uses human reference genome GRCh38
+    """
+    This function takes a gene ID and returns the gene object.
+    Args:
+        gene_symbol [in] (str)   Gene ID
+        data [in] (Genome obj)   Genome pyensmebl object 
+        gene [out] (gene object) Gene object
+    """
+    gene = data.gene_by_id(gene_symbol)
+    
+    try: 
+        return gene[0]
+    except: 
+        print("Invalid name")
+    
+###############################################################################
 def get_transcript_from_gene(gene_obj, only_id = False):
     """
     This function takes a gene object and returns a list of transcript objects.
