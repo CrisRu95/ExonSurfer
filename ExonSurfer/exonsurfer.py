@@ -41,7 +41,11 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
     print("Extracting ensemble info")
     data = ensembl.create_ensembl_data(release, 
                                        species.replace("_masked", ""))
-    gene_obj = ensembl.get_gene_by_symbol(gene, data)
+    try:
+      gene_obj = ensembl.get_gene_by_symbol(gene, data)
+    except:
+      gene_obj = ensembl.get_gene_by_id(gene, data)
+
         
     d = ensembl.get_transcripts_dict(gene_obj, exclude_noncoding = False)
     
