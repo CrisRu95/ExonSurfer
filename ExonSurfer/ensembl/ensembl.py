@@ -43,7 +43,7 @@ def get_gene_by_id(gene_symbol, data):
     gene = data.gene_by_id(gene_symbol)
     
     try: 
-        return gene[0]
+        return gene
     except: 
         print("Invalid name")
     
