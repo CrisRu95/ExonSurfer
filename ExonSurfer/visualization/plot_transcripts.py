@@ -75,7 +75,10 @@ def get_exon_transcript_information(species, symbol, transcript, release = 108):
         de  [out] (dict)    Dict with exons positions
     """
     data = ensembl.create_ensembl_data(release, species.replace("_masked", ""))
-    gene_obj = ensembl.get_gene_by_symbol(symbol, data)
+    try:
+      gene_obj = ensembl.get_gene_by_symbol(gene, data)
+    except:
+      gene_obj = ensembl.get_gene_by_id(gene, data)
         
     dT, dE = get_transcripts_exons_dict(gene_obj)
 
