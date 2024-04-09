@@ -61,8 +61,8 @@ FIRST_CHR = {
     "mus_musculus": "mouse{}.txt", 
     "rattus_norvegicus": "rat{}.txt",    
     
-    "danio_rerio": "arabidopsis_thaliana_{}.txt", # take into account Pt and Mt
-    "arabidopsis_thaliana": "daniorerio_{}.txt",
+    "arabidopsis_thaliana": "arabidopsis_thaliana_{}.txt", # take into account Pt and Mt
+    "danio_rerio": "daniorerio_{}.txt",
     "drosophila_melanogaster": "drosophila_melanogaster_{}.txt",   
     "rice": "ryza_sativa_{}.txt",   
     }
