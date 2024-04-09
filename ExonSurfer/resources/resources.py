@@ -63,8 +63,8 @@ FIRST_CHR = {
     
     "danio_rerio": "arabidopsis_thaliana_{}.txt", # take into account Pt and Mt
     "arabidopsis_thaliana": "daniorerio_{}.txt",
-    "drosophila_melanogaster": "rat{}.txt",   
-    "rice": "rat{}.txt",   
+    "drosophila_melanogaster": "drosophila_melanogaster_{}.txt",   
+    "rice": "ryza_sativa_{}.txt",   
     }
 
 HCANONICAL = "https://ftp.ensembl.org/pub/release-108/tsv/homo_sapiens/Homo_sapiens.GRCh38.108.canonical.tsv.gz"
