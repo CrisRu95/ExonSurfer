@@ -18,7 +18,7 @@ pandas==1.4
 platformdirs==2.4.0
 primer3-py==1.2.0
 progressbar33==2.4
-pyensembl==2.2.4
+pyensembl==2.3.12
 pylint==2.13.9
 python-dateutil==2.8.2
 pytz==2022.7.1
