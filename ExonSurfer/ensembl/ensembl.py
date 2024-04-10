@@ -22,12 +22,11 @@ def get_gene_by_symbol(gene_symbol, data):
         data [in] (Genome obj)   Genome pyensmebl object 
         gene [out] (gene object) Gene object
     """
-    gene = data.genes_by_name(gene_symbol)
-    
     try: 
-        return gene[0]
+        gene = data.genes_by_name(gene_symbol)[0]
     except: 
-        print("Invalid name")
+        gene = data.gene_by_id(gene_symbol)
+    return gene
     
 ###############################################################################
     
