@@ -54,7 +54,7 @@ def get_transcripts_exons_dict(gene, exclude_noncoding = True):
         tcripts = all_transcripts
 
     for tcript in tcripts:
-        dT[tcript.id] = ensembl.get_exons_from_transcript(tcript)
+        dT[tcript.name] = ensembl.get_exons_from_transcript(tcript)
 
         for exon in tcript.exons:
             dE[exon.id] = (exon.start, exon.end)
