@@ -200,7 +200,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         blast_df, df = blast.filter_big_blast(blast_df, df)
         
         # Check blast results positions
-        df = offtargets.check_specificity(blast_df, df, gene, transcripts, max_sep)
+        df = offtargets.check_specificity(blast_df, df, gene_obj.name, transcripts, max_sep)
         
         #######################################################################
         #                        STEP 5:  FILTER DATAFRAME                    #
