@@ -11,7 +11,8 @@ design_dict = {
         'PRIMER_OPT_TM': 60,
         'PRIMER_MIN_TM': 57,
         'PRIMER_MAX_TM': 63,
-        'PRIMER_TM_FORMULA': 1, # use santaLucia (1998) formula 
+        'PRIMER_TM_FORMULA': 1, # use santaLucia (1998) formula
+        'PRIMER_PAIR_MAX_DIFF_TM': 5,
         
         'PRIMER_OPT_GC_PERCENT': 50,
         'PRIMER_MIN_GC': 20,
@@ -24,7 +25,12 @@ design_dict = {
         # not shown to user
         'PRIMER_WT_GC_PERCENT_GT':1,
         'PRIMER_WT_GC_PERCENT_LT': 1,
-                
+        
+        # primer dimer parameters
+        'PRIMER_MAX_SELF_END': 3, 
+        'PRIMER_PAIR_MAX_COMPL_END': 3, 
+        'PRIMER_MAX_HAIRPIN_TH': 47, 
+        
         # product parameters
         'PRIMER_PRODUCT_OPT_TM': 80,
         'PRIMER_PRODUCT_MIN_TM': 76,
@@ -37,4 +43,5 @@ design_dict = {
         'PRIMER_SALT_MONOVALENT': 50,
         'PRIMER_SALT_CORRECTIONS': 1, # use santaLucia (1998) formula 
         'PRIMER_DNTP_CONC': 0.6, 
+        
         } 
