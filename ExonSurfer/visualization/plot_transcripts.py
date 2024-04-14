@@ -41,9 +41,14 @@ def get_transcripts_exons_dict(gene, exclude_noncoding = True):
                                       non-coding
         dT [out] (dict)               Dict of transcript objects, with trans ID 
                                       as keys, and exon objects as values
+        dE [out] (dict)               Dict of exon objects, with exon ID as keys,
+                                        and genomic positions as values
+        dId [out] (dict)              Dict of transcript ID as keys
+                                        and transcript name as values
     """
     dT = {}
     dE = {}
+    dId = {}
     
     # get list of transcripts to iterate
     all_transcripts = ensembl.get_transcript_from_gene(gene)
@@ -55,11 +60,13 @@ def get_transcripts_exons_dict(gene, exclude_noncoding = True):
 
     for tcript in tcripts:
         dT[tcript.name] = ensembl.get_exons_from_transcript(tcript)
+        dId[tcript.name] = tcript.id
+
 
         for exon in tcript.exons:
             dE[exon.id] = (exon.start, exon.end)
 
-    return dT, dE
+    return dT, dE, dId
 
 ###############################################################################
 
@@ -80,9 +87,9 @@ def get_exon_transcript_information(species, symbol, transcript, release = 108):
     except:
       gene_obj = ensembl.get_gene_by_id(symbol, data)
         
-    dT, dE = get_transcripts_exons_dict(gene_obj)
+    dT, dE, dId = get_transcripts_exons_dict(gene_obj)
 
-    return dT, dE
+    return dT, dE, dId
 
 ###############################################################################
 
@@ -137,12 +144,13 @@ def transform_primers_pos(for_pos, rev_pos, de):
 
 ###############################################################################
 
-def get_transcript_color(transd, detected): 
+def get_transcript_color(transd, detected, transcript_id): 
     
     transcol = {}
     
-    for key in transd: 
-        if key in detected: 
+    for key in transd:
+        t_id = transcript_id[key] 
+        if t_id in detected: 
             transcol[key] = COL_DETECTED
         else: 
             transcol[key] = COL_UNDETECTED
@@ -154,7 +162,7 @@ def plot_transcripts_alone(species, gene, transcripts, release):
     """
     This function plots the list of transcripts a gene has. 
     """
-    transd, exd = get_exon_transcript_information(species, gene, transcripts, 
+    transd, exd, transcript_id = get_exon_transcript_information(species, gene, transcripts, 
                                                   release)
     # create colors dict
     colors = dict(zip(transd.keys(), COLS[:len(transd)]))
@@ -238,14 +246,14 @@ def plot_transcripts_marked(species, gene, transcripts, release, pair_id, final_
     """
     This function plots the list of transcripts a gene has and the primers locations. 
     """
-    transd, exd = get_exon_transcript_information(species, gene, transcripts, 
+    transd, exd, transcript_id = get_exon_transcript_information(species, gene, transcripts, 
                                                   release)
     for_pos = final_df.loc[pair_id]["for_pos"]
     rev_pos = final_df.loc[pair_id]["rev_pos"]
     
     mex = list(set(for_pos + rev_pos))
 
-    colors = get_transcript_color(transd, final_df.loc[pair_id]["detected"])
+    colors = get_transcript_color(transd, final_df.loc[pair_id]["detected"], transcript_id=transcript_id)
     
     # define spacing between exon boxes
     box_spacing = 0.5
@@ -320,10 +328,18 @@ def plot_transcripts_marked(species, gene, transcripts, release, pair_id, final_
     )
 
     fig.update_layout(template = "plotly_white")
-    fig.update_layout(yaxis = dict(tickmode = 'array',
-                                  tickvals = [x + 0.25 for x in list(range(len(transd))) ],
-                                  ticktext = ["<b> %s </b>"%x for x in list(transd.keys())],
-                                  range = [-0.6, len(transd)-0.4]))
+    # Update layout for y-axis with color-coded labels
+    fig.update_layout(
+        yaxis=dict(
+            tickmode='array',
+            tickvals=[x + 0.25 for x in range(len(transd))],
+            ticktext=[
+                "<span style='color:{}'> <b>{}</b> </span>".format(colors[transcript], transcript)
+                for transcript in transd.keys()
+            ],
+            range=[-0.6, len(transd) - 0.4]
+        )
+    )
     div = opy.plot(fig, 
                    auto_open = False, 
                    config = config,
@@ -338,7 +354,7 @@ def plot_transcripts_with_primers(species, gene, transcripts, release, pair_id,
     """
     This function plots the list of transcripts a gene has and the primers locations. 
     """
-    transd, exd = get_exon_transcript_information(species, gene, transcripts, 
+    transd, exd, transcript_id = get_exon_transcript_information(species, gene, transcripts, 
                                                   release)
     for_pos = final_df.loc[pair_id]["for_pos"]
     rev_pos = final_df.loc[pair_id]["rev_pos"]
