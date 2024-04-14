@@ -334,7 +334,7 @@ def plot_transcripts_marked(species, gene, transcripts, release, pair_id, final_
             tickmode='array',
             tickvals=[x + 0.25 for x in range(len(transd))],
             ticktext=[
-                "<span style='display:inline-block;width:10px;height:10px;background-color:{};'></span> <b>{}</b>".format(colors[transcript], transcript)
+                "<span style='color:{}'> <b>{}</b> </span>".format(colors[transcript], transcript)
                 for transcript in transd.keys()
             ],
             range=[-0.6, len(transd) - 0.4]
