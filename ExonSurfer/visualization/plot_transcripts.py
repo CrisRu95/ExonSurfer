@@ -279,7 +279,7 @@ def plot_transcripts_marked(species, gene, transcripts, release, pair_id, final_
             width = x1 - x0
             
             # # exon is targeted by that primer pair
-            if exon in mex and transcript_id(transcript) in final_df.loc[pair_id]["detected"]: 
+            if exon in mex and transcript_id[transcript] in final_df.loc[pair_id]["detected"]: 
                 fig.add_shape(type = 'rect',
                             x0 = x0,
                             y0 = i,
