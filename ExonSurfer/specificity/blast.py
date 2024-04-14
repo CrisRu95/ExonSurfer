@@ -4,7 +4,8 @@
 # imported modules
 import os
 import pandas as pd
-from subprocess import call, DEVNULL
+from subprocess import call , DEVNULL
+from copy import deepcopy
 
 # own modules
 from ExonSurfer.resources import resources
@@ -16,7 +17,7 @@ from ExonSurfer.resources import resources
 def run_blast_list(fastaf, out, db_path, species, i_cutoff, e_value, 
                    tomerge = True, 
                    genomic = False, 
-                   blastn_path = "blastn", 
+                   blastn_path = "./blastn", 
                    num_threads = 4):
     """
     This function takes a list of primers and runs blastn on them.
@@ -30,7 +31,7 @@ def run_blast_list(fastaf, out, db_path, species, i_cutoff, e_value,
                     '-query', fastaf,
                     '-out', out,
                     '-db', db_path,
-                    '-outfmt', '6 qseqid sseqid pident length qstart qend sstart send evalue sstrand',
+                    '-outfmt', '"6 qseqid sseqid pident length qstart qend sstart send evalue sstrand"',
                     '-num_threads', str(num_threads), 
                     '-strand', 'both', 
                     '-perc_identity', str(i_cutoff), 
@@ -39,7 +40,7 @@ def run_blast_list(fastaf, out, db_path, species, i_cutoff, e_value,
 
     # RunBlastDBCommand(command_line)
     call(command_line, stderr = DEVNULL, stdout = DEVNULL)
-    
+
     # Store DF results 
     df_header = ("query id", "subject id","identity", "alignment length", 
                  "q. start", "q. end", "s. start", "s. end", "evalue", "strand")
@@ -125,8 +126,65 @@ def pre_filter_blast(blast_df, design_df, e_cutoff, i_cutoff, filter2 = True):
 
 ###############################################################################
 
-def filter_big_blast(blast_df, design_df, maxrows = 15000): 
+def filter_big_blast(t_gene, blast_df, design_df, maxrows = 15000): 
+    """
+    This function controls the maximum blast DF file size. It removes 
+    all the alignments of the pairs that have more alignemts to genes different
+    than the target, and also removes these pairs from the design df.
+    Args: 
+        t_gene [in] (str)             Target gene name (as in table.txt)
+        blast_df [in|out] (pd.df)     Alignment dataframe
+        design_df [in|out] (pd.df)    Design dataframe
+    """
+    # import median function
+    from numpy import median
     
+    # ignore all alignments that correspond to target gene
+    newblast = deepcopy(blast_df)
+    newblast = newblast[newblast["gene"] != t_gene]
+    to_continue = True # initialize
+    while newblast.shape[0] > maxrows and to_continue == True: 
+        raw_counts = newblast["query id"].value_counts()
+        clean_counts = []
+        for ppair in list(design_df.index): 
+            try: 
+                c = raw_counts["{}_3".format(ppair)] + raw_counts["{}_5".format(ppair)]
+                clean_counts.append((ppair, c))
+            except KeyError: 
+                pass
+            
+        if len(clean_counts) == 0: 
+            to_continue = False
+        else: 
+            # now filter and keep only primer pairs that less appear in the blast 
+            cutval = median([x[1] for x in clean_counts])
+            to_remove_pairs = [x[0] for x in clean_counts if x[1] >= cutval]
+            to_remove_primers = [x+"_5"for x in to_remove_pairs] + [x+"_3"for x in to_remove_pairs]
+            
+            if len(to_remove_pairs) < design_df.shape[0]: 
+                blast_df = blast_df[~blast_df['query id'].isin(to_remove_primers)]
+                design_df = design_df.drop(to_remove_pairs)
+            else: 
+                to_continue = False
+            
+    # reset index just in case
+    blast_df = blast_df.reset_index()
+            
+    return blast_df, design_df
+
+
+
+###############################################################################
+
+def filter_big_gblast(blast_df, design_df, maxrows = 15000): 
+    """
+    This function controls the maximum blast DF file size. It removes 
+    all the alignments of the pairs that have more alignemts, and also removes 
+    these pairs from the design df.
+    Args: 
+        blast_df [in|out] (pd.df)     Alignment dataframe
+        design_df [in|out] (pd.df)    Design dataframe
+    """
     # import median function
     from numpy import median
     
@@ -152,7 +210,4 @@ def filter_big_blast(blast_df, design_df, maxrows = 15000):
     # reset index just in case
     blast_df = blast_df.reset_index()
             
-    return blast_df, design_df
-
-
-    
+    return blast_df, design_df    

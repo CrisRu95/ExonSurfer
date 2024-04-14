@@ -46,7 +46,9 @@ def check_row_spec(blast_df, row, design_df, max_sep, t_gene, t_transcripts):
                 # if close enough
                 if abs(row["s. start"] - blast_df.iloc[i]["s. start"]) < max_sep: 
                     # if amplifies same gene
-                    if t_gene == row["gene"]: 
+                    if t_gene == row["gene"]:
+                        size = abs(row["s. start"] - blast_df.iloc[i]["s. start"])
+                        design_df.loc[pair_name, "diff_lens_amps"].append(size)
                         design_df.loc[pair_name, "detected"] += row["subject id"] +";"
                         if t_transcripts != "ALL" and row["subject id"] not in t_transcripts: 
                             design_df.loc[pair_name, "other_transcripts"] += row["subject id"] +";"
@@ -63,7 +65,9 @@ def check_specificity(blast_df, design_df, t_gene, t_transcript, max_sep):
     
     # not for filters, just to inform
     design_df["detected"] = ""
-
+    
+    design_df["diff_lens_amps"] = [[] for x in range(design_df.shape[0])]
+    
     # check off-targets
     blast_df.apply(lambda row: check_row_spec(blast_df, row, design_df, max_sep, 
                                               t_gene, t_transcript), 

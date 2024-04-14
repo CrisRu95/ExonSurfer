@@ -156,9 +156,10 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
     # Calculate dimers
     df["dimers"] = df.apply(lambda row: dimers.get_max_comp(row["forward"],row["reverse"]),axis=1)
     # Filter dimers
-    df = df[df['dimers'] < 5]
-    
+    df = df[df['dimers'] < 5]   
+    #Annotate pair number
     df["pair_num"] = ["Pair{}".format(x) for x in range(0, df.shape[0])]
+
     df = df.set_index('pair_num')
     
     if df.shape[0] > 1: # we designed primers
@@ -197,7 +198,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         if os.path.exists(FASTA_F): os.remove(FASTA_F)
         
         # Filter blast results
-        blast_df, df = blast.filter_big_blast(blast_df, df)
+        blast_df, df = blast.filter_big_blast(gene, blast_df, df)
         
         # Check blast results positions
         df = offtargets.check_specificity(blast_df, df, gene_obj.name, transcripts, max_sep)
@@ -219,7 +220,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                          species, i_cutoff, e_value, tomerge = False, 
                                          genomic = True)    
         # Filter big blast if needed
-        gblast_df, final_df = blast.filter_big_blast(gblast_df, final_df)
+        gblast_df, final_df = blast.filter_big_gblast(gblast_df, final_df)
         
         # Delete fasta file
         if os.path.exists(FASTA_F): os.remove(FASTA_F)

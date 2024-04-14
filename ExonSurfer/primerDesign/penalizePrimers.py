@@ -35,6 +35,32 @@ def annotate_other_transcripts(transcript_list, data):
     
 ###############################################################################
 
+def annotate_amp_lens(df): 
+    """
+    This function transforms the different amplicon lentghs into True or False
+    depending if the primer pair amplifies only transcripts of the same size or 
+    not. 
+    Args: 
+        df [in|out] (pd.df)    Design dataframe. Col "diff_amps_lens" required. 
+    """
+    def check_same(lst):
+        if len(set(lst)) == 1: 
+            ret = False
+        else: 
+            ret = True
+        return ret
+
+    # Apply the function to each row and create a new column
+    df['amp_noteq_len'] = df['diff_lens_amps'].apply(check_same)
+    
+    #df = df.drop(columns=['diff_amps_lens'])
+    #df.rename(columns={'same_sizes': 'diff_amps_lens'}, 
+    #inplace=True) 
+    
+    return df
+
+###############################################################################
+
 def make_df_comparison(df, condition, columns):
     """
     This function subsets the df according to the conditions indicated. 
@@ -50,7 +76,17 @@ def make_df_comparison(df, condition, columns):
     newconds = [condition[i] for i in range(len(condition)) if condition[i] != None]
     
     # check conditions length and buid final_df
-    if len(newconds) == 8: 
+    if len(newconds) == 9: 
+        final_df = df.loc[(df[newcols[0]] <= newconds[0]) &\
+                          (df[newcols[1]] <= newconds[1]) &\
+                          (df[newcols[2]] <= newconds[2]) &\
+                          (df[newcols[3]] <= newconds[3]) &\
+                          (df[newcols[4]] <= newconds[4]) &\
+                          (df[newcols[5]] <= newconds[5]) &\
+                          (df[newcols[6]] <= newconds[6]) &\
+                          (df[newcols[7]] <= newconds[7]) &\
+                          (df[newcols[8]] <= newconds[8])]
+    elif len(newconds) == 8: 
         final_df = df.loc[(df[newcols[0]] <= newconds[0]) &\
                           (df[newcols[1]] <= newconds[1]) &\
                           (df[newcols[2]] <= newconds[2]) &\
@@ -138,7 +174,10 @@ def penalize_final_output(df, transcripts, data):
                                 axis=1)
     df["pcod_genes"] = df.apply(lambda row: row["other_genes"].count("protein_coding"), 
                                 axis=1)
+    # Annotate amplicon lengths
+    df = annotate_amp_lens(df)
     
+    # Set minimum variables
     min_pcod_trans = min(df["pcod_trans"])
     min_pcod_genes = min(df["pcod_genes"])
     min_indiv = min(df["indiv_als"])
@@ -146,14 +185,16 @@ def penalize_final_output(df, transcripts, data):
     if transcripts != "ALL": 
         
         # combinations of "if statements"
-        columns = ["other_genes", 
+        columns = ["amp_noteq_len", 
+                   "other_genes", 
                    "pcod_genes",
                    "other_transcripts", 
                    "pcod_trans", 
                    "indiv_als", 
                    "option"]
         
-        conditions = [["", None], # other_genes col
+        conditions = [[False, None], # amp_noteq_len col
+                      ["", None], # other_genes col
                       list(set([0, min_pcod_genes, None])), # pcod_genes col
                       ["", None], # other_trans col
                       list(set([0, min_pcod_trans, None])), # pcod_trans col
@@ -178,12 +219,14 @@ def penalize_final_output(df, transcripts, data):
     
     else: # transcripts == ALL
         # STEP 2. Get best results according to combinations of "if statements"
-        columns = ["other_genes", 
+        columns = ["amp_noteq_len", 
+                   "other_genes", 
                    "pcod_genes",
                    "indiv_als", 
                    "option"]
         
-        conditions = [["", None], # other_genes col
+        conditions = [[False, None], # amp_noteq_len col 
+                      ["", None], # other_genes col
                       list(set([0, min_pcod_genes, None])), # pcod_genes col
                       list(set([0, min_indiv, None])), # indiv_als col
                       [1, None]] # option col
@@ -204,17 +247,19 @@ def penalize_final_output(df, transcripts, data):
             
     # Report final conditions for the filter(i-1)
     if transcripts != "ALL": 
-        print("FINAL CONDITIONS MET ARE:\nProductive als with other genes\t{}".format(all_comb[i-1][0]))
-        print("Num of productive als with other pcod genes\t{}".format(all_comb[i-1][1]))
-        print("Prod als with other transcripts\t{}".format(all_comb[i-1][2]))
-        print("Num of productive als with other pcod trans\t{}".format(all_comb[i-1][3]))
-        print("Num of individual als\t{}".format(all_comb[i-1][4]))
-        print("Desin option\t{}".format(all_comb[i-1][5]))   
+        print("FINAL CONDITIONS MET ARE:\nProductive als with other genes\t{}".format(all_comb[i-1][1]))
+        print("Amplicons of different lengths: {}".format(all_comb[i-1][0]))
+        print("Num of productive als with other pcod genes\t{}".format(all_comb[i-1][2]))
+        print("Prod als with other transcripts\t{}".format(all_comb[i-1][3]))
+        print("Num of productive als with other pcod trans\t{}".format(all_comb[i-1][4]))
+        print("Num of individual als\t{}".format(all_comb[i-1][5]))
+        print("Desin option\t{}".format(all_comb[i-1][6]))   
     else: 
-        print("FINAL CONDITIONS MET ARE:\nProductive als with other genes\t{}".format(all_comb[i-1][0]))
-        print("Num of productive als with other pcod genes\t{}".format(all_comb[i-1][1]))
-        print("Num of individual als\t{}".format(all_comb[i-1][2]))
-        print("Desin option\t{}".format(all_comb[i-1][3]))         
+        print("FINAL CONDITIONS MET ARE:\nProductive als with other genes\t{}".format(all_comb[i-1][1]))
+        print("Amplicons of different lengths: {}".format(all_comb[i-1][0]))
+        print("Num of productive als with other pcod genes\t{}".format(all_comb[i-1][2]))
+        print("Num of individual als\t{}".format(all_comb[i-1][3]))
+        print("Desin option\t{}".format(all_comb[i-1][4]))         
         
     return final_df
 

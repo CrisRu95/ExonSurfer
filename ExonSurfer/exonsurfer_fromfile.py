@@ -142,7 +142,7 @@ def CreatePrimers(file, species = "homo_sapiens_masked",
         
         # Filter blast results
         blast_df = blast.pre_filter_blast(blast_df, df, e_value, i_cutoff, False)
-        blast_df, df = blast.filter_big_blast(blast_df, df)
+        blast_df, df = blast.filter_big_blast(gene, blast_df, df)
         
         # Check blast results positions
         df = offtargets_file_input.check_specificity(blast_df, df, max_sep)
@@ -165,7 +165,7 @@ def CreatePrimers(file, species = "homo_sapiens_masked",
                                         tomerge = False, genomic = True)    
         # Filter big blast if needed
         gblast_df = blast.pre_filter_blast(gblast_df, df, e_value, i_cutoff, False)
-        gblast_df, final_df = blast.filter_big_blast(gblast_df, final_df)
+        gblast_df, final_df = blast.filter_big_gblast(gblast_df, final_df)
         
         # Delete fasta file
         if os.path.exists(FASTA_F): os.remove(FASTA_F)
