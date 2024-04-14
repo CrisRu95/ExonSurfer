@@ -29,6 +29,8 @@ design_dict = {
         # primer dimer parameters
         'PRIMER_MAX_SELF_END': 3, 
         'PRIMER_PAIR_MAX_COMPL_END': 3, 
+        'PRIMER_MAX_SELF_ANY': 8, 
+        'PRIMER_PAIR_MAX_COMPL_ANY': 8, 
         'PRIMER_MAX_HAIRPIN_TH': 47, 
         
         # product parameters
