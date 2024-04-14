@@ -70,7 +70,7 @@ def get_transcripts_exons_dict(gene, exclude_noncoding = True):
 
 ###############################################################################
 
-def get_exon_transcript_information(species, symbol, transcript, release = 108):
+def get_exon_transcript_information(species, symbol, transcript, release = 108, exclude_noncoding = True):
     """
     Function that obtain the information of the transcripts and exons positions 
     of a gene
@@ -87,7 +87,7 @@ def get_exon_transcript_information(species, symbol, transcript, release = 108):
     except:
       gene_obj = ensembl.get_gene_by_id(symbol, data)
         
-    dT, dE, dId = get_transcripts_exons_dict(gene_obj)
+    dT, dE, dId = get_transcripts_exons_dict(gene_obj, exclude_noncoding = exclude_noncoding)
 
     return dT, dE, dId
 
@@ -158,12 +158,12 @@ def get_transcript_color(transd, detected, transcript_id):
 
 ###############################################################################
 
-def plot_transcripts_alone(species, gene, transcripts, release): 
+def plot_transcripts_alone(species, gene, transcripts, release, exclude_noncoding = True): 
     """
     This function plots the list of transcripts a gene has. 
     """
     transd, exd, transcript_id = get_exon_transcript_information(species, gene, transcripts, 
-                                                  release)
+                                                  release, exclude_noncoding = exclude_noncoding)
     # create colors dict
     colors = dict(zip(transd.keys(), COLS[:len(transd)]))
     
@@ -242,12 +242,12 @@ def plot_transcripts_alone(species, gene, transcripts, release):
     
 ###############################################################################  
   
-def plot_transcripts_marked(species, gene, transcripts, release, pair_id, final_df): 
+def plot_transcripts_marked(species, gene, transcripts, release, pair_id, final_df, exclude_noncoding = True): 
     """
     This function plots the list of transcripts a gene has and the primers locations. 
     """
     transd, exd, transcript_id = get_exon_transcript_information(species, gene, transcripts, 
-                                                  release)
+                                                  release, exclude_noncoding = exclude_noncoding)
     for_pos = final_df.loc[pair_id]["for_pos"]
     rev_pos = final_df.loc[pair_id]["rev_pos"]
     
@@ -279,7 +279,7 @@ def plot_transcripts_marked(species, gene, transcripts, release, pair_id, final_
             width = x1 - x0
             
             # # exon is targeted by that primer pair
-            if exon in mex and transcript in final_df.loc[pair_id]["detected"]: 
+            if exon in mex and transcript_id[transcript] in final_df.loc[pair_id]["detected"]: 
                 fig.add_shape(type = 'rect',
                             x0 = x0,
                             y0 = i,
