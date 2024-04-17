@@ -17,7 +17,7 @@ from ExonSurfer.resources import resources
 def run_blast_list(fastaf, out, db_path, species, i_cutoff, e_value, 
                    tomerge = True, 
                    genomic = False, 
-                   blastn_path = "./blastn", 
+                   blastn_path = "blastn", 
                    num_threads = 4):
     """
     This function takes a list of primers and runs blastn on them.
@@ -31,7 +31,7 @@ def run_blast_list(fastaf, out, db_path, species, i_cutoff, e_value,
                     '-query', fastaf,
                     '-out', out,
                     '-db', db_path,
-                    '-outfmt', '"6 qseqid sseqid pident length qstart qend sstart send evalue sstrand"',
+                    '-outfmt', '6 qseqid sseqid pident length qstart qend sstart send evalue sstrand',
                     '-num_threads', str(num_threads), 
                     '-strand', 'both', 
                     '-perc_identity', str(i_cutoff), 
