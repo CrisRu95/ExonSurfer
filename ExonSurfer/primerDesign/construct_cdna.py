@@ -32,7 +32,7 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
     tt = chrom_open.read() # full chromosome sequence
     chrom_open.close()
             
-    if transcript == "ALL": 
+    if transcript == "ALL" or len(transcript) > 1: 
         
         # initialize all 
         cdna, exon_len, tosum = "", [], 0 
@@ -107,7 +107,7 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
 
 ###############################################################################
 
-def construct_one_exon_cdna(masked_chr, gene_obj, data, transcript): 
+def construct_one_exon_cdna(masked_chr, gene_obj, data, transcript, i, window): 
     """
     This function returns the CDNA for the transcripts that only have one exon. 
     Args: 
@@ -115,10 +115,13 @@ def construct_one_exon_cdna(masked_chr, gene_obj, data, transcript):
         gene_obj [in] (Gene obj) Gene object returned by ensembl
         data [in] (Genome obj)   Genome object returned by ensembl
         transcript [in] (str)    Ensembl transcript ID
+        i [in] (int)             Iteration round (to decide index)
+        window [in] (int)        An index is defined every window bases
         cdna [out] (str)         Complete cDNA of the transcript 
         junction_i [out] (int)   Exon_junction location on the cdna
         exon_len [out] (l)       List of exon ids and pos range from the junction
     """
+    
     # get only transcript object
     if transcript == "ALL": 
         t_obj = gene_obj.transcripts[0]
@@ -132,7 +135,7 @@ def construct_one_exon_cdna(masked_chr, gene_obj, data, transcript):
     
     cdna = tt[t_obj.exons[0].start-1:t_obj.exons[0].end]
     
-    junction_i = int(len(cdna) / 2) # in the middle of the exon
+    junction_i = int(window * i) # define "target" position
     exon_len = [(t_obj.exons[0].exon_id, 
                  range(0, t_obj.exons[0].end - t_obj.exons[0].start + 1))]
     

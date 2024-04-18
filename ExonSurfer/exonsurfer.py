@@ -67,7 +67,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         transcripts = [canonical_t] + transcripts
     
     # Set optimum junction length  
-    opt_junc_len = design_dict["PRIMER_PRODUCT_SIZE_RANGE"][0][1] + 80
+    opt_junc_len = design_dict["PRIMER_PRODUCT_SIZE_RANGE"][0][1]
     
     ###########################################################################
     #                           STEP 2: CHOOSE TARGET                         #
@@ -98,17 +98,29 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
             "amplicon_tm", "pair_penalty")
     df = pd.DataFrame(columns = cols)
     
-    while len(junction) > 0 and df.empty: 
+    # Check if one exon design
+    if len(junctions_d) == 1 and "-" not in junctions_d[list(junctions_d.keys())[0]]: 
+        enum = 1
+        i = 0
+        WINDOW = 100
+        target_len = 100 # random value to initialize
+    else: 
+        enum, i, WINDOW = False, False, False # random values
+    
+    while (len(junction) > 0 and df.empty) or (enum == 1 and i*WINDOW < target_len): 
         
         #######################################################################
         #                          STEP 3:  DESIGN PRIMERS                    #
         #######################################################################      
-        if len(junction) == 0: # only one exon
+        if enum == 1: # only one exon
             design_dict["PRIMER_NUM_RETURN"] = NPRIMERS
+            
             target, index, elen = construct_cdna.construct_one_exon_cdna(resources.MASKED_SEQS(species), 
                                                                          gene_obj, 
                                                                          data, 
-                                                                         transcripts)        
+                                                                         transcripts, i, WINDOW)
+            if len(target)-50 < index: 
+                index = int(len(target) / 2)
             # Design primers
             c2 = designPrimers.call_primer3(target, index, design_dict, min_3_overlap, 
                                             min_5_overlap, d_option, enum = 1)
@@ -116,9 +128,13 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                 item = [ensembl.get_transcript_from_gene(gene_obj)[0].exons[0].exon_id, 
                         "one exon"]            
             else: 
-                item = [data.transcript_by_id(transcripts).exons[0].exon_id, 
+                item = [data.transcript_by_id(transcripts[0]).exons[0].exon_id, 
                         "one exon"]
             df = designPrimers.report_one_exon_design(c2, elen, item, df)
+            
+            target_len = len(target) # keep looping?
+            i += 1 # keep looping?
+            
             
         else: # Normal design (more than 1 exon)
             to_design = []
@@ -153,16 +169,16 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                       transcripts, 
                                       canonical_t)
     
-    # Calculate dimers
-    df["dimers"] = df.apply(lambda row: dimers.get_max_comp(row["forward"],row["reverse"]),axis=1)
-    # Filter dimers
-    df = df[df['dimers'] < 5]   
-    #Annotate pair number
-    df["pair_num"] = ["Pair{}".format(x) for x in range(0, df.shape[0])]
-
-    df = df.set_index('pair_num')
-    
     if df.shape[0] > 1: # we designed primers
+        
+        # Calculate dimers
+        df["dimers"] = df.apply(lambda row: dimers.get_max_comp(row["forward"],row["reverse"]),axis=1)
+        # Filter dimers
+        df = df[df['dimers'] < 5]   
+        #Annotate pair number
+        df["pair_num"] = ["Pair{}".format(x) for x in range(0, df.shape[0])]
+    
+        df = df.set_index('pair_num')
     
         #######################################################################
         #                       STEP 4:  BLAST AGAINST CDNA                   #

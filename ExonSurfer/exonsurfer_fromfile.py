@@ -99,17 +99,17 @@ def CreatePrimers(file, species = "homo_sapiens_masked",
 
             df = designPrimers.report_design(c1, c2, elen, item, "", df)
 
-
-    # Calculate dimers
-    df["dimers"] = df.apply(lambda row: dimers.get_max_comp(row["forward"],row["reverse"]),axis=1)
-    # Filter dimers
-    df = df[df['dimers'] < 5]
-    
-    df["pair_num"] = ["Pair{}".format(x) for x in range(0, df.shape[0])]
-    df = df.set_index('pair_num')
     
     if df.shape[0] > 1: # we designed primers
     
+        # Calculate dimers
+        df["dimers"] = df.apply(lambda row: dimers.get_max_comp(row["forward"],row["reverse"]),axis=1)
+        # Filter dimers
+        df = df[df['dimers'] < 5]
+        
+        df["pair_num"] = ["Pair{}".format(x) for x in range(0, df.shape[0])]
+        df = df.set_index('pair_num')
+        
         #######################################################################
         #                       STEP 4:  BLAST AGAINST CDNA                   #
         #######################################################################          

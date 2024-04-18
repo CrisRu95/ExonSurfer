@@ -44,38 +44,43 @@ def format_junctions(d, to_detect, opt_amp_len, data):
     This function creates the dictionary junctions. 
     Args: 
         d [in] (dict)          Trans IDs as keys, exon list (ORDERED) as vals 
-        to_detect [in] (str)   Transcript ID or "ALL"
+        to_detect [in] (str)   Transcript IDs or "ALL"
         opt_amp_len [in] (int) Optimum amplicon length 
         data [in] (Genome obj) Genome object returned by ensembl
         junctions [out] (dict) Exon junctions as keys, transcript IDs as values
     """
     junctions = {}
     
-    # exon junctions of 2 exons, in ensembl.construct_target_cdna we use all cdna
-    for transcript in d: 
-        exons = d[transcript].split("-")
-        for i in range(0, len(exons)-1): 
-            key = "{}-{}".format(exons[i], exons[i+1])
-            
-            # we will NOT use all the cdna but only the junction
-            # so we append multiple junctions in case opt_amp_len is longer      
-            if to_detect == "ALL": 
-                j_len = get_junction_len(key, data)
-                
-                j = i + 2 # initialize
-                while j_len < opt_amp_len and j < len(exons):
-                    key += "-{}".format(exons[j]) # append exon to key
-                    j_len = get_junction_len(key, data)
-                    j += 1  
-                    
-            if key not in junctions: 
-                junctions[key] = [transcript]
-            else: 
-                 junctions[key].append(transcript)
+    # One transcript to detect, with only one exon
+    if len(to_detect) == 1 and "-" not in d[to_detect[0]]: 
+        junctions[d[to_detect[0]]] = to_detect[0]
     
-    # sort all values from dict
-    for item in junctions: 
-        junctions[item] = sorted(junctions[item])  
+    else: 
+        # exon junctions of 2 exons, in ensembl.construct_target_cdna we use all cdna
+        for transcript in d: 
+            exons = d[transcript].split("-")
+            for i in range(0, len(exons)-1): 
+                key = "{}-{}".format(exons[i], exons[i+1])
+                
+                # we will NOT use all the cdna but only the junction
+                # so we append multiple junctions in case opt_amp_len is longer      
+                if to_detect == "ALL": 
+                    j_len = get_junction_len(key, data)
+                    
+                    j = i + 2 # initialize
+                    while j_len < opt_amp_len and j < len(exons):
+                        key += "-{}".format(exons[j]) # append exon to key
+                        j_len = get_junction_len(key, data)
+                        j += 1  
+                        
+                if key not in junctions: 
+                    junctions[key] = [transcript]
+                else: 
+                     junctions[key].append(transcript)
+    
+        # sort all values from dict
+        for item in junctions: 
+            junctions[item] = sorted(junctions[item])  
                
     return junctions
 
