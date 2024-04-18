@@ -21,7 +21,7 @@ def annotate_other_transcripts(transcript_list, data):
         new_ts [in] (str)          Semicolon separated transcript ID string, with
                                    biotype written in brackets
     """
-    ts = re.split("-|;", transcript_list) # transform to list
+    ts = re.split("_|;", transcript_list) # transform to list
     new_ts = ""
     ts_nov = [t.split(".")[0] for t in ts if t != ""] #  no version info
     

@@ -19,7 +19,7 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
         gene_obj [in] (Gene obj) Gene object returned by ensembl
         data [in] (Genome obj)   Genome object returned by ensembl
         transcript [in] (l|str)  List of ensembl transcript IDs or ALL
-        exon_junction [in] (str) Ensembl exon IDs (e.g. ENS001-ENS002)
+        exon_junction [in] (str) Ensembl exon IDs (e.g. ENS001_ENS002)
         to_return [out] (l)      List of tuples, each tuple formed by: 
             - cdna (str)       Complete cDNA of the transcript 
             - junction_i (int) exon_junction location on the cdna
@@ -39,9 +39,9 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
         
         # check strand
         if gene_obj.on_positive_strand: 
-            list_of_exons = exon_junction[0].split("-")
+            list_of_exons = exon_junction[0].split("_")
         else: 
-            list_of_exons = exon_junction[0].split("-")[::-1]
+            list_of_exons = exon_junction[0].split("_")[::-1]
          
         # iterate all exons in the junction and build cdna
         for exon in list_of_exons: # exon is string id

@@ -18,7 +18,7 @@ def get_junc_dict(exon_junctions):
     """
     junctions_d = {}
     for i in range(0, len(exon_junctions)-1): 
-        key = "EXON{}-EXON{}".format(i+1, i+2)        
+        key = "EXON{}_EXON{}".format(i+1, i+2)        
         junctions_d[key] = exon_junctions[i]
         
     return junctions_d    
@@ -66,17 +66,17 @@ def get_junction_i(jdict, junction, nm_dna, ji):
     This function returns only the sequence for a specific junction. 
     Args: 
         jdict [in] (d)         Dict of junctions as keys and indexes as values
-        junction [in] (str)    Junction identifier (Ex "EXON1-EXON2")
+        junction [in] (str)    Junction identifier (Ex "EXON1_EXON2")
         nm_dna [in] (str)      Complete cDNA
         ji [in] (l)            List of junction indixes
         cut_nm_dna [out] (str) Junction sequence
         cut_ji [out] (l)       Indexes corresponding to the cut_nm_dna
     """
-    fe = junction.split("-")[0] # first exon
-    le = junction.split("-")[-1] # last exon
+    fe = junction.split("_")[0] # first exon
+    le = junction.split("_")[-1] # last exon
     
-    c1 = [jdict[k] for k in jdict.keys() if k.split("-")[1] == fe][0]
-    c2 = [jdict[k] for k in jdict.keys() if k.split("-")[0] == le][0]
+    c1 = [jdict[k] for k in jdict.keys() if k.split("_")[1] == fe][0]
+    c2 = [jdict[k] for k in jdict.keys() if k.split("_")[0] == le][0]
     
     cut_nm_dna = nm_dna[c1:c2]
     cut_ji = [x for x in ji if x in range(c1+1, c2)]

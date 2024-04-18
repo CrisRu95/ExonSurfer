@@ -64,7 +64,7 @@ FIRST_CHR = {
     "arabidopsis_thaliana": "arabidopsis_thaliana_{}.txt", # take into account Pt and Mt
     "danio_rerio": "daniorerio_{}.txt",
     "drosophila_melanogaster": "drosophila_melanogaster_{}.txt",   
-    "rice": "ryza_sativa_{}.txt",   
+    "rice": "oryza_sativa_{}.txt",   
     }
 
 HCANONICAL = "https://ftp.ensembl.org/pub/release-108/tsv/homo_sapiens/Homo_sapiens.GRCh38.108.canonical.tsv.gz"
@@ -255,12 +255,16 @@ def MASKED_SEQS(species):
     its location. 
     """
     # filename to search for
+    if species == "drosophila_melanogaster": 
+        n = "2L"
+    else: 
+        n = 1
     mask_path = os.path.join(str(get_maskedseq_path(species)),
-                             FIRST_CHR[species].format(1))
+                             FIRST_CHR[species].format(n))
     # check if file exists
     if not os.path.exists(mask_path):
         download_maskedseq(species)
-        
+    
     return os.path.join(str(get_maskedseq_path(species)), FIRST_CHR[species])
 
 ###############################################################################

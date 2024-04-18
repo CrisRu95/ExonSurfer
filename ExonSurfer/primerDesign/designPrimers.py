@@ -111,7 +111,7 @@ def report_design(c1, c2, exon_len, junction_id, junction_info, df):
         c2 [in] (dict)             Dict of primers designed with option 2
         exon_len [in] (l)          List of tuples, (exon_id, exon length)
         exon_junction [in] (tuple) Tuple with two strings: (1) "Ensemble exon ID
-                                   - Ensembl exon ID" (2) Design specification
+                                   _ Ensembl exon ID" (2) Design specification
         df [in|out] (ps.df)        Pandas df with the designed primers info
     """
     for pdict in (c1, c2): 
@@ -165,7 +165,7 @@ def report_design(c1, c2, exon_len, junction_id, junction_info, df):
                 if exon_len[i][0] == first_exon_to_search: 
                     first_found = True
                 if first_found: 
-                    junction += exon_len[i][0] + "-"
+                    junction += exon_len[i][0] + "_"
                 i += 1
             junction += exon_len[i][0] # add last one  
             row["junction"] = junction
@@ -196,7 +196,7 @@ def report_one_exon_design(c2, exon_len, exon_junction, df):
         c2 [in] (dict)             Dict of primers
         exon_len [in] (l)          List of tuples, (exon_id, exon length)
         exon_junction [in] (tuple) Tuple with two strings: (1) "Ensemble exon ID
-                                   - Ensembl exon ID" (2) Design specification
+                                   _ Ensembl exon ID" (2) Design specification
         df [in|out] (ps.df)        Pandas df with the designed primers info
     """
     

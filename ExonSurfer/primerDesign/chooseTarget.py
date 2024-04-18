@@ -8,10 +8,10 @@ Exon Primer Surfer
 
 
 mock inputfile: 
-T1	ENSE1-ENSE2-ENSE4
-T2	ENSE1-ENSE2-ENSE3-ENSE4
-T3	ENSE1-ENSE2
-T4	ENSE1-ENSE2-ENSE3
+T1	ENSE1_ENSE2_ENSE4
+T2	ENSE1_ENSE2_ENSE3_ENSE4
+T3	ENSE1_ENSE2
+T4	ENSE1_ENSE2_ENSE3
 """
 # imported modules
 from numpy import unique
@@ -31,7 +31,7 @@ def get_junction_len(key, data):
         j_len [out] (int)      Combined length of the exons
     """
     j_len = 0
-    for exon in key.split("-"): 
+    for exon in key.split("_"): 
         e_len = data.exon_by_id(exon).end - data.exon_by_id(exon).start
         j_len += e_len
     
@@ -52,15 +52,15 @@ def format_junctions(d, to_detect, opt_amp_len, data):
     junctions = {}
     
     # One transcript to detect, with only one exon
-    if len(to_detect) == 1 and "-" not in d[to_detect[0]]: 
+    if len(to_detect) == 1 and "_" not in d[to_detect[0]]: 
         junctions[d[to_detect[0]]] = to_detect[0]
     
     else: 
         # exon junctions of 2 exons, in ensembl.construct_target_cdna we use all cdna
         for transcript in d: 
-            exons = d[transcript].split("-")
+            exons = d[transcript].split("_")
             for i in range(0, len(exons)-1): 
-                key = "{}-{}".format(exons[i], exons[i+1])
+                key = "{}_{}".format(exons[i], exons[i+1])
                 
                 # we will NOT use all the cdna but only the junction
                 # so we append multiple junctions in case opt_amp_len is longer      
@@ -69,7 +69,7 @@ def format_junctions(d, to_detect, opt_amp_len, data):
                     
                     j = i + 2 # initialize
                     while j_len < opt_amp_len and j < len(exons):
-                        key += "-{}".format(exons[j]) # append exon to key
+                        key += "_{}".format(exons[j]) # append exon to key
                         j_len = get_junction_len(key, data)
                         j += 1  
                         
@@ -113,7 +113,7 @@ def choose_target(d, junctions, to_detect, canonical_t):
     there are no specific / universal junctions, the function returns the next 
     most acceptable solution. 
     Args: 
-        d [in] (dict)          Keys are trans, values are exons separated by "-"
+        d [in] (dict)          Keys are trans, values are exons separated by "_"
         junctions [in] (dict)  Keys are exon junctions, values are transcript ids
         to_detect [in] (l|str) List of transcript IDs or "ALL"
         canonical_t [in] (l)   List with the canonical transcript (can be empty)

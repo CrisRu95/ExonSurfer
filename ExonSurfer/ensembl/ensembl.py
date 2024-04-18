@@ -160,7 +160,7 @@ def get_transcripts_dict(gene, exclude_noncoding):
         tcripts = get_coding_transcript(all_transcripts)
     
     for tcript in tcripts:
-        d[tcript.id] = "-".join(get_exons_from_transcript(tcript))
+        d[tcript.id] = "_".join(get_exons_from_transcript(tcript))
      
     return d
 

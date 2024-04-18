@@ -99,7 +99,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
     df = pd.DataFrame(columns = cols)
     
     # Check if one exon design
-    if len(junctions_d) == 1 and "-" not in junctions_d[list(junctions_d.keys())[0]]: 
+    if len(junctions_d) == 1 and "_" not in junctions_d[list(junctions_d.keys())[0]]: 
         enum = 1
         i = 0
         WINDOW = 100
@@ -185,7 +185,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         #######################################################################          
         # Define three output files, with the same name as the gene and transcript
         if transcripts != "ALL": 
-            t_string = "-".join(transcripts[:3])
+            t_string = "_".join(transcripts[:3])
         else: 
             t_string = transcripts
         

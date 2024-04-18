@@ -36,15 +36,15 @@ def get_junction_seqs(junction, masked_chr, data):
     """
     This func obtains the exon sequences and prints them in different colors. 
     Args: 
-        junction [in] (str)    Exon IDs separated by "-"
+        junction [in] (str)    Exon IDs separated by "_"
         masked_chr [in] (str)  Path to the chr files, should have "{}" 
         data [in] (Genome obj) Genome object returned by ensembl
         nm_dna [out] (str)     CDNA seqs
         ji_l [out] (list)      List of ints, marking exon junctions in the nm_dna
     """
     # get pyensembl object
-    e_obj1 = data.exon_by_id(junction.split("-")[0])
-    e_obj2 = data.exon_by_id(junction.split("-")[1])
+    e_obj1 = data.exon_by_id(junction.split("_")[0])
+    e_obj2 = data.exon_by_id(junction.split("_")[1])
     
     # read chromosome 
     chrom_open = open(masked_chr.format(e_obj1.contig), "r")
@@ -53,9 +53,9 @@ def get_junction_seqs(junction, masked_chr, data):
     
     # get strand
     if e_obj1.start < e_obj2.start: 
-        list_of_exons = junction.split("-")
+        list_of_exons = junction.split("_")
     else: 
-        list_of_exons = junction.split("-")[::-1]
+        list_of_exons = junction.split("_")[::-1]
     
     # build cdna and junction index
     ji_l = [] #  list of indices
@@ -370,8 +370,8 @@ def get_offtarget_gseq(without_annot, species):
     """
     # obtain chromosome, first and last position
     chrom = without_annot.split(":")[0][1:] # remove "("
-    pos1 = int((without_annot.split(":")[1]).split("-")[0])
-    pos2 = int((without_annot.split(":")[1]).split("-")[1][:-1]) # remove ")"
+    pos1 = int((without_annot.split(":")[1]).split("_")[0])
+    pos2 = int((without_annot.split(":")[1]).split("_")[1][:-1]) # remove ")"
     
     # open chromosome file and read sequence
     chrom_file = resources.MASKED_SEQS(species).format(chrom)
