@@ -350,8 +350,12 @@ def get_offtarget_sequence(t_id, species):
     # add "." to ensure complete match
     try: 
         string = [x for x in cseq if t_id+"." in x][0]
-    except IndexError: 
-        string = [x for x in cseq if t_id+"\n" in x][0]
+    except: 
+        try:
+            string = [x for x in cseq if t_id+"\n" in x][0]
+        except:
+            string = [x for x in cseq if t_id in x][0]
+
     string = string.split("\n") # list
     string = string[1:] # remove header
     string = "".join(string).upper()
