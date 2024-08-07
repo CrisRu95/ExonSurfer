@@ -39,7 +39,7 @@ def get_junction_len(key, data):
 
 ###############################################################################
 
-def format_junctions(d, to_detect, opt_amp_len, data): 
+def format_junctions(d, to_detect, opt_amp_len, data, canonical_t): 
     """
     This function creates the dictionary junctions. 
     Args: 
@@ -47,6 +47,7 @@ def format_junctions(d, to_detect, opt_amp_len, data):
         to_detect [in] (str)   Transcript IDs or "ALL"
         opt_amp_len [in] (int) Optimum amplicon length 
         data [in] (Genome obj) Genome object returned by ensembl
+        canincal_t [in] (str)  Canonical transcript name
         junctions [out] (dict) Exon junctions as keys, transcript IDs as values
     """
     junctions = {}
@@ -54,6 +55,9 @@ def format_junctions(d, to_detect, opt_amp_len, data):
     # One transcript to detect, with only one exon
     if len(to_detect) == 1 and "_" not in d[to_detect[0]]: 
         junctions[d[to_detect[0]]] = to_detect[0]
+    
+    elif to_detect == "ALL" and "_" not in d[canonical_t]: 
+        junctions[d[canonical_t]] = canonical_t
     
     else: 
         # exon junctions of 2 exons, in ensembl.construct_target_cdna we use all cdna

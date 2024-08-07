@@ -79,7 +79,8 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
     junctions_d = chooseTarget.format_junctions(d, 
                                                 transcripts, 
                                                 opt_junc_len, 
-                                                data)
+                                                data, 
+                                                canonical_t)
     
     if transcripts == "ALL" and canonical_t != []: 
         junction = chooseTarget.choose_canonical(junctions_d, canonical_t)
