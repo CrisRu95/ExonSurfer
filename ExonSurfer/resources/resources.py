@@ -15,7 +15,7 @@ BLAST_DB_LINKS = { #  cDNA and genomic DNA
     "danio_rerio": "https://zenodo.org/records/10936138/files/danio_rerio.zip?download=1", 
     "arabidopsis_thaliana": "https://zenodo.org/records/10936138/files/arabidopsis.zip?download=1", 
     "drosophila_melanogaster": "https://zenodo.org/records/10936138/files/fruitfly.zip?download=1", 
-    "rice": "https://zenodo.org/records/10936138/files/rice.zip?download=1"    
+    "oryza_sativa": "https://zenodo.org/records/10936138/files/rice.zip?download=1"    
     
     }
 
@@ -28,7 +28,7 @@ BLAST_DB_NAMES = {
     "danio_rerio": "zebrafish.rna.fna", 
     "arabidopsis_thaliana": "arabidopsis.rna.fna", 
     "drosophila_melanogaster": "fruitfly.rna.fna", 
-    "rice": "rice.rna.fna"
+    "oryza_sativa": "rice.rna.fna"
     }
 
 BLAST_GENOMIC_DB_NAMES = {
@@ -40,7 +40,7 @@ BLAST_GENOMIC_DB_NAMES = {
     "danio_rerio": "zebrafish.dna.fna", 
     "arabidopsis_thaliana": "arabidopsis.dna.fna", 
     "drosophila_melanogaster": "fruitfly.dna.fna", 
-    "rice": "rice.dna.fna"
+    "oryza_sativa": "rice.dna.fna"
     }
 
 
@@ -53,7 +53,7 @@ CHROM_LINKS = {
     "danio_rerio": "https://zenodo.org/records/10936138/files/zebrafish_seqs.zip?download=1", 
     "arabidopsis_thaliana": "https://zenodo.org/records/10936138/files/arabidopsis_seqs.zip?download=1", 
     "drosophila_melanogaster": "https://zenodo.org/records/10936138/files/fruitfly_seqs.zip?download=1", 
-    "rice": "https://zenodo.org/records/10936138/files/rice_seqs.zip?download=1", }
+    "oryza_sativa": "https://zenodo.org/records/10936138/files/rice_seqs.zip?download=1", }
 
 FIRST_CHR = {
     "homo_sapiens": "human{}.txt", 
@@ -64,7 +64,7 @@ FIRST_CHR = {
     "arabidopsis_thaliana": "arabidopsis_thaliana_{}.txt", # take into account Pt and Mt
     "danio_rerio": "daniorerio_{}.txt",
     "drosophila_melanogaster": "drosophila_melanogaster_{}.txt",   
-    "rice": "oryza_sativa_{}.txt",   
+    "oryza_sativa": "oryza_sativa_{}.txt",   
     }
 
 HCANONICAL = "https://ftp.ensembl.org/pub/release-108/tsv/homo_sapiens/Homo_sapiens.GRCh38.108.canonical.tsv.gz"
