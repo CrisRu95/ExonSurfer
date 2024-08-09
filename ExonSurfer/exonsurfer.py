@@ -114,12 +114,16 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         #                          STEP 3:  DESIGN PRIMERS                    #
         #######################################################################      
         if enum == 1: # only one exon
-            design_dict["PRIMER_NUM_RETURN"] = NPRIMERS
-            
+
             target, index, elen = construct_cdna.construct_one_exon_cdna(resources.MASKED_SEQS(species), 
                                                                          gene_obj, 
                                                                          data, 
                                                                          transcripts, i, WINDOW)
+            
+            # Define PRIMER_NUM_RETURN depending on target length
+            num_primers = int(NPRIMERS / (len(target)/WINDOW)) * 2
+            design_dict["PRIMER_NUM_RETURN"] = num_primers
+            
             if len(target)-50 < index: 
                 index = int(len(target) / 2)
             # Design primers

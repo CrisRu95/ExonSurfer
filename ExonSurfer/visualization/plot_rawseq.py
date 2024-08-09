@@ -372,10 +372,14 @@ def get_offtarget_gseq(without_annot, species):
         species [in] (str)       Species designed
         string [out] (str)       Off-target sequence
     """
+    # remove parenthesis
+    without_annot = without_annot.replace("(", "")
+    without_annot = without_annot.replace(")", "")
+    
     # obtain chromosome, first and last position
-    chrom = without_annot.split(":")[0][1:] # remove "("
-    pos1 = int((without_annot.split(":")[1]).split("_")[0])
-    pos2 = int((without_annot.split(":")[1]).split("_")[1][:-1]) # remove ")"
+    chrom = without_annot.split(":")[0] 
+    pos1 = int((without_annot.split(":")[1]).split("-")[0])
+    pos2 = int((without_annot.split(":")[1]).split("-")[1]) 
     
     # open chromosome file and read sequence
     chrom_file = resources.MASKED_SEQS(species).format(chrom)

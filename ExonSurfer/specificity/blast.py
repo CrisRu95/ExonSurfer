@@ -35,8 +35,7 @@ def run_blast_list(fastaf, out, db_path, species, i_cutoff, e_value,
                     '-num_threads', str(num_threads), 
                     '-strand', 'both', 
                     '-perc_identity', str(i_cutoff), 
-                    '-evalue', str(e_value), 
-                    "-max_target_seqs", str(50000)]
+                    '-evalue', str(e_value)]
 
     # RunBlastDBCommand(command_line)
     call(command_line, stderr = DEVNULL, stdout = DEVNULL)
