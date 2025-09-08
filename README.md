@@ -1,4 +1,3 @@
-
 # ExonSurfer
 
 <p align="center">
@@ -15,13 +14,13 @@ The advantages of ExonPrimerSurfer are:
 * Fully automated workflows
 
 The program is easy to install, simply clone the repository to your local machine and install the required dependencies. 
+
 ## Installation
 
 Clone the repository:
 
 ```git
 git clone https://github.com/CrisRu95/ExonSurfer.git
-
 ```
 
 Install the dependencies:
@@ -34,6 +33,22 @@ Install the package
 
 ```bash
 python3 setup.py install --user
+```
+
+### Installation via Docker
+
+Clone and install like so,
+
+``` bash
+git clone https://github.com/CrisRu95/ExonSurfer.git
+cd ExonSurfer
+docker build -t exonsurfer .
+```
+
+Thereafter you can invoke exonsurfer through Docker:
+
+``` bash
+docker run -it --rm exonsurfer -h
 ```
 
 ## Usage
