@@ -56,7 +56,8 @@ def format_junctions(d, to_detect, opt_amp_len, data, canonical_t):
     if len(to_detect) == 1 and "_" not in d[to_detect[0]]: 
         junctions[d[to_detect[0]]] = to_detect[0]
     
-    elif to_detect == "ALL" and "_" not in d[canonical_t]: 
+    # Added "and canonical_t" to prevent using an empty list as a key
+    elif to_detect == "ALL" and canonical_t and "_" not in d[canonical_t]: 
         junctions[d[canonical_t]] = canonical_t
     
     else: 
