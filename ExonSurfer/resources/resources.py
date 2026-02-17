@@ -4,6 +4,7 @@
 # imported modules
 import os
 import uuid
+from pyensembl import Genome, EnsemblRelease
 
 # Constants
 BLAST_DB_LINKS = { #  cDNA and genomic DNA
@@ -15,7 +16,10 @@ BLAST_DB_LINKS = { #  cDNA and genomic DNA
     "danio_rerio": "https://zenodo.org/records/10936138/files/danio_rerio.zip?download=1", 
     "arabidopsis_thaliana": "https://zenodo.org/records/10936138/files/arabidopsis.zip?download=1", 
     "drosophila_melanogaster": "https://zenodo.org/records/10936138/files/fruitfly.zip?download=1", 
-    "oryza_sativa": "https://zenodo.org/records/10936138/files/rice.zip?download=1"    
+    "oryza_sativa": "https://zenodo.org/records/10936138/files/rice.zip?download=1",
+
+    # NEW SPECIES
+    "litomosoides_sigmodontis": "https://zenodo.org/records/18662092/files/l_sigmodontis_blast.zip?download=1"    
     
     }
 
@@ -28,7 +32,9 @@ BLAST_DB_NAMES = {
     "danio_rerio": "zebrafish.rna.fna", 
     "arabidopsis_thaliana": "arabidopsis.rna.fna", 
     "drosophila_melanogaster": "fruitfly.rna.fna", 
-    "oryza_sativa": "rice.rna.fna"
+    "oryza_sativa": "rice.rna.fna",
+    # NEW SPECIES
+    "litomosoides_sigmodontis": "l_sigmodontis.rna.fna"
     }
 
 BLAST_GENOMIC_DB_NAMES = {
@@ -40,7 +46,10 @@ BLAST_GENOMIC_DB_NAMES = {
     "danio_rerio": "zebrafish.dna.fna", 
     "arabidopsis_thaliana": "arabidopsis.dna.fna", 
     "drosophila_melanogaster": "fruitfly.dna.fna", 
-    "oryza_sativa": "rice.dna.fna"
+    "oryza_sativa": "rice.dna.fna",
+    
+    # NEW SPECIES
+    "litomosoides_sigmodontis": "l_sigmodontis.dna.fna"
     }
 
 
@@ -53,7 +62,10 @@ CHROM_LINKS = {
     "danio_rerio": "https://zenodo.org/records/10936138/files/zebrafish_seqs.zip?download=1", 
     "arabidopsis_thaliana": "https://zenodo.org/records/10936138/files/arabidopsis_seqs.zip?download=1", 
     "drosophila_melanogaster": "https://zenodo.org/records/10936138/files/fruitfly_seqs.zip?download=1", 
-    "oryza_sativa": "https://zenodo.org/records/10936138/files/rice_seqs.zip?download=1", }
+    "oryza_sativa": "https://zenodo.org/records/10936138/files/rice_seqs.zip?download=1", 
+    # NEW SPECIES
+    "litomosoides_sigmodontis": "https://zenodo.org/records/18662092/files/l_sigmodontis_seqs.zip?download=1"
+}
 
 FIRST_CHR = {
     "homo_sapiens": "human{}.txt", 
@@ -65,6 +77,8 @@ FIRST_CHR = {
     "danio_rerio": "daniorerio_{}.txt",
     "drosophila_melanogaster": "drosophila_melanogaster_{}.txt",   
     "oryza_sativa": "oryza_sativa_{}.txt",   
+    # The .format(n) in MASKED_SEQS will simply return this string as-is since there are no brackets
+    "litomosoides_sigmodontis": "L_sigmodontis_nLs.2.1.scaf00001.txt"
     }
 
 HCANONICAL = "https://ftp.ensembl.org/pub/release-108/tsv/homo_sapiens/Homo_sapiens.GRCh38.108.canonical.tsv.gz"
@@ -334,3 +348,31 @@ def download_all_db():
         MASKED_SEQS(species)
         print("[+] Done.", flush=True)
         
+###############################################################################
+
+def get_genome_data(species, release=108):
+    """
+    Returns the appropriate pyensembl data object.
+    Handles both standard Ensembl species and custom genomes (like L. sigmodontis).
+    """
+    
+    # 1. Custom Genome: Litomosoides sigmodontis
+    if species == "litomosoides_sigmodontis":
+        print(f"[-] Loading custom genome for: {species}")
+        data = Genome(
+            reference_name='Litomosoides_sigmodontis_nLs.2.1',
+            annotation_name='WormBase_ParaSite_WBPS19',
+            gtf_path_or_url='https://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/WBPS19/species/litomosoides_sigmodontis/PRJEB3075/litomosoides_sigmodontis.PRJEB3075.WBPS19.canonical_geneset.gtf.gz',
+            transcript_fasta_paths_or_urls=['https://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/WBPS19/species/litomosoides_sigmodontis/PRJEB3075/litomosoides_sigmodontis.PRJEB3075.WBPS19.mRNA_transcripts.fa.gz']
+        )
+    
+    # 2. Standard Ensembl Species (Human, Mouse, Rat)
+    else:
+        # Clean species name (remove _masked suffix if present)
+        clean_species = species.replace("_masked", "")
+        data = EnsemblRelease(species=clean_species, release=release)
+
+    # Ensure the genome is indexed (safe to run; skips if already done)
+    data.index()
+    
+    return data
