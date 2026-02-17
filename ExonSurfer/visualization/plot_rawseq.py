@@ -437,8 +437,8 @@ def highlight_ontarget(pair_id, final_df, species, release, file = False):
     # obtain exon junction information
     junction = final_df.loc[pair_id]["junction"]
     masked_chr = resources.MASKED_SEQS(species)
-    data = ensembl.create_ensembl_data(release, 
-                                       species.replace("_masked", ""))
+    data = resources.get_genome_data(species.replace("_masked", ""), release)
+
     # obtain sequence and indices
     if file == False: 
         nm_dna, ji = get_junction_seqs(junction, masked_chr, data)
