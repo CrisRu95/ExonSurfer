@@ -39,8 +39,8 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
     ########################################################################### 
     # Construct transcripts dictionary
     print("Extracting ensemble info")
-    data = ensembl.create_ensembl_data(release, 
-                                       species.replace("_masked", ""))
+    # --- ONE CLEAN LINE ---
+    data = resources.get_genome_data(species, release)
     try:
       gene_obj = ensembl.get_gene_by_symbol(gene, data)
     except:
@@ -179,7 +179,15 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         # Calculate dimers
         df["dimers"] = df.apply(lambda row: dimers.get_max_comp(row["forward"],row["reverse"]),axis=1)
         # Filter dimers
-        df = df[df['dimers'] < 5]   
+        # --- FIX: Check if filter empties the dataframe ---
+        df_filtered = df[df['dimers'] < 5]
+        
+        if df_filtered.empty:
+            print("[!] Warning: All primers have high dimer scores (>= 5). Skipping dimer filter to proceed.")
+            # No sobreescribimos df, nos quedamos con los originales aunque tengan dimeros
+        else:
+            df = df_filtered
+        # --------------------------------------------------
         #Annotate pair number
         df["pair_num"] = ["Pair{}".format(x) for x in range(0, df.shape[0])]
     
