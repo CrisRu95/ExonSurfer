@@ -11,6 +11,8 @@ import plotly.offline as opy
 
 # own modules
 from ExonSurfer.ensembl import ensembl
+from ExonSurfer.resources import resources
+
 
 # configuration
 config = {
@@ -81,7 +83,8 @@ def get_exon_transcript_information(species, symbol, transcript, release = 108, 
         dt [out] (dict)     Dict with the exons of each transcript
         de  [out] (dict)    Dict with exons positions
     """
-    data = ensembl.create_ensembl_data(release, species.replace("_masked", ""))
+    data = resources.get_genome_data(species.replace("_masked", ""), release)
+
     try:
       gene_obj = ensembl.get_gene_by_symbol(symbol, data)
     except:
