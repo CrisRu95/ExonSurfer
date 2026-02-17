@@ -36,3 +36,19 @@ straightforward as possible.
 
 ### Fixed
 - Fixed the if else to obtain the junctions in CreatePrimers
+
+
+## [1.3] - 2026-02-17
+
+### Added
+- Added support for *Litomosoides sigmodontis* (WormBase ParaSite) as a custom genome.
+- Added `get_genome_data` function in `resources.py` to centralize genome loading strategies.
+- Added Zenodo resource links for *L. sigmodontis* genomic and blast databases.
+
+### Changed
+- Refactored `CreatePrimers` to dynamically load genome data via `resources.py` instead of hardcoded Ensembl calls.
+- Updated dimer filtering logic: the filter is now skipped if it eliminates all primer candidates, preventing empty result crashes.
+
+### Fixed
+- Fixed "unhashable type: list" error in `chooseTarget.py` for species without defined canonical transcripts (e.g., *Arabidopsis thaliana*).
+- Fixed "Expected a 1D array" error in specific genes where the dimer filter resulted in an empty dataframe.
