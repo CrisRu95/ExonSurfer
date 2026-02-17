@@ -4,6 +4,7 @@
 # imported modules
 import os
 import pandas as pd
+import re
 
 # own modules
 from ExonSurfer.ensembl import ensembl, extractCanonical
@@ -34,6 +35,21 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         blast_df [out] (df)    Dataframe with blast results
         final_df [out] (df)    Dataframe with primer design results
     """ 
+    ###########################################################################
+    #                        STEP 0: SANITIZE INPUTS                          #
+    ########################################################################### 
+    
+    # 1. Handle Transcripts Input (String -> List)
+    if transcripts != "ALL" and isinstance(transcripts, str):
+        # Split by comma (,), semicolon (;), or whitespace (\s)
+        # The regex r'[;,\s]+' means "one or more of these characters"
+        transcripts = re.split(r'[;,]+', transcripts)
+        
+        # Remove empty strings (in case of trailing commas like "ID1, ID2,")
+        transcripts = [t for t in transcripts if t]
+        
+        print(f"[-] Parsed transcripts: {transcripts}")
+        
     ###########################################################################
     #                        STEP 1. RETRIEVE INFORMATION                     #
     ########################################################################### 
@@ -107,6 +123,9 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         target_len = 100 # random value to initialize
     else: 
         enum, i, WINDOW = False, False, False # random values
+        
+    # [CHANGE 1] Initialize variables here (around line 100, right before the 'while')
+    c1, c2 = {}, {}
     
     while (len(junction) > 0 and df.empty) or (enum == 1 and i*WINDOW < target_len): 
         
@@ -173,7 +192,8 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
                                       junctions_d, 
                                       transcripts, 
                                       canonical_t)
-    
+        #endifelse
+    #endwhile
     if df.shape[0] > 1: # we designed primers
         
         # Calculate dimers
@@ -300,6 +320,7 @@ def CreatePrimers(gene, transcripts = "ALL", species = "homo_sapiens_masked",
         blast_df = None
         gblast_df = None
         logresult = "Main reason for design failure: {}".format(msg_f)
+    #endifelse
         
     return blast_df, gblast_df, final_df, logresult
     
