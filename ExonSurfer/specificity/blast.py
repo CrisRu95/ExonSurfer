@@ -47,23 +47,32 @@ def run_blast_list(fastaf, out, db_path, species, i_cutoff, e_value,
     df = pd.read_csv(out, sep = "\t", names = df_header)
     
     if genomic == False: 
-        # remove transcript version information
-        df["subject id"] = df["subject id"].map(lambda x: x.split(".")[0])
+        if species == "litomosoides_sigmodontis":
+            # WormBase: Split by "-" to remove "-RA"
+            # We use rsplit in case the ID itself has dashes earlier, though unlikely here
+            #df["subject id"] = df["subject id"].map(lambda x: x.split("-")[0])
+        else:
+            # Ensembl: Split by "." to remove ".1"
+            df["subject id"] = df["subject id"].map(lambda x: x.split(".")[0])
     
     if tomerge == True: 
+        # Read the table
         table = pd.read_csv(os.path.join(resources.get_blastdb_path(species),
                                          resources.IDS_TABEL), 
                             sep = "\t", names=["id", "gene"], header=None)
-        if species=="litomosoides_sigmodontis":
-            table["id"] = table["id"].map(lambda x: x.split("-")[0])
+        
+        if species == "litomosoides_sigmodontis":
+            # Apply SAME logic as above: Split by "-"
+            #table["id"] = table["id"].map(lambda x: x.split("-")[0])
         else:
-            # remove transcript version information
+            # Ensembl logic
             table["id"] = table["id"].map(lambda x: x.split(".")[0])
         
-        df = pd.merge(df, table, left_on="subject id", right_on = "id", how = "left")
+        # Merge
+        df = pd.merge(df, table, left_on="subject id", right_on="id", how="left")
         
-        # overwrite annotated blast result
-        df.to_csv(out, sep = "\t", index = False)
+        # Save and clean up
+        df.to_csv(out, sep="\t", index=False)
         os.remove(out)
     
     return df
