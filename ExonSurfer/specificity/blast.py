@@ -54,8 +54,11 @@ def run_blast_list(fastaf, out, db_path, species, i_cutoff, e_value,
         table = pd.read_csv(os.path.join(resources.get_blastdb_path(species),
                                          resources.IDS_TABEL), 
                             sep = "\t", names=["id", "gene"], header=None)
-        # remove transcript version information
-        table["id"] = table["id"].map(lambda x: x.split(".")[0])
+        if species=="litomosoides_sigmodontis":
+            table["id"] = table["id"].map(lambda x: x.split("-")[0])
+        else:
+            # remove transcript version information
+            table["id"] = table["id"].map(lambda x: x.split(".")[0])
         
         df = pd.merge(df, table, left_on="subject id", right_on = "id", how = "left")
         
