@@ -16,10 +16,10 @@ BLAST_DB_LINKS = { #  cDNA and genomic DNA
     "danio_rerio": "https://zenodo.org/records/10936138/files/danio_rerio.zip?download=1", 
     "arabidopsis_thaliana": "https://zenodo.org/records/10936138/files/arabidopsis.zip?download=1", 
     "drosophila_melanogaster": "https://zenodo.org/records/10936138/files/fruitfly.zip?download=1", 
-    "oryza_sativa": "https://zenodo.org/records/10936138/files/rice.zip?download=1",
+    "oryza_sativa": "https://zenodo.org/records/10936138/files/rice.zip?download=1", 
 
     # NEW SPECIES
-    "litomosoides_sigmodontis": "https://zenodo.org/records/18662092/files/l_sigmodontis_blast.zip?download=1"    
+    "litomosoides_sigmodontis": "https://zenodo.org/records/18679238/files/l_sigmodontis_blast.zip?download=1"    
     
     }
 
@@ -64,7 +64,7 @@ CHROM_LINKS = {
     "drosophila_melanogaster": "https://zenodo.org/records/10936138/files/fruitfly_seqs.zip?download=1", 
     "oryza_sativa": "https://zenodo.org/records/10936138/files/rice_seqs.zip?download=1", 
     # NEW SPECIES
-    "litomosoides_sigmodontis": "https://zenodo.org/records/18662092/files/l_sigmodontis_seqs.zip?download=1"
+    "litomosoides_sigmodontis": "https://zenodo.org/records/18679238/files/l_sigmodontis_seqs.zip?download=1" 
 }
 
 FIRST_CHR = {
