@@ -51,6 +51,7 @@ def run_blast_list(fastaf, out, db_path, species, i_cutoff, e_value,
             # WormBase: Split by "-" to remove "-RA"
             # We use rsplit in case the ID itself has dashes earlier, though unlikely here
             #df["subject id"] = df["subject id"].map(lambda x: x.split("-")[0])
+            pass
         else:
             # Ensembl: Split by "." to remove ".1"
             df["subject id"] = df["subject id"].map(lambda x: x.split(".")[0])
@@ -64,6 +65,7 @@ def run_blast_list(fastaf, out, db_path, species, i_cutoff, e_value,
         if species == "litomosoides_sigmodontis":
             # Apply SAME logic as above: Split by "-"
             #table["id"] = table["id"].map(lambda x: x.split("-")[0])
+            pass
         else:
             # Ensembl logic
             table["id"] = table["id"].map(lambda x: x.split(".")[0])
