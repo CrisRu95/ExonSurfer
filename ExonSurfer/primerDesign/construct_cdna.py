@@ -29,7 +29,7 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
     
     # read chromosome 
     chrom_open = open(masked_chr.format(gene_obj.contig), "r")
-    tt = chrom_open.read() # full chromosome sequence
+    tt = "".join(line.strip() for line in chrom_open if not line.startswith(">")) #strip FASTA header and join wrapped lines into one clean sequence
     chrom_open.close()
             
     if transcript == "ALL" or len(transcript) > 1: 
@@ -39,9 +39,9 @@ def construct_target_cdna(masked_chr, gene_obj, data, transcript, exon_junction)
         
         # check strand
         if gene_obj.on_positive_strand: 
-            list_of_exons = exon_junction[0].split("_")
+            list_of_exons = exon_junction[0].split("|")
         else: 
-            list_of_exons = exon_junction[0].split("_")[::-1]
+            list_of_exons = exon_junction[0].split("|")[::-1]
          
         # iterate all exons in the junction and build cdna
         for exon in list_of_exons: # exon is string id
@@ -129,8 +129,9 @@ def construct_one_exon_cdna(masked_chr, gene_obj, data, transcript, i, window):
         t_obj = data.transcript_by_id(transcript[0])
     
     # read chromosome 
-    chrom_open = open(masked_chr.format(t_obj.contig), "r")
-    tt = chrom_open.read() # full chromosome sequence
+    
+    chrom_open = open(masked_chr.format(gene_obj.contig), "r")
+    tt = "".join(line.strip() for line in chrom_open if not line.startswith(">")) #strip FASTA header and join wrapped lines into one clean sequence
     chrom_open.close()
     
     cdna = tt[t_obj.exons[0].start-1:t_obj.exons[0].end]
