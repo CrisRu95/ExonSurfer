@@ -88,7 +88,7 @@ def get_cdna_seq(data, transcript_id, masked_chr):
     
     # read chromosome 
     chrom_open = open(masked_chr.format(t_obj.contig), "r")
-    tt = chrom_open.read() # full chromosome sequence
+    tt = "".join(line.strip() for line in chrom_open if not line.startswith(">")) # full chromosome sequence
     chrom_open.close()
     
     # initialize all
@@ -160,7 +160,7 @@ def get_transcripts_dict(gene, exclude_noncoding):
         tcripts = get_coding_transcript(all_transcripts)
     
     for tcript in tcripts:
-        d[tcript.id] = "_".join(get_exons_from_transcript(tcript))
+        d[tcript.id] = "|".join(get_exons_from_transcript(tcript))
      
     return d
 
