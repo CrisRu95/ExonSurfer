@@ -1,86 +1,166 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+ 
 # imported modules
 import os
 import uuid
 from pyensembl import Genome, EnsemblRelease
-
-# Constants
-BLAST_DB_LINKS = { #  cDNA and genomic DNA
-    "homo_sapiens": "https://zenodo.org/record/7802572/files/human.zip?download=1", 
-    "homo_sapiens_masked": "https://zenodo.org/record/7802572/files/human.zip?download=1", 
-    "mus_musculus": "https://zenodo.org/record/7766234/files/mouse.zip?download=1", 
-    "rattus_norvegicus": "https://zenodo.org/record/7766234/files/rat.zip?download=1",
-    
-    "danio_rerio": "https://zenodo.org/records/10936138/files/danio_rerio.zip?download=1", 
-    "arabidopsis_thaliana": "https://zenodo.org/records/10936138/files/arabidopsis.zip?download=1", 
-    "drosophila_melanogaster": "https://zenodo.org/records/10936138/files/fruitfly.zip?download=1", 
-    "oryza_sativa": "https://zenodo.org/records/10936138/files/rice.zip?download=1", 
-
-    # NEW SPECIES
-    "litomosoides_sigmodontis": "https://zenodo.org/records/18679238/files/l_sigmodontis_blast.zip?download=1"    
-    
-    }
-
-BLAST_DB_NAMES = {
-    "homo_sapiens": "human.rna.fna", 
-    "homo_sapiens_masked": "human.rna.fna", 
-    "mus_musculus": "mouse.rna.fna", 
-    "rattus_norvegicus": "rat.rna.fna",
-
-    "danio_rerio": "zebrafish.rna.fna", 
-    "arabidopsis_thaliana": "arabidopsis.rna.fna", 
-    "drosophila_melanogaster": "fruitfly.rna.fna", 
-    "oryza_sativa": "rice.rna.fna",
-    # NEW SPECIES
-    "litomosoides_sigmodontis": "l_sigmodontis.rna.fna"
-    }
-
-BLAST_GENOMIC_DB_NAMES = {
-    "homo_sapiens": "human.dna.fna", 
-    "homo_sapiens_masked": "human.dna.fna", 
-    "mus_musculus": "mouse.dna.fna", 
-    "rattus_norvegicus": "rat.dna.fna",
-
-    "danio_rerio": "zebrafish.dna.fna", 
-    "arabidopsis_thaliana": "arabidopsis.dna.fna", 
-    "drosophila_melanogaster": "fruitfly.dna.fna", 
-    "oryza_sativa": "rice.dna.fna",
-    
-    # NEW SPECIES
-    "litomosoides_sigmodontis": "l_sigmodontis.dna.fna"
-    }
-
-
-CHROM_LINKS = {
-    "homo_sapiens": "https://zenodo.org/record/7638757/files/human_seqs.zip?download=1", 
-    "homo_sapiens_masked": "https://zenodo.org/record/7638757/files/human_masked_seqs.zip?download=1", 
-    "mus_musculus": "https://zenodo.org/records/10936138/files/mouse_seqs.zip?download=1", 
-    "rattus_norvegicus": "https://zenodo.org/record/7638757/files/rat_seqs.zip?download=1", 
-    
-    "danio_rerio": "https://zenodo.org/records/10936138/files/zebrafish_seqs.zip?download=1", 
-    "arabidopsis_thaliana": "https://zenodo.org/records/10936138/files/arabidopsis_seqs.zip?download=1", 
-    "drosophila_melanogaster": "https://zenodo.org/records/10936138/files/fruitfly_seqs.zip?download=1", 
-    "oryza_sativa": "https://zenodo.org/records/10936138/files/rice_seqs.zip?download=1", 
-    # NEW SPECIES
-    "litomosoides_sigmodontis": "https://zenodo.org/records/18679238/files/l_sigmodontis_seqs.zip?download=1" 
+ 
+# BLAST DB download links (RNA + DNA zips)
+BLAST_DB_LINKS = {
+    # ── original 
+    "homo_sapiens":         "https://zenodo.org/record/7802572/files/human.zip?download=1",
+    "homo_sapiens_masked":  "https://zenodo.org/record/7802572/files/human.zip?download=1",
+    "mus_musculus":         "https://zenodo.org/record/7766234/files/mouse.zip?download=1",
+    "rattus_norvegicus":    "https://zenodo.org/record/7766234/files/rat.zip?download=1",
+    "danio_rerio":          "https://zenodo.org/records/10936138/files/danio_rerio.zip?download=1",
+    "arabidopsis_thaliana": "https://zenodo.org/records/10936138/files/arabidopsis.zip?download=1",
+    "drosophila_melanogaster": "https://zenodo.org/records/10936138/files/fruitfly.zip?download=1",
+    "oryza_sativa":         "https://zenodo.org/records/10936138/files/rice.zip?download=1",
+    "litomosoides_sigmodontis": "https://zenodo.org/records/18679238/files/l_sigmodontis_blast.zip?download=1",
+ 
+    # ── new biomedical 
+    "xenopus_tropicalis":   "https://zenodo.org/records/20039273/files/frog.zip?download=1",   # frog   (UCB_Xtro_10.0)
+#    "gallus_gallus":        ,   # chicken (bGalGal1.mat.broiler.GRCg7b)
+#    "sus_scrofa":           ,   # pig     (Sscrofa11.1)
+#    "macaca_mulatta":       ,   # macaque (Mmul_10)
+    "caenorhabditis_elegans":   "https://zenodo.org/records/20039273/files/celegans.zip?download=1",   # celegans (WBcel235)
+    "saccharomyces_cerevisiae": "https://zenodo.org/records/20039273/files/yeast.zip?download=1",   # yeast    (R64-1-1)
+ 
+    # ── new plants ───
+    "solanum_lycopersicum": "https://zenodo.org/records/20039273/files/tomato.zip?download=1",   # tomato  (SL3.0)
+    "zea_mays":             "https://zenodo.org/records/20039273/files/maize.zip?download=1",   # maize   (Zm-B73-REFERENCE-NAM-5.0)
+    "glycine_max":          "https://zenodo.org/records/20039273/files/soybean.zip?download=1",   # soybean (Glycine_max_v2.1)
 }
+ 
+# RNA BLAST DB file names
+BLAST_DB_NAMES = {
+    # ── original 
+    "homo_sapiens":         "human.rna.fna",
+    "homo_sapiens_masked":  "human.rna.fna",
+    "mus_musculus":         "mouse.rna.fna",
+    "rattus_norvegicus":    "rat.rna.fna",
+    "danio_rerio":          "zebrafish.rna.fna",
+    "arabidopsis_thaliana": "arabidopsis.rna.fna",
+    "drosophila_melanogaster": "fruitfly.rna.fna",
+    "oryza_sativa":         "rice.rna.fna",
+    "litomosoides_sigmodontis": "l_sigmodontis.rna.fna",
+ 
+    # ── new biomedical 
+    "xenopus_tropicalis":       "frog.rna.fna",
+    #"gallus_gallus":            "chicken.rna.fna",
+    #"sus_scrofa":               "pig.rna.fna",
+    #"macaca_mulatta":           "macaque.rna.fna",
+    "caenorhabditis_elegans":   "celegans.rna.fna",
+    "saccharomyces_cerevisiae": "yeast.rna.fna",
+ 
+    # ── new plants ────
+    "solanum_lycopersicum": "tomato.rna.fna",
+    "zea_mays":             "maize.rna.fna",
+    "glycine_max":          "soybean.rna.fna",
+}
+ 
+# Genomic DNA BLAST DB file names 
+BLAST_GENOMIC_DB_NAMES = {
+    "homo_sapiens":         "human.dna.fna",
+    "homo_sapiens_masked":  "human.dna.fna",
+    "mus_musculus":         "mouse.dna.fna",
+    "rattus_norvegicus":    "rat.dna.fna",
+    "danio_rerio":          "zebrafish.dna.fna",
+    "arabidopsis_thaliana": "arabidopsis.dna.fna",
+    "drosophila_melanogaster": "fruitfly.dna.fna",
+    "oryza_sativa":         "rice.dna.fna",
+    "litomosoides_sigmodontis": "l_sigmodontis.dna.fna",
+ 
+    # ── new biomedical 
+    "xenopus_tropicalis":       "frog.dna.fna",
+    #"gallus_gallus":            "chicken.dna.fna",
+    #"sus_scrofa":               "pig.dna.fna",
+    #"macaca_mulatta":           "macaque.dna.fna",
+    "caenorhabditis_elegans":   "celegans.dna.fna",
+    "saccharomyces_cerevisiae": "yeast.dna.fna",
+ 
+    # ── new plants ────
+    "solanum_lycopersicum": "tomato.dna.fna",
+    "zea_mays":             "maize.dna.fna",
+    "glycine_max":          "soybean.dna.fna",
+}
+ 
+# Chromosome sequence zips 
+CHROM_LINKS = {
+    # ── original 
+    "homo_sapiens":         "https://zenodo.org/record/7638757/files/human_seqs.zip?download=1",
+    "homo_sapiens_masked":  "https://zenodo.org/record/7638757/files/human_masked_seqs.zip?download=1",
+    "mus_musculus":         "https://zenodo.org/records/10936138/files/mouse_seqs.zip?download=1",
+    "rattus_norvegicus":    "https://zenodo.org/record/7638757/files/rat_seqs.zip?download=1",
+    "danio_rerio":          "https://zenodo.org/records/10936138/files/zebrafish_seqs.zip?download=1",
+    "arabidopsis_thaliana": "https://zenodo.org/records/10936138/files/arabidopsis_seqs.zip?download=1",
+    "drosophila_melanogaster": "https://zenodo.org/records/10936138/files/fruitfly_seqs.zip?download=1",
+    "oryza_sativa":         "https://zenodo.org/records/10936138/files/rice_seqs.zip?download=1",
+    "litomosoides_sigmodontis": "https://zenodo.org/records/18679238/files/l_sigmodontis_seqs.zip?download=1",
+ 
+    # ── new biomedical 
+    "xenopus_tropicalis":       "https://zenodo.org/records/20039273/files/frog_seqs.zip?download=1",
+    #"gallus_gallus":            _Z_NEW,
+    #"sus_scrofa":               _Z_NEW,
+    #"macaca_mulatta":           _Z_NEW,
+    "caenorhabditis_elegans":   "https://zenodo.org/records/20039273/files/celegans_seqs.zip?download=1",
+    "saccharomyces_cerevisiae": "https://zenodo.org/records/20039273/files/yeast_seqs.zip?download=1",
+ 
+    # ── new plants 
+    "solanum_lycopersicum": "https://zenodo.org/records/20039273/files/tomato_seqs.zip?download=1",
+    "zea_mays":             "https://zenodo.org/records/20039273/files/maize_seqs.zip?download=1",
+    "glycine_max":          "https://zenodo.org/records/20039273/files/soybean_seqs.zip?download=1",
+}
+ 
 
+# ── First chromosome id used to CHECK if seqs are already downloaded 
 FIRST_CHR = {
-    "homo_sapiens": "human{}.txt", 
-    "homo_sapiens_masked": "human{}_masked.txt", 
-    "mus_musculus": "mouse{}.txt", 
-    "rattus_norvegicus": "rat{}.txt",    
-    
-    "arabidopsis_thaliana": "arabidopsis_thaliana_{}.txt", # take into account Pt and Mt
-    "danio_rerio": "daniorerio_{}.txt",
-    "drosophila_melanogaster": "drosophila_melanogaster_{}.txt",   
-    "oryza_sativa": "oryza_sativa_{}.txt",   
-    # The .format(n) in MASKED_SEQS will simply return this string as-is since there are no brackets
-    "litomosoides_sigmodontis": "L_sigmodontis_nLs.2.1.scaf00001.txt"
-    }
+    "homo_sapiens":         "human{}.txt",
+    "homo_sapiens_masked":  "human{}_masked.txt",
+    "mus_musculus":         "mouse{}.txt",
+    "rattus_norvegicus":    "rat{}.txt",
+    "arabidopsis_thaliana": "arabidopsis_thaliana_{}.txt",   # includes Mt, Pt
+    "danio_rerio":          "daniorerio_{}.txt",
+    "drosophila_melanogaster": "drosophila_melanogaster_{}.txt",
+    "oryza_sativa":         "oryza_sativa_{}.txt",
+    "litomosoides_sigmodontis": "L_sigmodontis_nLs.2.1.scaf00001.txt",  # scaffold, no {}
+ 
+    # ── new biomedical 
+    "xenopus_tropicalis":       "xenopus_tropicalis_{}.txt",
+    "gallus_gallus":            "gallus_gallus_{}.txt",
+    "sus_scrofa":               "sus_scrofa_{}.txt",
+    "macaca_mulatta":           "macaca_mulatta_{}.txt",
+    "caenorhabditis_elegans":   "caenorhabditis_elegans_{}.txt",   # chrs: I, II, III, IV, V, X, MtDNA
+    "saccharomyces_cerevisiae": "saccharomyces_cerevisiae_{}.txt", # chrs: I–XVI, Mito
+ 
+    # ── new plants
+    "solanum_lycopersicum": "solanum_lycopersicum_{}.txt",
+    "zea_mays":             "zea_mays_{}.txt",
+    "glycine_max":          "glycine_max_{}.txt",
+}
+ 
 
+FIRST_CHR_CHECK = {
+    "homo_sapiens":             "1",
+    "homo_sapiens_masked":      "1",
+    "mus_musculus":             "1",
+    "rattus_norvegicus":        "1",
+    "danio_rerio":              "1",
+    "arabidopsis_thaliana":     "1",
+    "oryza_sativa":             "1",
+    "zea_mays":                 "1",
+    "solanum_lycopersicum":     "1",
+    "glycine_max":              "1",
+    "drosophila_melanogaster":  "2L",
+    "caenorhabditis_elegans":   "I",
+    "saccharomyces_cerevisiae": "I",
+    "xenopus_tropicalis":       "1",
+    "gallus_gallus":            "1",
+    "sus_scrofa":               "1",
+    "macaca_mulatta":           "1",
+    "litomosoides_sigmodontis": "",   # scaffold, no {} in pattern
+}
 HCANONICAL = "https://ftp.ensembl.org/pub/release-108/tsv/homo_sapiens/Homo_sapiens.GRCh38.108.canonical.tsv.gz"
 
 IDS_TABEL = "table.txt"
@@ -268,18 +348,13 @@ def MASKED_SEQS(species):
     Thi function acts as a constant; downloads data if necessary and returns 
     its location. 
     """
-    # filename to search for
-    if species == "drosophila_melanogaster": 
-        n = "2L"
-    else: 
-        n = 1
+    pattern  = FIRST_CHR[species]
+    check_id = FIRST_CHR_CHECK.get(species, "1")
     mask_path = os.path.join(str(get_maskedseq_path(species)),
-                             FIRST_CHR[species].format(n))
-    # check if file exists
+                             pattern.format(check_id))
     if not os.path.exists(mask_path):
         download_maskedseq(species)
-    
-    return os.path.join(str(get_maskedseq_path(species)), FIRST_CHR[species])
+    return os.path.join(str(get_maskedseq_path(species)), pattern)
 
 ###############################################################################
     
