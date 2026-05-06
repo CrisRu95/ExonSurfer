@@ -52,3 +52,45 @@ straightforward as possible.
 ### Fixed
 - Fixed "unhashable type: list" error in `chooseTarget.py` for species without defined canonical transcripts (e.g., *Arabidopsis thaliana*).
 - Fixed "Expected a 1D array" error in specific genes where the dimer filter resulted in an empty dataframe.
+
+
+## [1.4] - 2026-05-06
+
+### Added
+- Added support for 9 new species:
+  - *Xenopus tropicalis* (UCB_Xtro_10.0)
+  - *Gallus gallus* (bGalGal1.mat.broiler.GRCg7b)
+  - *Sus scrofa* (Sscrofa11.1)
+  - *Macaca mulatta* (Mmul_10)
+  - *Caenorhabditis elegans* (WBcel235)
+  - *Saccharomyces cerevisiae* (R64-1-1)
+  - *Solanum lycopersicum* (SL3.0)
+  - *Zea mays* (Zm-B73-REFERENCE-NAM-5.0)
+  - *Glycine max* (Glycine_max_v2.1)
+- Added `FIRST_CHR_CHECK` dict in `resources.py` mapping each species to its correct
+  first chromosome identifier for existence checks (e.g. Roman numerals for yeast and
+  *C. elegans*, `"2L"` for *Drosophila*).
+
+### Changed
+- Changed exon junction key separator from `"_"` to `"|"` in `ensembl.py`
+  (`get_transcripts_dict`), `chooseTarget.py` (`format_junctions`, `get_junction_len`),
+  and `construct_cdna.py`. This fixes junction key parsing for any species whose exon
+  IDs contain underscores (e.g. yeast `YFL039C_mRNA-E1`, *C. elegans* `ZK617.1a.1.e1`).
+- Updated chromosome sequence file reading in `construct_cdna.py` and `ensembl.py` to
+  strip FASTA headers and join line-wrapped sequences into a single string before
+  slicing. Ensembl FASTA files use 60-character line wrapping; passing wrapped sequences
+  to Primer3 caused a `ValueError: Input line with no '='` crash.
+- Replaced hardcoded `n = 1` / `n = "2L"` logic in `MASKED_SEQS()` with a
+  `FIRST_CHR_CHECK` lookup, fixing spurious re-downloads on every run for species
+  with non-numeric chromosome identifiers.
+
+### Fixed
+- Fixed `TypeError: cannot unpack non-iterable NoneType object` in `chooseTarget.py`
+  for yeast and *C. elegans*, caused by `split("_")` shredding exon IDs that contain
+  underscores (root cause of the junction key separator change above).
+- Fixed `ValueError: Input line with no '='` from Primer3 for all non-vertebrate
+  species whose chromosome `.txt` files are stored in FASTA format with line-wrapped
+  sequences.
+- Fixed `MASKED_SEQS()` triggering a re-download on every run for species using Roman
+  numeral chromosome names (*S. cerevisiae*, *C. elegans*) because the existence check
+  was always looking for `_1.txt` regardless of species.
