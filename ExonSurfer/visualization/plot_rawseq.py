@@ -48,7 +48,7 @@ def get_junction_seqs(junction, masked_chr, data):
     
     # read chromosome 
     chrom_open = open(masked_chr.format(e_obj1.contig), "r")
-    tt = chrom_open.read() # full chromosome sequence
+    tt = "".join(line.strip() for line in chrom_open if not line.startswith(">")) # full chromosome sequence
     chrom_open.close()
     
     # get strand
