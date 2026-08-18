@@ -369,8 +369,9 @@ def BLAST_DB(species):
     blast_db_path = os.path.join(get_blastdb_path(species), 
                                  BLAST_DB_NAMES[species])
 
-    # check if file exists
-    if not os.path.exists(blast_db_path):
+    # check if the BLAST index actually exists (blast_db_path itself is never
+    # a real file — makeblastdb only produces blast_db_path + ".nhr"/".nin"/etc.)
+    if not os.path.exists(blast_db_path + ".nhr"):
         download_blast_db(species)
 
     return blast_db_path
