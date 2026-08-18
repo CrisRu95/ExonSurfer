@@ -47,7 +47,7 @@ def run_blast_list(fastaf, out, db_path, species, i_cutoff, e_value,
     df = pd.read_csv(out, sep = "\t", names = df_header)
     
     if genomic == False: 
-        if species == "litomosoides_sigmodontis":
+        if species in ("litomosoides_sigmodontis", "caenorhabditis_elegans"):
             # WormBase: Split by "-" to remove "-RA"
             # We use rsplit in case the ID itself has dashes earlier, though unlikely here
             #df["subject id"] = df["subject id"].map(lambda x: x.split("-")[0])
@@ -62,7 +62,7 @@ def run_blast_list(fastaf, out, db_path, species, i_cutoff, e_value,
                                          resources.IDS_TABEL), 
                             sep = "\t", names=["id", "gene"], header=None)
         
-        if species == "litomosoides_sigmodontis":
+        if species in ("litomosoides_sigmodontis", "caenorhabditis_elegans"):
             # Apply SAME logic as above: Split by "-"
             #table["id"] = table["id"].map(lambda x: x.split("-")[0])
             pass
